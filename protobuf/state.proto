@@ -1,0 +1,14 @@
+syntax = "proto3";
+package proto;
+
+option go_package = "github.com/hjwalt/flows/protobuf";
+
+message State {
+  oneof state {
+    StateV1 v1 = 1;
+  };
+}
+
+message StateV1 {
+  map<int32, int64> offset_progress = 1;
+}

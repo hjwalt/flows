@@ -1,0 +1,13 @@
+syntax = "proto3";
+package proto;
+
+option go_package = "github.com/hjwalt/flows/example";
+
+message WordCountState {
+  int64 count = 1;
+}
+
+message WordJoinState {
+  int64 count = 1;
+  string word = 2;
+}

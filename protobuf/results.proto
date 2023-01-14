@@ -1,0 +1,14 @@
+syntax = "proto3";
+package proto;
+
+option go_package = "github.com/hjwalt/flows/protobuf";
+
+message Results {
+  oneof result {
+    ResultV1 v1 = 1;
+  };
+}
+
+message ResultV1 {
+  repeated bytes messages = 1;
+}

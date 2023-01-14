@@ -1,0 +1,20 @@
+syntax = "proto3";
+package proto;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/hjwalt/flows/protobuf";
+
+message Message {
+  string topic = 1;
+  int32 partition = 2;
+  int64 offset = 3;
+  bytes key = 4;
+  bytes value = 5;
+  map<string, Header> headers = 6;
+  google.protobuf.Timestamp timestamp = 7;
+}
+
+message Header {
+  repeated bytes headers = 1;
+}
