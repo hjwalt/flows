@@ -36,7 +36,7 @@ func WithLoopBatchMaxDelay(maxDelay time.Duration) runtime.Configuration[*Consum
 	}
 }
 
-func WithLoopBatchFunction(loopFunction stateless.StatelessBinaryBatchFunction) runtime.Configuration[*ConsumerBatchedLoop] {
+func WithLoopBatchFunction(loopFunction stateless.BatchFunction) runtime.Configuration[*ConsumerBatchedLoop] {
 	return func(cbl *ConsumerBatchedLoop) *ConsumerBatchedLoop {
 		cbl.F = loopFunction
 		return cbl
@@ -48,7 +48,7 @@ type ConsumerBatchedLoop struct {
 	// batching configuration
 	MaxBufferred int64
 	MaxDelay     time.Duration
-	F            stateless.StatelessBinaryBatchFunction
+	F            stateless.BatchFunction
 
 	// batched data
 	messageToCommit *sarama.ConsumerMessage

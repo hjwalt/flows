@@ -8,7 +8,7 @@ import (
 )
 
 // constructor
-func NewProducerBatchIterateFunction(configurations ...runtime.Configuration[*ProducerBatchIterateFunction]) StatelessBinaryBatchFunction {
+func NewProducerBatchIterateFunction(configurations ...runtime.Configuration[*ProducerBatchIterateFunction]) BatchFunction {
 	batchIterateFunction := &ProducerBatchIterateFunction{}
 	for _, configuration := range configurations {
 		batchIterateFunction = configuration(batchIterateFunction)
@@ -29,7 +29,7 @@ func WithBatchIterateFunctionProducer(producer runtime.Producer) runtime.Configu
 	}
 }
 
-func WithBatchIterateFunctionNextFunction(next StatelessBinarySingleFunction) runtime.Configuration[*ProducerBatchIterateFunction] {
+func WithBatchIterateFunctionNextFunction(next SingleFunction) runtime.Configuration[*ProducerBatchIterateFunction] {
 	return func(pbif *ProducerBatchIterateFunction) *ProducerBatchIterateFunction {
 		pbif.next = next
 		return pbif
@@ -46,7 +46,7 @@ func withProducerBatchIterateWrap(c *ProducerBatchIterateFunction) {
 // implementation
 type ProducerBatchIterateFunction struct {
 	producer runtime.Producer
-	next     StatelessBinarySingleFunction
+	next     SingleFunction
 }
 
 func (r *ProducerBatchIterateFunction) Apply(c context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {

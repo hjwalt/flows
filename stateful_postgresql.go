@@ -18,8 +18,8 @@ type StatefulPostgresqlFunctionConfiguration struct {
 	PostgresqlConfiguration    []runtime.Configuration[*stateful_bun.PostgresqlConnection]
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
-	StatefulFunction           stateful.StatefulBinarySingleFunction
-	PersistenceIdFunction      stateful.StatefulBinaryPersistenceIdFunction
+	StatefulFunction           stateful.SingleFunction
+	PersistenceIdFunction      stateful.PersistenceIdFunction
 	PersistenceTableName       string
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }

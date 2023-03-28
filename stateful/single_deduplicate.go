@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewSingleStatefulDeduplicate(configurations ...runtime.Configuration[*SingleStatefulDeduplicate]) StatefulBinarySingleFunction {
+func NewSingleStatefulDeduplicate(configurations ...runtime.Configuration[*SingleStatefulDeduplicate]) SingleFunction {
 	singleFunction := &SingleStatefulDeduplicate{}
 	for _, configuration := range configurations {
 		singleFunction = configuration(singleFunction)
@@ -19,7 +19,7 @@ func NewSingleStatefulDeduplicate(configurations ...runtime.Configuration[*Singl
 }
 
 // configuration
-func WithSingleStatefulDeduplicateNextFunction(next StatefulBinarySingleFunction) runtime.Configuration[*SingleStatefulDeduplicate] {
+func WithSingleStatefulDeduplicateNextFunction(next SingleFunction) runtime.Configuration[*SingleStatefulDeduplicate] {
 	return func(st *SingleStatefulDeduplicate) *SingleStatefulDeduplicate {
 		st.next = next
 		return st
@@ -28,7 +28,7 @@ func WithSingleStatefulDeduplicateNextFunction(next StatefulBinarySingleFunction
 
 // implementation
 type SingleStatefulDeduplicate struct {
-	next StatefulBinarySingleFunction
+	next SingleFunction
 }
 
 func (r SingleStatefulDeduplicate) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes], inState SingleState[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], SingleState[message.Bytes], error) {

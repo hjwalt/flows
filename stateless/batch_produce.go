@@ -8,7 +8,7 @@ import (
 )
 
 // constructor
-func NewProducerBatchFunction(configurations ...runtime.Configuration[*BatchProducer]) StatelessBinaryBatchFunction {
+func NewProducerBatchFunction(configurations ...runtime.Configuration[*BatchProducer]) BatchFunction {
 	batchFunction := &BatchProducer{}
 	for _, configuration := range configurations {
 		batchFunction = configuration(batchFunction)
@@ -24,7 +24,7 @@ func WithBatchProducerRuntime(producer runtime.Producer) runtime.Configuration[*
 	}
 }
 
-func WithBatchProducerNextFunction(next StatelessBinaryBatchFunction) runtime.Configuration[*BatchProducer] {
+func WithBatchProducerNextFunction(next BatchFunction) runtime.Configuration[*BatchProducer] {
 	return func(pbf *BatchProducer) *BatchProducer {
 		pbf.next = next
 		return pbf
@@ -34,7 +34,7 @@ func WithBatchProducerNextFunction(next StatelessBinaryBatchFunction) runtime.Co
 // implementation
 type BatchProducer struct {
 	producer runtime.Producer
-	next     StatelessBinaryBatchFunction
+	next     BatchFunction
 }
 
 func (r BatchProducer) Apply(c context.Context, m []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {

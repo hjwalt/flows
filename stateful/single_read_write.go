@@ -15,7 +15,7 @@ const (
 )
 
 // constructor
-func NewSingleReadWrite(configurations ...runtime.Configuration[*SingleStateReadWrite]) stateless.StatelessBinarySingleFunction {
+func NewSingleReadWrite(configurations ...runtime.Configuration[*SingleStateReadWrite]) stateless.SingleFunction {
 	singleFunction := &SingleStateReadWrite{}
 	for _, configuration := range configurations {
 		singleFunction = configuration(singleFunction)
@@ -38,7 +38,7 @@ func WithSingleReadWriteRepository(repository SingleStateRepository) runtime.Con
 	}
 }
 
-func WithSingleReadWriteStatefulFunction(next StatefulBinarySingleFunction) runtime.Configuration[*SingleStateReadWrite] {
+func WithSingleReadWriteStatefulFunction(next SingleFunction) runtime.Configuration[*SingleStateReadWrite] {
 	return func(st *SingleStateReadWrite) *SingleStateReadWrite {
 		st.next = next
 		return st
@@ -49,7 +49,7 @@ func WithSingleReadWriteStatefulFunction(next StatefulBinarySingleFunction) runt
 
 // implementation
 type SingleStateReadWrite struct {
-	next              StatefulBinarySingleFunction
+	next              SingleFunction
 	persistenceIdFunc func(context.Context, message.Message[message.Bytes, message.Bytes]) (string, error)
 	repository        SingleStateRepository
 }

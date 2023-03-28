@@ -12,7 +12,7 @@ import (
 )
 
 // constructor
-func NewSingleRetry(configurations ...runtime.Configuration[*SingleRetry]) StatelessBinarySingleFunction {
+func NewSingleRetry(configurations ...runtime.Configuration[*SingleRetry]) SingleFunction {
 	singleFunction := &SingleRetry{}
 	for _, configuration := range configurations {
 		singleFunction = configuration(singleFunction)
@@ -28,7 +28,7 @@ func WithSingleRetryRuntime(retry *runtime_retry.Retry) runtime.Configuration[*S
 	}
 }
 
-func WithSingleRetryNextFunction(next StatelessBinarySingleFunction) runtime.Configuration[*SingleRetry] {
+func WithSingleRetryNextFunction(next SingleFunction) runtime.Configuration[*SingleRetry] {
 	return func(psf *SingleRetry) *SingleRetry {
 		psf.next = next
 		return psf
@@ -38,7 +38,7 @@ func WithSingleRetryNextFunction(next StatelessBinarySingleFunction) runtime.Con
 // implementation
 type SingleRetry struct {
 	retry *runtime_retry.Retry
-	next  StatelessBinarySingleFunction
+	next  SingleFunction
 }
 
 func (r *SingleRetry) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
