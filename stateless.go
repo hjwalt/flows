@@ -15,7 +15,7 @@ import (
 type StatelessSingleFunctionConfiguration struct {
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
-	StatelessFunction          stateless.StatelessBinarySingleFunction
+	StatelessFunction          stateless.SingleFunction
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 

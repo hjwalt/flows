@@ -11,7 +11,7 @@ import (
 )
 
 // constructor
-func NewIntermediateToJoinMap(configurations ...runtime.Configuration[*IntermediateToJoinMap]) stateless.StatelessBinarySingleFunction {
+func NewIntermediateToJoinMap(configurations ...runtime.Configuration[*IntermediateToJoinMap]) stateless.SingleFunction {
 	singleFunction := &IntermediateToJoinMap{}
 	for _, configuration := range configurations {
 		singleFunction = configuration(singleFunction)
@@ -20,7 +20,7 @@ func NewIntermediateToJoinMap(configurations ...runtime.Configuration[*Intermedi
 }
 
 // configuration
-func WithIntermediateToJoinMapTransactionWrappedFunction(f stateless.StatelessBinarySingleFunction) runtime.Configuration[*IntermediateToJoinMap] {
+func WithIntermediateToJoinMapTransactionWrappedFunction(f stateless.SingleFunction) runtime.Configuration[*IntermediateToJoinMap] {
 	return func(itjm *IntermediateToJoinMap) *IntermediateToJoinMap {
 		itjm.transactionWrapped = f
 		return itjm
@@ -29,7 +29,7 @@ func WithIntermediateToJoinMapTransactionWrappedFunction(f stateless.StatelessBi
 
 // implementation
 type IntermediateToJoinMap struct {
-	transactionWrapped stateless.StatelessBinarySingleFunction
+	transactionWrapped stateless.SingleFunction
 }
 
 func (r *IntermediateToJoinMap) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {

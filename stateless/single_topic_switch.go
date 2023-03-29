@@ -11,9 +11,9 @@ import (
 )
 
 // constructor
-func NewSingleTopicSwitch(configurations ...runtime.Configuration[*SingleTopicSwitch]) StatelessBinarySingleFunction {
+func NewSingleTopicSwitch(configurations ...runtime.Configuration[*SingleTopicSwitch]) SingleFunction {
 	singleFunction := &SingleTopicSwitch{
-		functions: make(map[string]StatelessBinarySingleFunction),
+		functions: make(map[string]SingleFunction),
 	}
 	for _, configuration := range configurations {
 		singleFunction = configuration(singleFunction)
@@ -22,7 +22,7 @@ func NewSingleTopicSwitch(configurations ...runtime.Configuration[*SingleTopicSw
 }
 
 // configuration
-func WithSingleTopicSwitchStatelessSingleFunction(topic string, f StatelessBinarySingleFunction) runtime.Configuration[*SingleTopicSwitch] {
+func WithSingleTopicSwitchStatelessSingleFunction(topic string, f SingleFunction) runtime.Configuration[*SingleTopicSwitch] {
 	return func(sts *SingleTopicSwitch) *SingleTopicSwitch {
 		sts.functions[topic] = f
 		return sts
@@ -31,7 +31,7 @@ func WithSingleTopicSwitchStatelessSingleFunction(topic string, f StatelessBinar
 
 // implementation
 type SingleTopicSwitch struct {
-	functions map[string]StatelessBinarySingleFunction
+	functions map[string]SingleFunction
 }
 
 func (r *SingleTopicSwitch) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {

@@ -10,7 +10,7 @@ import (
 )
 
 // constructor
-func NewSingleProducer(configurations ...runtime.Configuration[*SingleProducer]) StatelessBinarySingleFunction {
+func NewSingleProducer(configurations ...runtime.Configuration[*SingleProducer]) SingleFunction {
 	singleFunction := &SingleProducer{}
 	for _, configuration := range configurations {
 		singleFunction = configuration(singleFunction)
@@ -26,7 +26,7 @@ func WithSingleProducerRuntime(producer runtime.Producer) runtime.Configuration[
 	}
 }
 
-func WithSingleProducerNextFunction(next StatelessBinarySingleFunction) runtime.Configuration[*SingleProducer] {
+func WithSingleProducerNextFunction(next SingleFunction) runtime.Configuration[*SingleProducer] {
 	return func(psf *SingleProducer) *SingleProducer {
 		psf.next = next
 		return psf
@@ -36,7 +36,7 @@ func WithSingleProducerNextFunction(next StatelessBinarySingleFunction) runtime.
 // implementation
 type SingleProducer struct {
 	producer runtime.Producer
-	next     StatelessBinarySingleFunction
+	next     SingleFunction
 }
 
 func (r SingleProducer) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {

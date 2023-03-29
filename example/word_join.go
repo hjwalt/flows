@@ -92,11 +92,11 @@ func WordJoinWordFunction(c context.Context, m message.Message[message.Bytes, me
 func WordJoinRun() error {
 	joinFunctionConfiguration := flows.JoinPostgresqlFunctionConfiguration{
 
-		StatefulFunctions: map[string]stateful.StatefulBinarySingleFunction{
+		StatefulFunctions: map[string]stateful.SingleFunction{
 			"word":      WordJoinCountFunction,
 			"word-type": WordJoinWordFunction,
 		},
-		PersistenceIdFunctions: map[string]stateful.StatefulBinaryPersistenceIdFunction{
+		PersistenceIdFunctions: map[string]stateful.PersistenceIdFunction{
 			"word":      WordJoinPersistenceId,
 			"word-type": WordJoinPersistenceId,
 		},

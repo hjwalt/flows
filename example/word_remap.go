@@ -8,33 +8,29 @@ import (
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_sarama"
+	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
 )
 
-func WordRemapStatelessFunction(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+func WordRemapStatelessFunction(c context.Context, m message.Message[string, string]) (*message.Message[string, string], error) {
 	logger.Info("applying")
-
-	// format map to proto
-	stringMessage, mapErr := message.Convert(m, format.Bytes(), format.Bytes(), format.String(), format.String())
-	if mapErr != nil {
-		return make([]message.Message[[]byte, []byte], 0), mapErr
-	}
-
-	stringMessage.Value = stringMessage.Value + " updated"
-	stringMessage.Topic = "word-updated"
-
-	// format map from proto
-	outMessage, outMessageMapErr := message.Convert(stringMessage, format.String(), format.String(), format.Bytes(), format.Bytes())
-	if outMessageMapErr != nil {
-		return make([]message.Message[[]byte, []byte], 0), outMessageMapErr
-	}
-
-	return []message.Message[[]byte, []byte]{outMessage}, nil
+	return &message.Message[string, string]{
+		Topic:   "word-updated",
+		Key:     m.Key,
+		Value:   m.Value + " updated",
+		Headers: m.Headers,
+	}, nil
 }
 
 func WordRemapRun() error {
 	statelessFunctionConfiguration := flows.StatelessSingleFunctionConfiguration{
-		StatelessFunction: WordRemapStatelessFunction,
+		StatelessFunction: stateless.ConvertOneToOne(
+			WordRemapStatelessFunction,
+			format.String(),
+			format.String(),
+			format.String(),
+			format.String(),
+		),
 		KafkaProducerConfiguration: []runtime.Configuration[*runtime_sarama.Producer]{
 			runtime_sarama.WithProducerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 			runtime_sarama.WithProducerBroker("localhost:9092"),

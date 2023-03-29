@@ -12,7 +12,7 @@ import (
 )
 
 // constructor
-func NewBatchRetry(configurations ...runtime.Configuration[*BatchRetry]) StatelessBinaryBatchFunction {
+func NewBatchRetry(configurations ...runtime.Configuration[*BatchRetry]) BatchFunction {
 	batchFunction := &BatchRetry{}
 	for _, configuration := range configurations {
 		batchFunction = configuration(batchFunction)
@@ -28,7 +28,7 @@ func WithBatchRetryRuntime(retry *runtime_retry.Retry) runtime.Configuration[*Ba
 	}
 }
 
-func WithBatchRetryNextFunction(next StatelessBinaryBatchFunction) runtime.Configuration[*BatchRetry] {
+func WithBatchRetryNextFunction(next BatchFunction) runtime.Configuration[*BatchRetry] {
 	return func(psf *BatchRetry) *BatchRetry {
 		psf.next = next
 		return psf
@@ -38,7 +38,7 @@ func WithBatchRetryNextFunction(next StatelessBinaryBatchFunction) runtime.Confi
 // implementation
 type BatchRetry struct {
 	retry *runtime_retry.Retry
-	next  StatelessBinaryBatchFunction
+	next  BatchFunction
 }
 
 func (r *BatchRetry) Apply(c context.Context, m []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {

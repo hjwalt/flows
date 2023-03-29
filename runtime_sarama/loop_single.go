@@ -21,7 +21,7 @@ func NewSingleLoop(configurations ...runtime.Configuration[*ConsumerSingleLoop])
 }
 
 // configuration
-func WithLoopSingleFunction(loopFunction stateless.StatelessBinarySingleFunction) runtime.Configuration[*ConsumerSingleLoop] {
+func WithLoopSingleFunction(loopFunction stateless.SingleFunction) runtime.Configuration[*ConsumerSingleLoop] {
 	return func(csl *ConsumerSingleLoop) *ConsumerSingleLoop {
 		csl.F = loopFunction
 		return csl
@@ -30,7 +30,7 @@ func WithLoopSingleFunction(loopFunction stateless.StatelessBinarySingleFunction
 
 // implementation
 type ConsumerSingleLoop struct {
-	F stateless.StatelessBinarySingleFunction
+	F stateless.SingleFunction
 }
 
 func (consumerSarama *ConsumerSingleLoop) Loop(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {

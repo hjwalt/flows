@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewSourceToIntermediateMap(configurations ...runtime.Configuration[*SourceToIntermediateMap]) stateless.StatelessBinarySingleFunction {
+func NewSourceToIntermediateMap(configurations ...runtime.Configuration[*SourceToIntermediateMap]) stateless.SingleFunction {
 	singleFunction := &SourceToIntermediateMap{}
 	for _, configuration := range configurations {
 		singleFunction = configuration(singleFunction)
@@ -29,7 +29,7 @@ func WithSourceToIntermediateMapIntermediateTopic(intermediateTopic string) runt
 	}
 }
 
-func WithSourceToIntermediateMapPersistenceIdFunction(f stateful.StatefulBinaryPersistenceIdFunction) runtime.Configuration[*SourceToIntermediateMap] {
+func WithSourceToIntermediateMapPersistenceIdFunction(f stateful.PersistenceIdFunction) runtime.Configuration[*SourceToIntermediateMap] {
 	return func(stim *SourceToIntermediateMap) *SourceToIntermediateMap {
 		stim.persistenceId = f
 		return stim
@@ -38,7 +38,7 @@ func WithSourceToIntermediateMapPersistenceIdFunction(f stateful.StatefulBinaryP
 
 // implementation
 type SourceToIntermediateMap struct {
-	persistenceId     stateful.StatefulBinaryPersistenceIdFunction
+	persistenceId     stateful.PersistenceIdFunction
 	intermediateTopic string
 }
 
