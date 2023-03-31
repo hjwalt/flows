@@ -29,7 +29,7 @@ func WithSourceToIntermediateMapIntermediateTopic(intermediateTopic string) runt
 	}
 }
 
-func WithSourceToIntermediateMapPersistenceIdFunction(f stateful.PersistenceIdFunction) runtime.Configuration[*SourceToIntermediateMap] {
+func WithSourceToIntermediateMapPersistenceIdFunction(f stateful.PersistenceIdFunction[[]byte, []byte]) runtime.Configuration[*SourceToIntermediateMap] {
 	return func(stim *SourceToIntermediateMap) *SourceToIntermediateMap {
 		stim.persistenceId = f
 		return stim
@@ -38,7 +38,7 @@ func WithSourceToIntermediateMapPersistenceIdFunction(f stateful.PersistenceIdFu
 
 // implementation
 type SourceToIntermediateMap struct {
-	persistenceId     stateful.PersistenceIdFunction
+	persistenceId     stateful.PersistenceIdFunction[[]byte, []byte]
 	intermediateTopic string
 }
 

@@ -8,9 +8,9 @@ import (
 )
 
 // constructor
-func NewSinglePersistenceIdSwitch(configurations ...runtime.Configuration[*PersistenceIdSwitch]) PersistenceIdFunction {
+func NewSinglePersistenceIdSwitch(configurations ...runtime.Configuration[*PersistenceIdSwitch]) PersistenceIdFunction[[]byte, []byte] {
 	persistenceIdFunction := &PersistenceIdSwitch{
-		functions: make(map[string]PersistenceIdFunction),
+		functions: make(map[string]PersistenceIdFunction[[]byte, []byte]),
 	}
 	for _, configuration := range configurations {
 		persistenceIdFunction = configuration(persistenceIdFunction)
@@ -19,7 +19,7 @@ func NewSinglePersistenceIdSwitch(configurations ...runtime.Configuration[*Persi
 }
 
 // configuration
-func WithPersistenceIdSwitchPersistenceIdFunction(topic string, f PersistenceIdFunction) runtime.Configuration[*PersistenceIdSwitch] {
+func WithPersistenceIdSwitchPersistenceIdFunction(topic string, f PersistenceIdFunction[[]byte, []byte]) runtime.Configuration[*PersistenceIdSwitch] {
 	return func(pis *PersistenceIdSwitch) *PersistenceIdSwitch {
 		pis.functions[topic] = f
 		return pis
@@ -28,7 +28,7 @@ func WithPersistenceIdSwitchPersistenceIdFunction(topic string, f PersistenceIdF
 
 // implementation
 type PersistenceIdSwitch struct {
-	functions map[string]PersistenceIdFunction
+	functions map[string]PersistenceIdFunction[[]byte, []byte]
 }
 
 func (r *PersistenceIdSwitch) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
