@@ -39,7 +39,7 @@ func WordRemapRun() error {
 			runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 			runtime_sarama.WithConsumerBroker("localhost:9092"),
 			runtime_sarama.WithConsumerTopic("word-updated"),
-			runtime_sarama.WithConsumerGroupName("test"),
+			runtime_sarama.WithConsumerGroupName("flows-word-remap"),
 		},
 	}
 

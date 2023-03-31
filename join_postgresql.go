@@ -31,7 +31,7 @@ type JoinPostgresqlFunctionConfiguration struct {
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
 	StatefulFunctions          map[string]stateful.SingleFunction
-	PersistenceIdFunctions     map[string]stateful.PersistenceIdFunction
+	PersistenceIdFunctions     map[string]stateful.PersistenceIdFunction[[]byte, []byte]
 	IntermediateTopicName      string
 	PersistenceTableName       string
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]

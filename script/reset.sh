@@ -17,7 +17,7 @@ kafka-topics.sh --bootstrap-server $TARGET_BROKER --create --topic $TARGET_TOPIC
 kafka-topics.sh --bootstrap-server $TARGET_BROKER --create --topic $TARGET_TOPIC_JOIN
 kafka-topics.sh --bootstrap-server $TARGET_BROKER --create --topic $TARGET_TOPIC-count
 kafka-topics.sh --bootstrap-server $TARGET_BROKER --create --topic $TARGET_TOPIC-updated
-# kafka-topics.sh --bootstrap-server $TARGET_BROKER --create --topic $JOIN_INTERMEDIATE_TOPIC
+kafka-topics.sh --bootstrap-server $TARGET_BROKER --create --topic $JOIN_INTERMEDIATE_TOPIC
 
 # 10 apples
 # 5 pizzas

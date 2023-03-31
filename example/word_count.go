@@ -20,55 +20,54 @@ import (
 	"go.uber.org/zap"
 )
 
-func WordCountStatefulFunction(c context.Context, m message.Message[message.Bytes, message.Bytes], inState stateful.SingleState[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], stateful.SingleState[message.Bytes], error) {
+func WordCountPersistenceId(ctx context.Context, m message.Message[string, string]) (string, error) {
+	return m.Key, nil
+}
+
+func WordCountStatefulFunction(c context.Context, m message.Message[string, string], s stateful.SingleState[*WordCountState]) (*message.Message[string, string], stateful.SingleState[*WordCountState], error) {
 	logger.Info("applying")
 
-	// format conversion to something more usable, will be abstracted out also in the future
-	protoState, protoStateMapErr := stateful.ConvertSingleState(inState, format.Bytes(), format.Protobuf[*WordCountState]())
-	if protoStateMapErr != nil {
-		return make([]message.Message[[]byte, []byte], 0), inState, protoStateMapErr
-	}
-
 	// setting defaults
-	if protoState.Content == nil {
-		protoState.Content = &WordCountState{Count: 0}
+	if s.Content == nil {
+		s.Content = &WordCountState{Count: 0}
 	}
 
 	// update state
-	protoState.Content.Count += 1
+	s.Content.Count += 1
 
-	logger.Info("count", zap.Int64("count", protoState.Content.Count))
-
-	// map back to bytes
-	nextByteState, nextByteStateMapErr := stateful.ConvertSingleState(protoState, format.Protobuf[*WordCountState](), format.Bytes())
-	if nextByteStateMapErr != nil {
-		return make([]message.Message[[]byte, []byte], 0), inState, nextByteStateMapErr
-	}
+	logger.Info("count", zap.Int64("count", s.Content.Count))
 
 	// create output message
-	outMessage := message.Message[message.Bytes, message.Bytes]{
+	outMessage := message.Message[string, string]{
 		Topic: "word-count",
 		Key:   m.Key,
-		Value: []byte(reflect.GetString(protoState.Content.Count)),
+		Value: reflect.GetString(s.Content.Count),
 	}
 
-	return []message.Message[[]byte, []byte]{outMessage}, nextByteState, nil
-}
-
-func WordCountPersistenceId(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
-	return string(m.Key), nil
+	return &outMessage, s, nil
 }
 
 func WordCountRun() error {
 	statefulFunctionConfiguration := flows.StatefulPostgresqlFunctionConfiguration{
-		StatefulFunction:      WordCountStatefulFunction,
-		PersistenceIdFunction: WordCountPersistenceId,
-		PersistenceTableName:  "public.flows_state",
-
+		PersistenceTableName: "public.flows_state",
 		PostgresqlConfiguration: []runtime.Configuration[*stateful_bun.PostgresqlConnection]{
 			stateful_bun.WithApplicationName("flows"),
 			stateful_bun.WithConnectionString("postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"),
 		},
+
+		PersistenceIdFunction: stateful.ConvertPersistenceId(
+			WordCountPersistenceId,
+			format.String(),
+			format.String(),
+		),
+		StatefulFunction: stateful.ConvertOneToOne(
+			WordCountStatefulFunction,
+			format.Protobuf[*WordCountState](),
+			format.String(),
+			format.String(),
+			format.String(),
+			format.String(),
+		),
 		KafkaProducerConfiguration: []runtime.Configuration[*runtime_sarama.Producer]{
 			runtime_sarama.WithProducerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 			runtime_sarama.WithProducerBroker("localhost:9092"),
@@ -77,7 +76,7 @@ func WordCountRun() error {
 			runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 			runtime_sarama.WithConsumerBroker("localhost:9092"),
 			runtime_sarama.WithConsumerTopic("word"),
-			runtime_sarama.WithConsumerGroupName("test"),
+			runtime_sarama.WithConsumerGroupName("flows-word-count"),
 		},
 		RouteConfiguration: []runtime.Configuration[*runtime_bunrouter.Router]{
 			runtime_bunrouter.WithRouterGroup("/api"),
