@@ -2,9 +2,9 @@ package runtime_sarama
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Shopify/sarama"
+	"github.com/hjwalt/flows/metric"
 	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
@@ -28,9 +28,17 @@ func WithLoopSingleFunction(loopFunction stateless.SingleFunction) runtime.Confi
 	}
 }
 
+func WithLoopSinglePrometheus() runtime.Configuration[*ConsumerSingleLoop] {
+	return func(csl *ConsumerSingleLoop) *ConsumerSingleLoop {
+		csl.metric = metric.PrometheusConsume()
+		return csl
+	}
+}
+
 // implementation
 type ConsumerSingleLoop struct {
-	F stateless.SingleFunction
+	F      stateless.SingleFunction
+	metric metric.Consume
 }
 
 func (consumerSarama *ConsumerSingleLoop) Loop(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
@@ -44,8 +52,9 @@ func (consumerSarama *ConsumerSingleLoop) Loop(session sarama.ConsumerGroupSessi
 			return err
 		}
 		session.MarkMessage(saramaMessage, "")
-		// add to prometheus
-		messageProcessedCounter.WithLabelValues(saramaMessage.Topic, fmt.Sprintf("%d", saramaMessage.Partition)).Inc()
+		if consumerSarama.metric != nil {
+			consumerSarama.metric.MessagesProcessedIncrement(saramaMessage.Topic, saramaMessage.Partition, 1)
+		}
 		logger.Info("commit", zap.String("topic", saramaMessage.Topic), zap.Int32("partition", saramaMessage.Partition), zap.Int64("offset", saramaMessage.Offset))
 	}
 	return nil

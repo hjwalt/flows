@@ -2,9 +2,9 @@ package stateless
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/metric"
 	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/runway/logger"
@@ -35,17 +35,26 @@ func WithSingleRetryNextFunction(next SingleFunction) runtime.Configuration[*Sin
 	}
 }
 
+func WithSingleRetryPrometheus() runtime.Configuration[*SingleRetry] {
+	return func(sr *SingleRetry) *SingleRetry {
+		sr.metric = metric.PrometheusRetry()
+		return sr
+	}
+}
+
 // implementation
 type SingleRetry struct {
-	retry *runtime_retry.Retry
-	next  SingleFunction
+	retry  *runtime_retry.Retry
+	next   SingleFunction
+	metric metric.Retry
 }
 
 func (r *SingleRetry) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
 	msgs := make([]message.Message[message.Bytes, message.Bytes], 0)
 	retryErr := r.retry.Do(func(tryCount int64) error {
-		// add to prometheus
-		retryGauge.WithLabelValues(m.Topic, fmt.Sprintf("%d", m.Partition)).Set(float64(tryCount))
+		if r.metric != nil {
+			r.metric.RetryCount(m.Topic, m.Partition, tryCount)
+		}
 		res, err := r.next(c, m)
 		if err != nil {
 			logger.Warn("retrying", zap.Int64("try", tryCount), zap.Error(err))

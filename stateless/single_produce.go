@@ -2,9 +2,9 @@ package stateless
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/metric"
 	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/runway/logger"
 )
@@ -33,10 +33,18 @@ func WithSingleProducerNextFunction(next SingleFunction) runtime.Configuration[*
 	}
 }
 
+func WithSingleProducerPrometheus() runtime.Configuration[*SingleProducer] {
+	return func(psf *SingleProducer) *SingleProducer {
+		psf.metric = metric.PrometheusProduce()
+		return psf
+	}
+}
+
 // implementation
 type SingleProducer struct {
 	producer runtime.Producer
 	next     SingleFunction
+	metric   metric.Produce
 }
 
 func (r SingleProducer) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
@@ -52,7 +60,8 @@ func (r SingleProducer) Apply(c context.Context, m message.Message[message.Bytes
 	if err := r.producer.Produce(c, n); err != nil {
 		return make([]message.Message[message.Bytes, message.Bytes], 0), err
 	}
-	// add to prometheus
-	messageProducedCounter.WithLabelValues(m.Topic, fmt.Sprintf("%d", m.Partition)).Add(float64(len(n)))
+	if r.metric != nil {
+		r.metric.MessagesProducedIncrement(m.Topic, m.Partition, int64(len(n)))
+	}
 	return make([]message.Message[message.Bytes, message.Bytes], 0), nil
 }

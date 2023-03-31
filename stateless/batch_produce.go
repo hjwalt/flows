@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/metric"
 	"github.com/hjwalt/flows/runtime"
 )
 
@@ -35,6 +36,7 @@ func WithBatchProducerNextFunction(next BatchFunction) runtime.Configuration[*Ba
 type BatchProducer struct {
 	producer runtime.Producer
 	next     BatchFunction
+	metric   metric.Produce
 }
 
 func (r BatchProducer) Apply(c context.Context, m []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
@@ -44,6 +46,9 @@ func (r BatchProducer) Apply(c context.Context, m []message.Message[message.Byte
 	}
 	if err := r.producer.Produce(c, n); err != nil {
 		return make([]message.Message[message.Bytes, message.Bytes], 0), err
+	}
+	if r.metric != nil {
+		r.metric.MessagesProducedIncrement(m[0].Topic, m[0].Partition, int64(len(n)))
 	}
 	return make([]message.Message[message.Bytes, message.Bytes], 0), nil
 }

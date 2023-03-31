@@ -124,6 +124,7 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	messagesProduced := stateless.NewSingleProducer(
 		stateless.WithSingleProducerNextFunction(statelessTopicSwitch),
 		stateless.WithSingleProducerRuntime(producer),
+		stateless.WithSingleProducerPrometheus(),
 	)
 
 	// - retry
@@ -139,11 +140,13 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	produceRetry := stateless.NewSingleRetry(
 		stateless.WithSingleRetryRuntime(retryRuntime),
 		stateless.WithSingleRetryNextFunction(messagesProduced),
+		stateless.WithSingleRetryPrometheus(),
 	)
 
 	// sarama consumer loop
 	consumerLoop := runtime_sarama.NewSingleLoop(
 		runtime_sarama.WithLoopSingleFunction(produceRetry),
+		runtime_sarama.WithLoopSinglePrometheus(),
 	)
 
 	// consumer runtime

@@ -2,10 +2,10 @@ package runtime_sarama
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/Shopify/sarama"
+	"github.com/hjwalt/flows/metric"
 	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
@@ -43,6 +43,13 @@ func WithLoopBatchFunction(loopFunction stateless.BatchFunction) runtime.Configu
 	}
 }
 
+func WithLoopBatchPrometheus() runtime.Configuration[*ConsumerBatchedLoop] {
+	return func(cbl *ConsumerBatchedLoop) *ConsumerBatchedLoop {
+		cbl.metric = metric.PrometheusConsume()
+		return cbl
+	}
+}
+
 // implementation
 type ConsumerBatchedLoop struct {
 	// batching configuration
@@ -62,6 +69,9 @@ type ConsumerBatchedLoop struct {
 	messageClaimed chan *sarama.ConsumerMessage
 	context        context.Context
 	cancel         context.CancelFunc
+
+	// metrics
+	metric metric.Consume
 }
 
 func (batchConsume *ConsumerBatchedLoop) Loop(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
@@ -128,8 +138,9 @@ func (batchConsume *ConsumerBatchedLoop) consumeBatch(session sarama.ConsumerGro
 		return err
 	}
 	session.MarkMessage(batchConsume.messageToCommit, "")
-	// add to prometheus
-	messageProcessedCounter.WithLabelValues(batchConsume.messageToCommit.Topic, fmt.Sprintf("%d", batchConsume.messageToCommit.Partition)).Add(float64(len(batchConsume.messages)))
+	if batchConsume.metric != nil {
+		batchConsume.metric.MessagesProcessedIncrement(batchConsume.messageToCommit.Topic, batchConsume.messageToCommit.Partition, int64(len(batchConsume.messages)))
+	}
 	logger.Info("commit", zap.String("topic", batchConsume.messageToCommit.Topic), zap.Int32("partition", batchConsume.messageToCommit.Partition), zap.Int64("offset", batchConsume.messageToCommit.Offset))
 
 	batchConsume.reset()
