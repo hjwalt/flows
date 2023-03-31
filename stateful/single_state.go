@@ -7,6 +7,13 @@ import (
 	"github.com/hjwalt/flows/protobuf"
 )
 
+func NewSingleState[S any](content S) SingleState[S] {
+	singleState := SingleState[S]{
+		Content: content,
+	}
+	return SetDefault(singleState)
+}
+
 type SingleState[S any] struct {
 	PersistenceId      string
 	Internal           *protobuf.State
@@ -16,7 +23,7 @@ type SingleState[S any] struct {
 	UpdatedTimestampMs int64
 }
 
-func SetDefault(s SingleState[message.Bytes]) SingleState[message.Bytes] {
+func SetDefault[S any](s SingleState[S]) SingleState[S] {
 	stateToUse := s
 
 	if stateToUse.Internal == nil {

@@ -63,23 +63,6 @@ func FromConsumerMessages(sources []*sarama.ConsumerMessage) ([]message.Message[
 
 // mapping internal representation into sarama producer message
 func ToProducerMessage(source message.Message[message.Bytes, message.Bytes]) (*sarama.ProducerMessage, error) {
-
-	byteFormat := format.Bytes()
-
-	// serialise key
-	key, err := byteFormat.Marshal(source.Key)
-	if err != nil {
-		logger.ErrorErr("producer message map key serialisation failure", err)
-		return nil, err
-	}
-
-	// serialise value
-	value, err := byteFormat.Marshal(source.Value)
-	if err != nil {
-		logger.ErrorErr("producer message map value serialisation failure", err)
-		return nil, err
-	}
-
 	// map headers
 	headers := make([]sarama.RecordHeader, 0)
 	for k, vs := range source.Headers {
@@ -94,8 +77,8 @@ func ToProducerMessage(source message.Message[message.Bytes, message.Bytes]) (*s
 	return &sarama.ProducerMessage{
 		Topic:   source.Topic,
 		Headers: headers,
-		Key:     sarama.ByteEncoder(key),
-		Value:   sarama.ByteEncoder(value),
+		Key:     sarama.ByteEncoder(source.Key),
+		Value:   sarama.ByteEncoder(source.Value),
 	}, nil
 }
 
