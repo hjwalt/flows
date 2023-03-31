@@ -18,7 +18,7 @@ func ConvertOneToTwo[IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 any](
 ) SingleFunction {
 	return func(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
 
-		formattedMessage, unmarshalError := message.Convert(m, BytesFormat, BytesFormat, ik, iv)
+		formattedMessage, unmarshalError := message.Convert(m, format.Bytes(), format.Bytes(), ik, iv)
 		if unmarshalError != nil {
 			return make([]message.Message[[]byte, []byte], 0), unmarshalError
 		}
@@ -31,7 +31,7 @@ func ConvertOneToTwo[IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 any](
 		byteResultMessages := make([]message.Message[[]byte, []byte], 0)
 
 		if res1 != nil {
-			bytesResMessage, marshalError := message.Convert(*res1, ok1, ov1, BytesFormat, BytesFormat)
+			bytesResMessage, marshalError := message.Convert(*res1, ok1, ov1, format.Bytes(), format.Bytes())
 			if marshalError != nil {
 				return make([]message.Message[[]byte, []byte], 0), marshalError
 			}
@@ -39,7 +39,7 @@ func ConvertOneToTwo[IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 any](
 		}
 
 		if res2 != nil {
-			bytesResMessage, marshalError := message.Convert(*res2, ok2, ov2, BytesFormat, BytesFormat)
+			bytesResMessage, marshalError := message.Convert(*res2, ok2, ov2, format.Bytes(), format.Bytes())
 			if marshalError != nil {
 				return make([]message.Message[[]byte, []byte], 0), marshalError
 			}

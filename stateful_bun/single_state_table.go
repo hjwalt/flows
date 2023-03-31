@@ -17,19 +17,18 @@ type SingleStateTable struct {
 	UpdatedTimestampMs int64
 }
 
-var BytesFormat = format.Bytes()
 var InternalStateProtoFormat = format.Protobuf[*protobuf.State]()
 var ResultsStateProtoFormat = format.Protobuf[*protobuf.Results]()
 
 func TableToState(dbState *SingleStateTable) (stateful.SingleState[message.Bytes], error) {
 
-	internalValue, internalMapErr := format.Convert(dbState.Internal, BytesFormat, InternalStateProtoFormat)
+	internalValue, internalMapErr := format.Convert(dbState.Internal, format.Bytes(), InternalStateProtoFormat)
 	if internalMapErr != nil {
 		logger.ErrorErr("single state mapping error", internalMapErr)
 		return stateful.SingleState[message.Bytes]{}, internalMapErr
 	}
 
-	resultValue, resultMapErr := format.Convert(dbState.Results, BytesFormat, ResultsStateProtoFormat)
+	resultValue, resultMapErr := format.Convert(dbState.Results, format.Bytes(), ResultsStateProtoFormat)
 	if resultMapErr != nil {
 		logger.ErrorErr("single state mapping error", resultMapErr)
 		return stateful.SingleState[message.Bytes]{}, resultMapErr
@@ -46,13 +45,13 @@ func TableToState(dbState *SingleStateTable) (stateful.SingleState[message.Bytes
 }
 
 func StateToTable(nextState stateful.SingleState[message.Bytes]) (*SingleStateTable, error) {
-	internalBytes, internalMapErr := format.Convert(nextState.Internal, InternalStateProtoFormat, BytesFormat)
+	internalBytes, internalMapErr := format.Convert(nextState.Internal, InternalStateProtoFormat, format.Bytes())
 	if internalMapErr != nil {
 		logger.ErrorErr("single state mapping error", internalMapErr)
 		return &SingleStateTable{}, internalMapErr
 	}
 
-	resultBytes, resultMapErr := format.Convert(nextState.Results, ResultsStateProtoFormat, BytesFormat)
+	resultBytes, resultMapErr := format.Convert(nextState.Results, ResultsStateProtoFormat, format.Bytes())
 	if resultMapErr != nil {
 		logger.ErrorErr("single state mapping error", resultMapErr)
 		return &SingleStateTable{}, resultMapErr

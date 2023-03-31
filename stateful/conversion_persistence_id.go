@@ -13,7 +13,7 @@ func ConvertPersistenceId[IK any, IV any](
 	iv format.Format[IV],
 ) PersistenceIdFunction[[]byte, []byte] {
 	return func(ctx context.Context, m message.Message[[]byte, []byte]) (string, error) {
-		formattedMessage, unmarshalError := message.Convert(m, BytesFormat, BytesFormat, ik, iv)
+		formattedMessage, unmarshalError := message.Convert(m, format.Bytes(), format.Bytes(), ik, iv)
 		if unmarshalError != nil {
 			return "", unmarshalError
 		}

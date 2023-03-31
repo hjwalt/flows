@@ -8,6 +8,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// for byte based storage of a message
 type MessageFormat struct{}
 
 func (helper MessageFormat) Default() Message[[]byte, []byte] {

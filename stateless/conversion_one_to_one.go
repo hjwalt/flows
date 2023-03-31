@@ -7,8 +7,6 @@ import (
 	"github.com/hjwalt/flows/message"
 )
 
-var BytesFormat = format.Bytes()
-
 func ConvertOneToOne[IK any, IV any, OK any, OV any](
 	source OneToOneFunction[IK, IV, OK, OV],
 	ik format.Format[IK],
@@ -17,7 +15,7 @@ func ConvertOneToOne[IK any, IV any, OK any, OV any](
 	ov format.Format[OV],
 ) SingleFunction {
 	return func(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
-		formattedMessage, unmarshalError := message.Convert(m, BytesFormat, BytesFormat, ik, iv)
+		formattedMessage, unmarshalError := message.Convert(m, format.Bytes(), format.Bytes(), ik, iv)
 		if unmarshalError != nil {
 			return make([]message.Message[[]byte, []byte], 0), unmarshalError
 		}
@@ -30,7 +28,7 @@ func ConvertOneToOne[IK any, IV any, OK any, OV any](
 		byteResultMessages := make([]message.Message[[]byte, []byte], 0)
 
 		if res != nil {
-			bytesResMessage, marshalError := message.Convert(*res, ok, ov, BytesFormat, BytesFormat)
+			bytesResMessage, marshalError := message.Convert(*res, ok, ov, format.Bytes(), format.Bytes())
 			if marshalError != nil {
 				return make([]message.Message[[]byte, []byte], 0), marshalError
 			}
