@@ -2,6 +2,7 @@ package stateless
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/metric"
@@ -55,7 +56,7 @@ func (r *SingleRetry) Apply(c context.Context, m message.Message[message.Bytes, 
 		if r.metric != nil {
 			r.metric.RetryCount(m.Topic, m.Partition, tryCount)
 		}
-		res, err := r.next(c, m)
+		res, err := r.next(runtime_retry.SetTryCount(c, tryCount), m)
 		if err != nil {
 			logger.Warn("retrying", zap.Int64("try", tryCount), zap.Error(err))
 			return err
@@ -63,5 +64,12 @@ func (r *SingleRetry) Apply(c context.Context, m message.Message[message.Bytes, 
 		msgs = append(msgs, res...)
 		return nil
 	})
-	return msgs, retryErr
+
+	if retryErr != nil {
+		return msgs, errors.Join(ErrorRetryAttempt, retryErr)
+	} else {
+		return msgs, nil
+	}
 }
+
+var ErrorRetryAttempt = errors.New("all retry attempts failed")

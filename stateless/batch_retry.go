@@ -55,7 +55,7 @@ func (r *BatchRetry) Apply(c context.Context, m []message.Message[message.Bytes,
 		if r.metric != nil {
 			r.metric.RetryCount(m[0].Topic, m[0].Partition, tryCount)
 		}
-		res, err := r.next(c, m)
+		res, err := r.next(runtime_retry.SetTryCount(c, tryCount), m)
 		if err != nil {
 			logger.Warn("retrying", zap.Int64("try", tryCount), zap.Error(err))
 			return err
