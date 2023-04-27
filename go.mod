@@ -7,7 +7,7 @@ require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
-	github.com/hjwalt/runway v0.0.0-20230327024853-d21904a701a1
+	github.com/hjwalt/runway v0.0.1
 	github.com/prometheus/client_golang v1.15.0
 	github.com/stretchr/testify v1.8.2
 	github.com/testcontainers/testcontainers-go v0.19.0
