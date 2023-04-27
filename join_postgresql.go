@@ -164,6 +164,7 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	routeConfig := append(
 		make([]runtime.Configuration[*runtime_bunrouter.Router], 0),
 		runtime_bunrouter.WithRouterPrometheus(),
+		runtime_bunrouter.WithRouterProducer(producer),
 	)
 	routeConfig = append(
 		routeConfig,

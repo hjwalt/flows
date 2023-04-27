@@ -71,5 +71,3 @@ func (r *SingleRetry) Apply(c context.Context, m message.Message[message.Bytes, 
 		return msgs, nil
 	}
 }
-
-var ErrorRetryAttempt = errors.New("all retry attempts failed")

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/runway/logger"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -113,6 +114,43 @@ func WithRouterHttpHandler(method string, path string, handler http.HandlerFunc)
 	}
 }
 
+func WithRouterProducerHandler(method string, path string, bodyMap router.RouteProduceMapFunction) runtime.Configuration[*Router] {
+	return func(r *Router) *Router {
+		handlerFunction := router.NewRouteProducer(
+			router.WithRouteProducerRuntime(r.producer),
+			router.WithRouteBodyMap(bodyMap),
+		)
+		if r.group == nil {
+			switch strings.ToUpper(method) {
+			case GET:
+				r.router.GET(path, handlerFunction.Route)
+			case POST:
+				r.router.POST(path, handlerFunction.Route)
+			case PUT:
+				r.router.PUT(path, handlerFunction.Route)
+			case DELETE:
+				r.router.DELETE(path, handlerFunction.Route)
+			default:
+				logger.Warn("unknown method", zap.String("method", method))
+			}
+		} else {
+			switch strings.ToUpper(method) {
+			case GET:
+				r.group.GET(path, handlerFunction.Route)
+			case POST:
+				r.group.POST(path, handlerFunction.Route)
+			case PUT:
+				r.group.PUT(path, handlerFunction.Route)
+			case DELETE:
+				r.group.DELETE(path, handlerFunction.Route)
+			default:
+				logger.Warn("unknown method", zap.String("method", method))
+			}
+		}
+		return r
+	}
+}
+
 func WithRouterPrometheus() runtime.Configuration[*Router] {
 	return func(r *Router) *Router {
 		if r.group == nil {
@@ -124,12 +162,20 @@ func WithRouterPrometheus() runtime.Configuration[*Router] {
 	}
 }
 
+func WithRouterProducer(producer runtime.Producer) runtime.Configuration[*Router] {
+	return func(r *Router) *Router {
+		r.producer = producer
+		return r
+	}
+}
+
 // implementation
 type Router struct {
-	server *http.Server
-	router *bunrouter.Router
-	group  *bunrouter.Group
-	port   int
+	server   *http.Server
+	router   *bunrouter.Router
+	group    *bunrouter.Group
+	port     int
+	producer runtime.Producer
 }
 
 func (r *Router) Start() error {
