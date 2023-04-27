@@ -166,15 +166,6 @@ Such deduplication can be peformed using a unique Kafka header identifier.
 
 However, if the application functionality can already tolerate at least once execution, then there will be no problems with migration.
 
-## Replace Directive
-
-We require the following replace directive in `go.mod` due to `testcontainers-go`.
-When that dependency is clean at some point this requirement will be removed.
-
-```
-replace github.com/docker/docker => github.com/docker/docker v20.10.3-0.20221013203545-33ab36d6b304+incompatible // 22.06 branch
-```
-
 ## Functions
 
 The functions are used as is, because function for pointer struct can be used as is.
