@@ -6,6 +6,7 @@ import (
 
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime"
+	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/stateful"
 )
 
@@ -19,7 +20,7 @@ func NewSingleStateRepository(configurations ...runtime.Configuration[SingleStat
 }
 
 // configuration
-func WithSingleStateRepositoryConnection(connection BunConnection) runtime.Configuration[SingleStateRepository] {
+func WithSingleStateRepositoryConnection(connection runtime_bun.BunConnection) runtime.Configuration[SingleStateRepository] {
 	return func(st SingleStateRepository) SingleStateRepository {
 		st.connection = connection
 		return st
@@ -36,7 +37,7 @@ func WithSingleStateRepositoryPersistenceTableName(persistenceTableName string) 
 // implementation
 type SingleStateRepository struct {
 	persistenceTableName string
-	connection           BunConnection
+	connection           runtime_bun.BunConnection
 }
 
 func (r SingleStateRepository) Get(ctx context.Context, persistenceId string) (stateful.SingleState[message.Bytes], error) {

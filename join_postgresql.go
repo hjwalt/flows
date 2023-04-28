@@ -6,6 +6,7 @@ import (
 	"github.com/avast/retry-go"
 	"github.com/hjwalt/flows/join"
 	"github.com/hjwalt/flows/runtime"
+	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
@@ -27,7 +28,7 @@ import (
 // stateful switch -> stateful function (for each source topic)
 
 type JoinPostgresqlFunctionConfiguration struct {
-	PostgresqlConfiguration    []runtime.Configuration[*stateful_bun.PostgresqlConnection]
+	PostgresqlConfiguration    []runtime.Configuration[*runtime_bun.PostgresqlConnection]
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
 	StatefulFunctions          map[string]stateful.SingleFunction
@@ -44,9 +45,9 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	// postgres runtime
 	postgresConnectionConfig := append(
 		c.PostgresqlConfiguration,
-		stateful_bun.WithController(ctrl),
+		runtime_bun.WithController(ctrl),
 	)
-	conn := stateful_bun.NewPostgresqlConnection(postgresConnectionConfig...)
+	conn := runtime_bun.NewPostgresqlConnection(postgresConnectionConfig...)
 
 	// producer runtime
 	producerConfig := append(

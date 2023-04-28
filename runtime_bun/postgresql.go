@@ -1,4 +1,4 @@
-package stateful_bun
+package runtime_bun
 
 import (
 	"database/sql"
