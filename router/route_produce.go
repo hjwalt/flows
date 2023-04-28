@@ -10,7 +10,7 @@ import (
 	"github.com/hjwalt/flows/format"
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime"
-	"github.com/uptrace/bunrouter"
+	"github.com/hjwalt/runway/logger"
 )
 
 const (
@@ -21,11 +21,11 @@ const (
 
 // route
 
-type RouteProduceMapFunction func(ctx context.Context, req message.Message[message.Bytes, message.Bytes]) (message.Message[message.Bytes, message.Bytes], error)
-
-type RouteProducerResponse struct {
-	Message string
+type BasicResponse struct {
+	Message string `json:"message"`
 }
+
+type RouteProduceMapFunction func(ctx context.Context, req message.Message[message.Bytes, message.Bytes]) (message.Message[message.Bytes, message.Bytes], error)
 
 // constructor
 func NewRouteProducer(configurations ...runtime.Configuration[*RouteProducer]) *RouteProducer {
@@ -57,7 +57,15 @@ type RouteProducer struct {
 	bodyMap  RouteProduceMapFunction
 }
 
-func (rp *RouteProducer) Route(w http.ResponseWriter, req bunrouter.Request) error {
+func (rp *RouteProducer) Handle(w http.ResponseWriter, req *http.Request) {
+	err := rp.Produce(w, req)
+	if err != nil {
+		logger.ErrorErr("handle error", err)
+		WriteError(w, 500, errors.New("server error"))
+	}
+}
+
+func (rp *RouteProducer) Produce(w http.ResponseWriter, req *http.Request) error {
 	requestHeaders := map[string][]message.Bytes{}
 
 	// request headers
@@ -89,15 +97,22 @@ func (rp *RouteProducer) Route(w http.ResponseWriter, req bunrouter.Request) err
 	}
 
 	// request body
-	defer req.Body.Close()
-	body, readErr := io.ReadAll(req.Body)
-	if readErr != nil {
-		return errors.Join(ErrorRouteReadingRequestBody, readErr)
+	var requestBody []byte
+	if req.Body != nil {
+		defer req.Body.Close()
+		body, readErr := io.ReadAll(req.Body)
+		if readErr != nil {
+			return errors.Join(ErrorRouteReadingRequestBody, readErr)
+		}
+
+		requestBody = body
+	} else {
+		requestBody = make([]byte, 0)
 	}
 
 	requestMessage := message.Message[message.Bytes, message.Bytes]{
 		Key:     []byte(requestKey),
-		Value:   body,
+		Value:   requestBody,
 		Headers: requestHeaders,
 	}
 
@@ -112,7 +127,7 @@ func (rp *RouteProducer) Route(w http.ResponseWriter, req bunrouter.Request) err
 		return errors.Join(ErrorRouteProducingMessage, produceErr)
 	}
 
-	return WriteJson(w, 200, RouteProducerResponse{Message: "ok"}, format.Json[RouteProducerResponse]())
+	return WriteJson(w, 200, BasicResponse{Message: "ok"}, format.Json[BasicResponse]())
 }
 
 func processHeaderKey(key string) string {

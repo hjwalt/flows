@@ -123,26 +123,26 @@ func WithRouterProducerHandler(method string, path string, bodyMap router.RouteP
 		if r.group == nil {
 			switch strings.ToUpper(method) {
 			case GET:
-				r.router.GET(path, handlerFunction.Route)
+				r.router.GET(path, bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
 			case POST:
-				r.router.POST(path, handlerFunction.Route)
+				r.router.POST(path, bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
 			case PUT:
-				r.router.PUT(path, handlerFunction.Route)
+				r.router.PUT(path, bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
 			case DELETE:
-				r.router.DELETE(path, handlerFunction.Route)
+				r.router.DELETE(path, bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
 			default:
 				logger.Warn("unknown method", zap.String("method", method))
 			}
 		} else {
 			switch strings.ToUpper(method) {
 			case GET:
-				r.group.GET(path, handlerFunction.Route)
+				r.group.GET(path, bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
 			case POST:
-				r.group.POST(path, handlerFunction.Route)
+				r.group.POST(path, bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
 			case PUT:
-				r.group.PUT(path, handlerFunction.Route)
+				r.group.PUT(path, bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
 			case DELETE:
-				r.group.DELETE(path, handlerFunction.Route)
+				r.group.DELETE(path, bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
 			default:
 				logger.Warn("unknown method", zap.String("method", method))
 			}
