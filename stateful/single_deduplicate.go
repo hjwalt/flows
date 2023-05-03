@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// constructor
 func NewSingleStatefulDeduplicate(configurations ...runtime.Configuration[*SingleStatefulDeduplicate]) SingleFunction {
 	singleFunction := &SingleStatefulDeduplicate{}
 	for _, configuration := range configurations {

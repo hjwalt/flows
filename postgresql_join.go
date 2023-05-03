@@ -1,17 +1,12 @@
 package flows
 
 import (
-	"time"
-
-	"github.com/avast/retry-go"
 	"github.com/hjwalt/flows/join"
 	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
-	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
-	"github.com/hjwalt/flows/stateful_bun"
 	"github.com/hjwalt/flows/stateless"
 )
 
@@ -43,24 +38,11 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	ctrl := runtime.NewController()
 
 	// postgres runtime
-	postgresConnectionConfig := append(
-		c.PostgresqlConfiguration,
-		runtime_bun.WithController(ctrl),
-	)
-	conn := runtime_bun.NewPostgresqlConnection(postgresConnectionConfig...)
+	conn := Postgresql(ctrl, c.PostgresqlConfiguration)
+	repository := PostgresqlSingleStateRepository(conn, c.PersistenceTableName)
 
 	// producer runtime
-	producerConfig := append(
-		c.KafkaProducerConfiguration,
-		runtime_sarama.WithProducerRuntimeController(ctrl),
-	)
-	producer := runtime_sarama.NewProducer(producerConfig...)
-
-	// bun transaction repository
-	repository := stateful_bun.NewSingleStateRepository(
-		stateful_bun.WithSingleStateRepositoryConnection(conn),
-		stateful_bun.WithSingleStateRepositoryPersistenceTableName(c.PersistenceTableName),
-	)
+	producer := KafkaProducer(ctrl, c.KafkaProducerConfiguration)
 
 	topics := []string{}
 	statefulTopicSwitchConfigurations := []runtime.Configuration[*stateful.SingleTopicSwitch]{}
@@ -122,27 +104,10 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 
 	// stateless topic switch wrapping
 	// - produce output messages
-	messagesProduced := stateless.NewSingleProducer(
-		stateless.WithSingleProducerNextFunction(statelessTopicSwitch),
-		stateless.WithSingleProducerRuntime(producer),
-		stateless.WithSingleProducerPrometheus(),
-	)
+	messagesProduced := WrapSingleProduce(statelessTopicSwitch, producer)
 
 	// - retry
-	retryRuntime := runtime_retry.NewRetry(
-		runtime_retry.WithRetryOption(
-			retry.Attempts(1000000),
-			retry.Delay(10*time.Millisecond),
-			retry.MaxDelay(time.Second),
-			retry.MaxJitter(time.Second),
-			retry.DelayType(retry.BackOffDelay),
-		),
-	)
-	produceRetry := stateless.NewSingleRetry(
-		stateless.WithSingleRetryRuntime(retryRuntime),
-		stateless.WithSingleRetryNextFunction(messagesProduced),
-		stateless.WithSingleRetryPrometheus(),
-	)
+	produceRetry, retryRuntime := WrapRetry(messagesProduced)
 
 	// sarama consumer loop
 	consumerLoop := runtime_sarama.NewSingleLoop(
