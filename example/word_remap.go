@@ -22,7 +22,7 @@ func WordRemapStatelessFunction(c context.Context, m message.Message[string, str
 	}, nil
 }
 
-func WordRemapRun() error {
+func WordRemap() runtime.Runtime {
 	statelessFunctionConfiguration := flows.StatelessSingleFunctionConfiguration{
 		StatelessFunction: stateless.ConvertOneToOne(
 			WordRemapStatelessFunction,
@@ -43,6 +43,5 @@ func WordRemapRun() error {
 		},
 	}
 
-	multi := statelessFunctionConfiguration.Runtime()
-	return multi.Start()
+	return statelessFunctionConfiguration.Runtime()
 }

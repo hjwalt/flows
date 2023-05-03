@@ -47,7 +47,7 @@ func WordCountStatefulFunction(c context.Context, m message.Message[string, stri
 	return &outMessage, s, nil
 }
 
-func WordCountRun() error {
+func WordCount() runtime.Runtime {
 	statefulFunctionConfiguration := flows.StatefulPostgresqlFunctionConfiguration{
 		PersistenceTableName: "public.flows_state",
 		PostgresqlConfiguration: []runtime.Configuration[*runtime_bun.PostgresqlConnection]{
@@ -112,8 +112,7 @@ func WordCountRun() error {
 		},
 	}
 
-	multi := statefulFunctionConfiguration.Runtime()
-	return multi.Start()
+	return statefulFunctionConfiguration.Runtime()
 }
 
 type TestResponse struct {

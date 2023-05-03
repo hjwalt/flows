@@ -23,3 +23,14 @@ CREATE TABLE IF NOT EXISTS public.flows_join_state
     updated_timestamp_ms  BIGINT,
     PRIMARY KEY(persistence_id)
 );
+
+DROP TABLE IF EXISTS public.flows_materialised;
+
+CREATE TABLE IF NOT EXISTS public.flows_materialised
+(
+    id                   VARCHAR(255)  NOT NULL,
+    key_content          VARCHAR(255)  NULL,
+    value_content        VARCHAR(255)  NULL,
+    timestamp_ms         BIGINT,
+    PRIMARY KEY(id)
+);

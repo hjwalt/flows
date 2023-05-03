@@ -8,15 +8,15 @@ import (
 
 func Main() *main {
 	return &main{
-		runtimes: make(map[string]runtime.Runtime),
+		runtimes: make(map[string]func() runtime.Runtime),
 	}
 }
 
 type main struct {
-	runtimes map[string]runtime.Runtime
+	runtimes map[string]func() runtime.Runtime
 }
 
-func (m *main) Register(i string, r runtime.Runtime) error {
+func (m *main) Register(i string, r func() runtime.Runtime) error {
 	if m == nil {
 		return errors.New("main is missing")
 	}
@@ -29,10 +29,12 @@ func (m *main) Start(i string) error {
 		return errors.New("main is missing")
 	}
 
-	r, rExist := m.runtimes[i]
+	rConstructor, rExist := m.runtimes[i]
 	if !rExist {
 		return errors.New("instance is missing")
 	}
+
+	r := rConstructor()
 
 	return r.Start()
 }

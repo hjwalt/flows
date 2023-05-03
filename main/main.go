@@ -1,9 +1,22 @@
 package main
 
-import "github.com/hjwalt/flows/example"
+import (
+	"github.com/hjwalt/flows"
+	"github.com/hjwalt/flows/example"
+	"github.com/hjwalt/runway/environment"
+)
 
 func main() {
-	example.WordCountRun()
-	// example.WordRemapRun()
-	// example.WordJoinRun()
+	m := flows.Main()
+
+	m.Register("word-count", example.WordCount)
+	m.Register("word-remap", example.WordRemap)
+	m.Register("word-join", example.WordJoin)
+	m.Register("word-materialise", example.WordMaterialise)
+
+	err := m.Start(environment.GetString("INSTANCE", "word-count"))
+
+	if err != nil {
+		panic(err)
+	}
 }

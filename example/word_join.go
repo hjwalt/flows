@@ -65,7 +65,7 @@ func WordJoinWordFunction(c context.Context, m message.Message[string, string], 
 	return &outMessage, s, nil
 }
 
-func WordJoinRun() error {
+func WordJoin() runtime.Runtime {
 	joinFunctionConfiguration := flows.JoinPostgresqlFunctionConfiguration{
 
 		StatefulFunctions: map[string]stateful.SingleFunction{
@@ -117,6 +117,5 @@ func WordJoinRun() error {
 		},
 	}
 
-	multi := joinFunctionConfiguration.Runtime()
-	return multi.Start()
+	return joinFunctionConfiguration.Runtime()
 }

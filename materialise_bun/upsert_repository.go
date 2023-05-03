@@ -53,7 +53,7 @@ func (r BunUpsertRepository[T]) Upsert(c context.Context, m []T) error {
 
 	query := r.connection.Db().
 		NewInsert().
-		Model(m).
+		Model(&m).
 		On("CONFLICT (" + pkJoined + ") DO UPDATE").
 		Set(conflictSet)
 

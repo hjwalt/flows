@@ -26,7 +26,7 @@ update:
 # --------------------
 
 run:
-	go run ./main
+	./script/run.sh
 
 reset:
 	./script/reset.sh
