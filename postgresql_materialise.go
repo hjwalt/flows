@@ -21,9 +21,9 @@ func (c MaterialisePostgresqlFunctionConfiguration[T]) Runtime() runtime.Runtime
 	repository := PostgresqlUpsertRepository[T](conn)
 
 	// function
-	materialiseFn := materialise.NewSingleUpsert[T](
-		materialise.WithSingleUpsertRepository[T](repository),
-		materialise.WithSingleUpsertMapFunction[T](c.MaterialiseMapFunction),
+	materialiseFn := materialise.NewSingleUpsert(
+		materialise.WithSingleUpsertRepository(repository),
+		materialise.WithSingleUpsertMapFunction(c.MaterialiseMapFunction),
 	)
 
 	retriedFn, retryRuntime := WrapRetry(materialiseFn)
