@@ -1,6 +1,6 @@
 # Flows
 
-Simple dataflow with Kafka.
+Simple declarative and functional dataflow with Kafka.
 
 ## Developing
 
