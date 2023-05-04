@@ -48,7 +48,7 @@ func (r SingleStateRepository) Get(ctx context.Context, persistenceId string) (s
 		Model(dbState).
 		ModelTableExpr(r.persistenceTableName+" AS single_state_table").
 		Where("persistence_id = ?", persistenceId).
-		For("UPDATE").
+		// For("UPDATE"). -- model no longer requires transaction
 		Scan(ctx)
 
 	if readErr != nil && readErr != sql.ErrNoRows {
