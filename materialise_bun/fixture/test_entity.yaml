@@ -1,0 +1,8 @@
+- model: TestEntity
+  rows:
+    - id: 1
+      key_content: test
+      value_content: test
+    - id: 2
+      key_content: test 2
+      value_content: test 2

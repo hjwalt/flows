@@ -20,7 +20,7 @@ import (
 // intermediate to join -> transaction
 // transaction -> offset deduplication
 // offset deduplication -> stateful switch
-// stateful switch -> stateful function (for each source topic)
+// stateful switch -> stateful function(s) (for each source topic)
 
 type JoinPostgresqlFunctionConfiguration struct {
 	PostgresqlConfiguration    []runtime.Configuration[*runtime_bun.PostgresqlConnection]
@@ -126,23 +126,14 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	)
 	consumer := runtime_sarama.NewConsumer(consumerConfig...)
 
-	// http runtime, prometheus first for hard prometheus path
-	routeConfig := append(
-		make([]runtime.Configuration[*runtime_bunrouter.Router], 0),
-		runtime_bunrouter.WithRouterPrometheus(),
-		runtime_bunrouter.WithRouterProducer(producer),
-	)
-	routeConfig = append(
-		routeConfig,
-		c.RouteConfiguration...,
-	)
-	routerRuntime := runtime_bunrouter.NewRouter(routeConfig...)
+	// http runtime
+	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
 
 	// multi runtime configuration
 	multi := runtime.NewMulti(
 		runtime.WithController(ctrl),
-		runtime.WithRuntime(routerRuntime),
 		runtime.WithRuntime(conn),
+		runtime.WithRuntime(routerRuntime),
 		runtime.WithRuntime(producer),
 		runtime.WithRuntime(consumer),
 		runtime.WithRuntime(retryRuntime),

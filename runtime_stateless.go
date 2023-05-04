@@ -32,17 +32,8 @@ func (c StatelessSingleFunctionConfiguration) Runtime() runtime.Runtime {
 	// consumer runtime
 	consumer := KafkaConsumerSingle(ctrl, produceRetry, c.KafkaConsumerConfiguration)
 
-	// http runtime, prometheus first for hard prometheus path
-	routeConfig := append(
-		make([]runtime.Configuration[*runtime_bunrouter.Router], 0),
-		runtime_bunrouter.WithRouterPrometheus(),
-		runtime_bunrouter.WithRouterProducer(producer),
-	)
-	routeConfig = append(
-		routeConfig,
-		c.RouteConfiguration...,
-	)
-	routerRuntime := runtime_bunrouter.NewRouter(routeConfig...)
+	// http runtime
+	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
 
 	// multi runtime configuration
 	multi := runtime.NewMulti(
