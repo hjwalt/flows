@@ -54,14 +54,14 @@ func (r *SourceToIntermediateMap) Apply(c context.Context, m message.Message[mes
 	joinKey := &protobuf.JoinKey{
 		PersistenceId: persistenceId,
 	}
-	joinKeyBytes, joinKeySerialisationErr := JoinKeyFormat.Marshal(joinKey)
+	joinKeyBytes, joinKeySerialisationErr := IntermediateKeyFormat.Marshal(joinKey)
 	if joinKeySerialisationErr != nil {
 		logger.ErrorErr("error serialising join key", joinKeySerialisationErr)
 		return make([]message.Message[[]byte, []byte], 0), joinKeySerialisationErr
 	}
 
 	// To keep all information about the source message
-	joinValueBytes, joinValueSerialisationErr := MessageFormat.Marshal(m)
+	joinValueBytes, joinValueSerialisationErr := IntermediateValueFormat.Marshal(m)
 	if joinValueSerialisationErr != nil {
 		logger.ErrorErr("error serialising join value", joinValueSerialisationErr)
 		return make([]message.Message[[]byte, []byte], 0), joinValueSerialisationErr
@@ -76,5 +76,5 @@ func (r *SourceToIntermediateMap) Apply(c context.Context, m message.Message[mes
 	return []message.Message[message.Bytes, message.Bytes]{remappedMessage}, nil
 }
 
-var MessageFormat = message.Format()
-var JoinKeyFormat = format.Protobuf[*protobuf.JoinKey]()
+var IntermediateValueFormat = message.Format()
+var IntermediateKeyFormat = format.Protobuf[*protobuf.JoinKey]()

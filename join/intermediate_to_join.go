@@ -2,6 +2,7 @@ package join
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime"
@@ -9,6 +10,8 @@ import (
 	"github.com/hjwalt/runway/logger"
 	"go.uber.org/zap"
 )
+
+var ErrorIntermediateToJoinDeserialiseMessage = errors.New("error deserialising message")
 
 // constructor
 func NewIntermediateToJoinMap(configurations ...runtime.Configuration[*IntermediateToJoinMap]) stateless.SingleFunction {
@@ -34,10 +37,9 @@ type IntermediateToJoinMap struct {
 
 func (r *IntermediateToJoinMap) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
 	logger.Info("intermediate to join", zap.String("topic", m.Topic))
-	messageDeserialized, messageDeserialisationError := MessageFormat.Unmarshal(m.Value)
+	messageDeserialized, messageDeserialisationError := IntermediateValueFormat.Unmarshal(m.Value)
 	if messageDeserialisationError != nil {
-		logger.ErrorErr("error deserialising message", messageDeserialisationError)
-		return make([]message.Message[[]byte, []byte], 0), messageDeserialisationError
+		return make([]message.Message[[]byte, []byte], 0), errors.Join(ErrorIntermediateToJoinDeserialiseMessage, messageDeserialisationError)
 	}
 
 	messageDeserialized.Partition = m.Partition
