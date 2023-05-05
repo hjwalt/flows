@@ -4,8 +4,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/hjwalt/flows/mock"
 	"github.com/hjwalt/flows/router"
+	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,7 +44,7 @@ func TestWriteJson(t *testing.T) {
 			assert := assert.New(t)
 
 			rr := httptest.NewRecorder()
-			err := router.WriteJson(rr, c.status, c.response, mock.CrappyJson[CrappyResponseStruct]())
+			err := router.WriteJson(rr, c.status, c.response, test_helper.CrappyJson[CrappyResponseStruct]())
 
 			if c.err == nil {
 				assert.NoError(err)

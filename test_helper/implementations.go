@@ -2,7 +2,7 @@
 // Source: mock/interfaces.go
 
 // Package mock is a generated GoMock package.
-package mock
+package test_helper
 
 import (
 	context "context"

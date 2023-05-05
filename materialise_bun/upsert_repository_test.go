@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/hjwalt/flows/materialise_bun"
-	"github.com/hjwalt/flows/mock"
+	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/uptrace/bun"
 )
@@ -21,7 +21,7 @@ type TestEntity struct {
 func TestUpsertStandard(t *testing.T) {
 	assert := assert.New(t)
 
-	conn := &mock.SqliteBunConnection[*TestEntity]{
+	conn := &test_helper.SqliteBunConnection[*TestEntity]{
 		FixtureFolder: "fixture",
 		FixtureFile:   "test_entity.yaml",
 	}

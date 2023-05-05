@@ -40,8 +40,8 @@ group-delete:
 # --------------------
 
 mocks: RUN
-	mockgen -source=mock/interfaces.go -destination=mock/implementations.go -package=mock ;\
-	mockgen -source=stateful_bun/connection.go -destination=mock/stateful_bun_connection.go -package=mock ;\
+	mockgen -source=test_helper/interfaces.go -destination=test_helper/implementations.go -package=test_helper ;\
+	mockgen -source=stateful_bun/connection.go -destination=test_helper/stateful_bun_connection.go -package=test_helper ;\
 
 proto: RUN
 	rm -rf $$GOPATH/$(MODULE)/ ;\

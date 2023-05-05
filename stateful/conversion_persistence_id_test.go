@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/mock"
 	"github.com/hjwalt/flows/stateful"
+	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -47,7 +47,7 @@ func TestConvertPersistenceId(t *testing.T) {
 		},
 	}
 
-	crappyStringFormat := mock.CrappyStringFormat()
+	crappyStringFormat := test_helper.CrappyStringFormat()
 	persistenceIdFunction := func(ctx context.Context, m message.Message[string, string]) (string, error) {
 		if m.Key == "failed" {
 			return "", errors.New("failed")

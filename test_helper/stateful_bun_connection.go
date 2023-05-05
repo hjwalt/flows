@@ -2,7 +2,7 @@
 // Source: stateful_bun/connection.go
 
 // Package mock is a generated GoMock package.
-package mock
+package test_helper
 
 import (
 	reflect "reflect"

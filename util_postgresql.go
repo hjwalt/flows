@@ -25,7 +25,7 @@ func PostgresqlSingleStateRepository(conn runtime_bun.BunConnection, tableName s
 }
 
 func PostgresqlUpsertRepository[T any](conn runtime_bun.BunConnection) materialise.UpsertRepository[T] {
-	return materialise_bun.NewBunUpsertRepository[T](
+	return materialise_bun.NewBunUpsertRepository(
 		materialise_bun.WithBunUpsertRepositoryConnection[T](conn),
 	)
 }

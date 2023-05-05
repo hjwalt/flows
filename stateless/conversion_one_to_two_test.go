@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/mock"
 	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -116,7 +116,7 @@ func TestConvertOneToTwo(t *testing.T) {
 		},
 	}
 
-	crappyStringFormat := mock.CrappyStringFormat()
+	crappyStringFormat := test_helper.CrappyStringFormat()
 	oneToTwo := func(ctx context.Context, m message.Message[string, string]) (*message.Message[string, string], *message.Message[string, string], error) {
 		if strings.ToLower(m.Key) == "stupid error" {
 			return &message.Message[string, string]{}, &message.Message[string, string]{}, errors.New(m.Key)

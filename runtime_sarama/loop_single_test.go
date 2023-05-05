@@ -9,8 +9,8 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/golang/mock/gomock"
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/mock"
 	"github.com/hjwalt/flows/runtime_sarama"
+	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +22,7 @@ func TestSingleConsumeLoopWhenNoErrorShouldComplete(t *testing.T) {
 	messages := make(chan *sarama.ConsumerMessage)
 	completed := make(chan bool, 1)
 
-	session := mock.NewMockConsumerGroupSession(gomock.NewController(t))
+	session := test_helper.NewMockConsumerGroupSession(gomock.NewController(t))
 	consumerSingleLoop := runtime_sarama.NewSingleLoop(
 		runtime_sarama.WithLoopSingleFunction(
 			func(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
@@ -67,7 +67,7 @@ func TestSingleConsumeLoopWhenErrorShouldError(t *testing.T) {
 	messages := make(chan *sarama.ConsumerMessage)
 	completed := make(chan string, 1)
 
-	session := mock.NewMockConsumerGroupSession(gomock.NewController(t))
+	session := test_helper.NewMockConsumerGroupSession(gomock.NewController(t))
 
 	consumerSingleLoop := runtime_sarama.NewSingleLoop(
 		runtime_sarama.WithLoopSingleFunction(

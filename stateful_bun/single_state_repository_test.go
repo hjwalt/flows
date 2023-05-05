@@ -4,16 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/hjwalt/flows/mock"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateful_bun"
+	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSingleStateRepositoryGet(t *testing.T) {
 	assert := assert.New(t)
 
-	conn := &mock.SqliteBunConnection[*stateful_bun.SingleStateTable]{
+	conn := &test_helper.SqliteBunConnection[*stateful_bun.SingleStateTable]{
 		FixtureFolder: "fixture",
 		FixtureFile:   "single_state_table.yaml",
 	}
@@ -41,7 +41,7 @@ func TestSingleStateRepositoryUpsert(t *testing.T) {
 
 	assert := assert.New(t)
 
-	conn := &mock.SqliteBunConnection[*stateful_bun.SingleStateTable]{
+	conn := &test_helper.SqliteBunConnection[*stateful_bun.SingleStateTable]{
 		FixtureFolder: "fixture",
 		FixtureFile:   "single_state_table.yaml",
 	}

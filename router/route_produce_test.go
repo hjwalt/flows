@@ -9,13 +9,13 @@ import (
 	"testing"
 
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/mock"
 	"github.com/hjwalt/flows/router"
+	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRouteProducer(t *testing.T) {
-	producer := mock.NewChannelProducer()
+	producer := test_helper.NewChannelProducer()
 
 	routerProducer := router.NewRouteProducer(
 		router.WithRouteProducerRuntime(producer),
