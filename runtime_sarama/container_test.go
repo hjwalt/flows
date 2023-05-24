@@ -6,7 +6,7 @@ import (
 
 	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_sarama"
-	"github.com/hjwalt/flows/utility"
+	"github.com/hjwalt/flows/test_helper"
 	"github.com/hjwalt/runway/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
@@ -64,7 +64,7 @@ func CreateContainer(t *testing.T) Container {
 		ProviderType:     testcontainers.ProviderPodman,
 		ContainerRequest: req,
 		Started:          true,
-		Logger:           utility.TestContainerLogging{},
+		Logger:           test_helper.TestContainerLogging{},
 	})
 	assert.NoError(containerError)
 
