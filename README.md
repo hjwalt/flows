@@ -143,9 +143,8 @@ Examples of temporal operations that are not considered for implementation yet:
    3. AWS DynamoDB
    4. GCP Bigtable
 2. Local state caching
-3. Testcontainer with docker instead of podman
-4. Unit test coverage
-5. Replace prometheus with otel
+3. Unit test coverage
+4. Replace prometheus with otel
 
 ## Notes
 
@@ -226,4 +225,12 @@ func TestPointerStuff(t *testing.T) {
 	}
 	assert.Equal(200, Get(testFour.Get))
 }
+```
+
+## Rootless Podman
+
+You only need to add `DOCKER_HOST` according to your `podman info`. Example:
+
+```
+export DOCKER_HOST=unix:///run/user/1000/podman/podman.sock
 ```

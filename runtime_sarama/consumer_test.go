@@ -158,7 +158,7 @@ func TestConsumerStartMissingBrokerShouldError(t *testing.T) {
 	err := consumer.Start()
 
 	assert.NotNil(err)
-	assert.Equal("kafka: client has run out of available brokers to talk to: dial tcp [::1]:12345: connect: connection refused", err.Error())
+	assert.Contains(err.Error(), "kafka: client has run out of available brokers to talk to")
 }
 
 func TestConsumerRunWhenNoConsumeErrorShouldExitAfterCancel(t *testing.T) {

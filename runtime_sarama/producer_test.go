@@ -73,5 +73,5 @@ func TestProducerStartMissingBrokerShouldError(t *testing.T) {
 	err := producer.Start()
 
 	assert.NotNil(err)
-	assert.Equal("kafka: client has run out of available brokers to talk to: dial tcp [::1]:12346: connect: connection refused", err.Error())
+	assert.Contains(err.Error(), "kafka: client has run out of available brokers to talk to")
 }
