@@ -11,6 +11,7 @@ import (
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/test_helper"
+	"github.com/hjwalt/runway/logger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,7 +61,7 @@ func TestBatchConsumeLoopWhenNoErrorShouldTriggerOnMaxBuffered(t *testing.T) {
 
 	// mock setup
 
-	session.EXPECT().MarkMessage(gomock.Eq(&sarama.ConsumerMessage{Partition: 1}), gomock.Any()).Times(1)
+	session.EXPECT().MarkMessage(gomock.Eq(&sarama.ConsumerMessage{Partition: 1, Offset: 2}), gomock.Any()).Times(1)
 
 	// execute test
 
@@ -75,13 +76,20 @@ func TestBatchConsumeLoopWhenNoErrorShouldTriggerOnMaxBuffered(t *testing.T) {
 
 	time.Sleep(time.Millisecond)
 	assert.Equal(0, len(completed))
-	messages <- &sarama.ConsumerMessage{Partition: 1}
-	messages <- &sarama.ConsumerMessage{Partition: 1}
+	messages <- &sarama.ConsumerMessage{Partition: 1, Offset: 1}
+	messages <- &sarama.ConsumerMessage{Partition: 1, Offset: 2}
+	time.Sleep(time.Millisecond)
 	close(messages)
-	time.Sleep(101 * time.Millisecond)
-	assert.Equal(1, len(completed))
 
-	result := <-completed
+	var result bool
+
+	select {
+	case result = <-completed:
+		logger.Info("completed")
+	case <-time.After(1 * time.Second):
+		result = false
+	}
+
 	assert.True(result)
 	assert.Equal(1, executionCount)
 }
