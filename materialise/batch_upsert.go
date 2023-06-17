@@ -9,7 +9,7 @@ import (
 
 type BatchUpsert[T any] struct {
 	repository UpsertRepository[T]
-	mapper     MapFunction[T]
+	mapper     MapFunction[message.Bytes, message.Bytes, T]
 }
 
 func (r *BatchUpsert[T]) Apply(c context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {

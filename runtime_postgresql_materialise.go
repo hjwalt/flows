@@ -2,6 +2,7 @@ package flows
 
 import (
 	"github.com/hjwalt/flows/materialise"
+	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
@@ -12,7 +13,7 @@ type MaterialisePostgresqlFunctionConfiguration[T any] struct {
 	PostgresqlConfiguration    []runtime.Configuration[*runtime_bun.PostgresqlConnection]
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
-	MaterialiseMapFunction     materialise.MapFunction[T]
+	MaterialiseMapFunction     materialise.MapFunction[message.Bytes, message.Bytes, T]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 

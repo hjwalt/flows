@@ -10,4 +10,4 @@ type UpsertRepository[T any] interface {
 	Upsert(context.Context, []T) error
 }
 
-type MapFunction[T any] func(context.Context, message.Message[message.Bytes, message.Bytes]) ([]T, error)
+type MapFunction[K any, V any, T any] func(context.Context, message.Message[K, V]) ([]T, error)

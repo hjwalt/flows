@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows"
+	"github.com/hjwalt/flows/format"
+	"github.com/hjwalt/flows/materialise"
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_bun"
@@ -28,12 +30,12 @@ type FlowsMaterialised struct {
 	TimestampMs   int64
 }
 
-func FlowsMaterialisedMap(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]FlowsMaterialised, error) {
+func FlowsMaterialisedMap(c context.Context, m message.Message[string, string]) ([]FlowsMaterialised, error) {
 	return []FlowsMaterialised{
 		{
-			Id:           string(m.Key),
-			KeyContent:   string(m.Key),
-			ValueContent: string(m.Value),
+			Id:           m.Key,
+			KeyContent:   m.Key,
+			ValueContent: m.Value,
 			TimestampMs:  m.Timestamp.UnixMilli(),
 		},
 	}, nil
@@ -51,7 +53,7 @@ func WordMaterialise() runtime.Runtime {
 			runtime_sarama.WithConsumerTopic("word-count"),
 			runtime_sarama.WithConsumerGroupName("flows-word-materialise"),
 		},
-		MaterialiseMapFunction: FlowsMaterialisedMap,
+		MaterialiseMapFunction: materialise.ConvertOneToOne(FlowsMaterialisedMap, format.String(), format.String()),
 	}
 
 	return materialiseConfiguration.Runtime()

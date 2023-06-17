@@ -27,7 +27,7 @@ func WithSingleUpsertRepository[T any](repository UpsertRepository[T]) runtime.C
 	}
 }
 
-func WithSingleUpsertMapFunction[T any](mapper MapFunction[T]) runtime.Configuration[*SingleUpsert[T]] {
+func WithSingleUpsertMapFunction[T any](mapper MapFunction[message.Bytes, message.Bytes, T]) runtime.Configuration[*SingleUpsert[T]] {
 	return func(c *SingleUpsert[T]) *SingleUpsert[T] {
 		c.mapper = mapper
 		return c
@@ -37,7 +37,7 @@ func WithSingleUpsertMapFunction[T any](mapper MapFunction[T]) runtime.Configura
 // implementation
 type SingleUpsert[T any] struct {
 	repository UpsertRepository[T]
-	mapper     MapFunction[T]
+	mapper     MapFunction[message.Bytes, message.Bytes, T]
 }
 
 func (r *SingleUpsert[T]) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
