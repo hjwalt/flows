@@ -8,8 +8,8 @@ require (
 	github.com/gobeam/stringy v0.0.6
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
-	github.com/hjwalt/runway v0.0.2
-	github.com/prometheus/client_golang v1.15.1
+	github.com/hjwalt/runway v0.0.3
+	github.com/prometheus/client_golang v1.16.0
 	github.com/stretchr/testify v1.8.4
 	github.com/testcontainers/testcontainers-go v0.19.0
 	github.com/uptrace/bun v1.1.14
@@ -21,7 +21,7 @@ require (
 	github.com/uptrace/bun/extra/bundebug v1.1.14
 	github.com/uptrace/bunrouter v1.0.20
 	go.uber.org/zap v1.24.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -75,7 +75,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
-	github.com/prometheus/procfs v0.10.1 // indirect
+	github.com/prometheus/procfs v0.11.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
@@ -89,9 +89,9 @@ require (
 	golang.org/x/mod v0.11.0 // indirect
 	golang.org/x/net v0.11.0 // indirect
 	golang.org/x/sys v0.9.0 // indirect
-	golang.org/x/tools v0.9.3 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
-	google.golang.org/grpc v1.55.0 // indirect
+	golang.org/x/tools v0.10.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230626202813-9b080da550b3 // indirect
+	google.golang.org/grpc v1.56.1 // indirect
 	gotest.tools/v3 v3.4.0 // indirect
 	lukechampine.com/uint128 v1.3.0 // indirect
 	mellium.im/sasl v0.3.1 // indirect
