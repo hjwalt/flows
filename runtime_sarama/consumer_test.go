@@ -18,10 +18,16 @@ type ConsumerLoopForTest struct {
 	loopError bool
 }
 
-func (c ConsumerLoopForTest) Loop(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+func (c ConsumerLoopForTest) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	if c.loopError {
 		return errors.New("mocked loop error")
 	}
+	return nil
+}
+func (batchConsume ConsumerLoopForTest) Setup(sarama.ConsumerGroupSession) error {
+	return nil
+}
+func (batchConsume ConsumerLoopForTest) Cleanup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 func (c ConsumerLoopForTest) Start() error {
@@ -213,19 +219,4 @@ func TestConsumerRunWhenConsumeErrorShouldExitImmediately(t *testing.T) {
 	}()
 	time.Sleep(time.Millisecond)
 	assert.Equal(1, len(completed))
-}
-
-func TestConsumerFunctionsForCoverage(t *testing.T) {
-	assert := assert.New(t)
-
-	consumer := runtime_sarama.Consumer{
-		Loop: ConsumerLoopForTest{loopError: true},
-	}
-
-	consumer.Setup(nil)
-	consumer.Cleanup(nil)
-	claimErr := consumer.ConsumeClaim(nil, nil)
-
-	assert.NotNil(claimErr)
-	assert.Equal("mocked loop error", claimErr.Error())
 }

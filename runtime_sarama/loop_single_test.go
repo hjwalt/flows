@@ -39,7 +39,7 @@ func TestSingleConsumeLoopWhenNoErrorShouldComplete(t *testing.T) {
 	// execute test
 
 	go func() {
-		err := consumerSingleLoop.Loop(session, ConsumerGroupClaimForTest{messages: messages})
+		err := consumerSingleLoop.ConsumeClaim(session, ConsumerGroupClaimForTest{messages: messages})
 		if err == nil {
 			completed <- true
 		} else {
@@ -85,7 +85,7 @@ func TestSingleConsumeLoopWhenErrorShouldError(t *testing.T) {
 	// execute test
 
 	go func() {
-		err := consumerSingleLoop.Loop(session, ConsumerGroupClaimForTest{messages: messages})
+		err := consumerSingleLoop.ConsumeClaim(session, ConsumerGroupClaimForTest{messages: messages})
 		if err == nil {
 			completed <- "no error"
 		} else {

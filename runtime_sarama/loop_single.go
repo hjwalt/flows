@@ -41,7 +41,8 @@ type ConsumerSingleLoop struct {
 	metric metric.Consume
 }
 
-func (consumerSarama *ConsumerSingleLoop) Loop(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+// ConsumeClaim must start a consumerGroup loop of ConsumerGroupClaim's Messages().
+func (consumerSarama *ConsumerSingleLoop) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for saramaMessage := range claim.Messages() {
 		logger.Info("read", zap.String("topic", saramaMessage.Topic), zap.Int32("partition", saramaMessage.Partition), zap.Int64("offset", saramaMessage.Offset))
 		source, err := FromConsumerMessage(saramaMessage)
@@ -59,8 +60,20 @@ func (consumerSarama *ConsumerSingleLoop) Loop(session sarama.ConsumerGroupSessi
 	}
 	return nil
 }
+
+// Setup is run at the beginning of a new session, before ConsumeClaim, marks the consumer group as ready
+func (consumerSarama *ConsumerSingleLoop) Setup(sarama.ConsumerGroupSession) error {
+	return nil
+}
+
+// Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
+func (consumerSarama *ConsumerSingleLoop) Cleanup(sarama.ConsumerGroupSession) error {
+	return nil
+}
+
 func (consumerSarama *ConsumerSingleLoop) Start() error {
 	return nil
 }
+
 func (consumerSarama *ConsumerSingleLoop) Stop() {
 }

@@ -66,7 +66,7 @@ func TestBatchConsumeLoopWhenNoErrorShouldTriggerOnMaxBuffered(t *testing.T) {
 	// execute test
 
 	go func() {
-		err := consumerBatchLoop.Loop(session, ConsumerGroupClaimForTest{messages: messages})
+		err := consumerBatchLoop.ConsumeClaim(session, ConsumerGroupClaimForTest{messages: messages})
 		if err == nil {
 			completed <- true
 		} else {
@@ -122,7 +122,7 @@ func TestBatchConsumeLoopWhenNoErrorShouldTriggerOnTimer(t *testing.T) {
 	// execute test
 
 	go func() {
-		err := consumerBatchLoop.Loop(session, ConsumerGroupClaimForTest{messages: messages})
+		err := consumerBatchLoop.ConsumeClaim(session, ConsumerGroupClaimForTest{messages: messages})
 		if err == nil {
 			completed <- true
 		} else {
@@ -172,7 +172,7 @@ func TestBatchConsumeLoopWhenErrorShouldErrorOnMaxBuffered(t *testing.T) {
 	// execute test
 
 	go func() {
-		err := consumerBatchLoop.Loop(session, ConsumerGroupClaimForTest{messages: messages})
+		err := consumerBatchLoop.ConsumeClaim(session, ConsumerGroupClaimForTest{messages: messages})
 		assert.NotNil(err)
 		assert.Equal("mocked error", err.Error())
 		if err == nil {
@@ -224,7 +224,7 @@ func TestBatchConsumeLoopWhenErrorShouldErrorOnTimer(t *testing.T) {
 	// execute test
 
 	go func() {
-		err := consumerBatchLoop.Loop(session, ConsumerGroupClaimForTest{messages: messages})
+		err := consumerBatchLoop.ConsumeClaim(session, ConsumerGroupClaimForTest{messages: messages})
 		assert.NotNil(err)
 		assert.Equal("mocked error 2", err.Error())
 		if err == nil {

@@ -74,7 +74,7 @@ type ConsumerBatchedLoop struct {
 	metric metric.Consume
 }
 
-func (batchConsume *ConsumerBatchedLoop) Loop(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+func (batchConsume *ConsumerBatchedLoop) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	// create start and stop context
 	batchConsume.context, batchConsume.cancel = context.WithCancel(context.Background())
 	batchConsume.messageClaimed = make(chan *sarama.ConsumerMessage)
@@ -104,6 +104,14 @@ func (batchConsume *ConsumerBatchedLoop) Loop(session sarama.ConsumerGroupSessio
 			return nil
 		}
 	}
+}
+
+func (batchConsume *ConsumerBatchedLoop) Setup(sarama.ConsumerGroupSession) error {
+	return nil
+}
+
+func (batchConsume *ConsumerBatchedLoop) Cleanup(sarama.ConsumerGroupSession) error {
+	return nil
 }
 
 func (batchConsume *ConsumerBatchedLoop) reset() {

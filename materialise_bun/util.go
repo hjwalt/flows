@@ -3,7 +3,7 @@ package materialise_bun
 import (
 	"reflect"
 
-	"github.com/gobeam/stringy"
+	"github.com/hjwalt/runway/stringy"
 )
 
 var IgnoreColumns = map[string]bool{
@@ -23,7 +23,7 @@ func Columns(val interface{}) ([]string, []string) {
 		if !st.Field(i).IsExported() {
 			continue
 		}
-		fieldName := LowerSnakeCase(st.Field(i).Name)
+		fieldName := stringy.ToLowerSnakeCase(st.Field(i).Name)
 		ispk := false
 		if len(st.Field(i).Tag.Get("bun")) > 0 {
 			tag := ParseTag(st.Field(i).Tag.Get("bun"))
@@ -58,7 +58,7 @@ func ColumnsGeneric[T any](val T) ([]string, []string) {
 		if !st.Field(i).IsExported() {
 			continue
 		}
-		fieldName := LowerSnakeCase(st.Field(i).Name)
+		fieldName := stringy.ToLowerSnakeCase(st.Field(i).Name)
 		ispk := false
 		if len(st.Field(i).Tag.Get("bun")) > 0 {
 			tag := ParseTag(st.Field(i).Tag.Get("bun"))
@@ -89,10 +89,4 @@ func ConflictSet(cols []string) string {
 		conflictSet += column + " = EXCLUDED." + column
 	}
 	return conflictSet
-}
-
-func LowerSnakeCase(fieldName string) string {
-	str := stringy.New(fieldName)
-	snakeStr := str.SnakeCase("?", "")
-	return snakeStr.ToLower()
 }

@@ -5,10 +5,9 @@ go 1.20
 require (
 	github.com/Shopify/sarama v1.38.1
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/gobeam/stringy v0.0.6
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
-	github.com/hjwalt/runway v0.0.3
+	github.com/hjwalt/runway v0.0.4
 	github.com/prometheus/client_golang v1.16.0
 	github.com/stretchr/testify v1.8.4
 	github.com/testcontainers/testcontainers-go v0.19.0

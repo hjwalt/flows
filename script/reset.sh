@@ -6,18 +6,18 @@ TARGET_TOPIC_JOIN=word-type
 JOIN_INTERMEDIATE_TOPIC=word-join-intermediate
 JOIN_OUTPUT_TOPIC=word-join
 
-kafka-topics.sh --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC
-kafka-topics.sh --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC_JOIN
-kafka-topics.sh --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC-count
-kafka-topics.sh --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC-updated
-kafka-topics.sh --bootstrap-server $TARGET_BROKER --delete --topic $JOIN_INTERMEDIATE_TOPIC
-kafka-topics.sh --bootstrap-server $TARGET_BROKER --delete --topic $JOIN_OUTPUT_TOPIC
+kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC
+kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC_JOIN
+kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC-count
+kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC-updated
+kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $JOIN_INTERMEDIATE_TOPIC
+kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $JOIN_OUTPUT_TOPIC
 
-kafka-topics.sh --bootstrap-server $TARGET_BROKER --create --topic $TARGET_TOPIC
-kafka-topics.sh --bootstrap-server $TARGET_BROKER --create --topic $TARGET_TOPIC_JOIN
-kafka-topics.sh --bootstrap-server $TARGET_BROKER --create --topic $TARGET_TOPIC-count
-kafka-topics.sh --bootstrap-server $TARGET_BROKER --create --topic $TARGET_TOPIC-updated
-kafka-topics.sh --bootstrap-server $TARGET_BROKER --create --topic $JOIN_INTERMEDIATE_TOPIC
+kafka-topics --bootstrap-server $TARGET_BROKER --create --topic $TARGET_TOPIC
+kafka-topics --bootstrap-server $TARGET_BROKER --create --topic $TARGET_TOPIC_JOIN
+kafka-topics --bootstrap-server $TARGET_BROKER --create --topic $TARGET_TOPIC-count
+kafka-topics --bootstrap-server $TARGET_BROKER --create --topic $TARGET_TOPIC-updated
+kafka-topics --bootstrap-server $TARGET_BROKER --create --topic $JOIN_INTERMEDIATE_TOPIC
 
 # 10 apples
 # 5 pizzas

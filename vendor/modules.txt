@@ -93,9 +93,6 @@ github.com/eapache/queue
 # github.com/fatih/color v1.15.0
 ## explicit; go 1.17
 github.com/fatih/color
-# github.com/gobeam/stringy v0.0.6
-## explicit; go 1.14
-github.com/gobeam/stringy
 # github.com/gogo/protobuf v1.3.2
 ## explicit; go 1.15
 github.com/gogo/protobuf/proto
@@ -124,11 +121,12 @@ github.com/hashicorp/go-multierror
 # github.com/hashicorp/go-uuid v1.0.3
 ## explicit
 github.com/hashicorp/go-uuid
-# github.com/hjwalt/runway v0.0.3
+# github.com/hjwalt/runway v0.0.4
 ## explicit; go 1.20
 github.com/hjwalt/runway/environment
 github.com/hjwalt/runway/logger
 github.com/hjwalt/runway/reflect
+github.com/hjwalt/runway/stringy
 # github.com/jcmturner/aescts/v2 v2.0.0
 ## explicit; go 1.13
 github.com/jcmturner/aescts/v2

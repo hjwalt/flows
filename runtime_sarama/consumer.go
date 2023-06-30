@@ -107,7 +107,7 @@ func (c *Consumer) Run() {
 		// `Consume` should be called inside an infinite loop, when a
 		// server-side rebalance happens, the consumerGroup session will need to be
 		// recreated to get the new claims
-		if err := c.Group.Consume(c.Context, c.Topics, c); err != nil {
+		if err := c.Group.Consume(c.Context, c.Topics, c.Loop); err != nil {
 			logger.ErrorErr("consume group run error", err)
 			c.Cancel()
 			break
@@ -123,27 +123,10 @@ func (c *Consumer) Run() {
 	logger.Info("sarama consumer run end")
 }
 
-// Setup is run at the beginning of a new session, before ConsumeClaim, marks the consumer group as ready
-func (c *Consumer) Setup(sarama.ConsumerGroupSession) error {
-	return nil
-}
-
-// Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
-func (c *Consumer) Cleanup(sarama.ConsumerGroupSession) error {
-	return nil
-}
-
-// ConsumeClaim must start a consumerGroup loop of ConsumerGroupClaim's Messages().
-func (c *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	claimErr := c.Loop.Loop(session, claim)
-	if claimErr != nil {
-		logger.Error("consume claim error", zap.Error(claimErr))
-	}
-	return claimErr
-}
-
 type ConsumerLoop interface {
-	Loop(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error
+	ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error
+	Setup(sarama.ConsumerGroupSession) error
+	Cleanup(sarama.ConsumerGroupSession) error
 	Start() error
 	Stop()
 }
