@@ -6,10 +6,15 @@ import (
 	"github.com/hjwalt/flows/runtime"
 )
 
-func Main() *main {
+func NewMain() Main {
 	return &main{
 		runtimes: make(map[string]func() runtime.Runtime),
 	}
+}
+
+type Main interface {
+	Register(i string, r func() runtime.Runtime) error
+	Start(i string) error
 }
 
 type main struct {

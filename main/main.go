@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	m := flows.Main()
+	m := flows.NewMain()
 
 	m.Register("word-count", example.WordCount)
 	m.Register("word-remap", example.WordRemap)
