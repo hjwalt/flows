@@ -1,7 +1,6 @@
 package router
 
 import (
-	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"github.com/hjwalt/flows/format"
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime"
+	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
 )
 
@@ -24,8 +24,6 @@ const (
 type BasicResponse struct {
 	Message string `json:"message"`
 }
-
-type RouteProduceMapFunction func(ctx context.Context, req message.Message[message.Bytes, message.Bytes]) (message.Message[message.Bytes, message.Bytes], error)
 
 // constructor
 func NewRouteProducer(configurations ...runtime.Configuration[*RouteProducer]) *RouteProducer {
@@ -44,7 +42,7 @@ func WithRouteProducerRuntime(producer runtime.Producer) runtime.Configuration[*
 	}
 }
 
-func WithRouteBodyMap(bodyMap RouteProduceMapFunction) runtime.Configuration[*RouteProducer] {
+func WithRouteBodyMap(bodyMap stateless.OneToOneFunction[message.Bytes, message.Bytes, message.Bytes, message.Bytes]) runtime.Configuration[*RouteProducer] {
 	return func(psf *RouteProducer) *RouteProducer {
 		psf.bodyMap = bodyMap
 		return psf
@@ -54,7 +52,7 @@ func WithRouteBodyMap(bodyMap RouteProduceMapFunction) runtime.Configuration[*Ro
 // implementation
 type RouteProducer struct {
 	producer runtime.Producer
-	bodyMap  RouteProduceMapFunction
+	bodyMap  stateless.OneToOneFunction[message.Bytes, message.Bytes, message.Bytes, message.Bytes]
 }
 
 func (rp *RouteProducer) Handle(w http.ResponseWriter, req *http.Request) {
@@ -122,9 +120,14 @@ func (rp *RouteProducer) Produce(w http.ResponseWriter, req *http.Request) error
 		return errors.Join(ErrorRouteMappingRequestBody, requestMapErr)
 	}
 
-	produceErr := rp.producer.Produce(req.Context(), []message.Message[message.Bytes, message.Bytes]{messageMessage})
-	if produceErr != nil {
-		return errors.Join(ErrorRouteProducingMessage, produceErr)
+	// producing message
+	if messageMessage != nil {
+		produceErr := rp.producer.Produce(req.Context(), []message.Message[message.Bytes, message.Bytes]{*messageMessage})
+		if produceErr != nil {
+			return errors.Join(ErrorRouteProducingMessage, produceErr)
+		}
+	} else {
+		logger.Warn("skipping producing")
 	}
 
 	return WriteJson(w, 200, BasicResponse{Message: "ok"}, format.Json[BasicResponse]())

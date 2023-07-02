@@ -100,8 +100,8 @@ func WordCount() runtime.Runtime {
 
 				return router.WriteJson(w, 200, state, format.Json[TestResponse]())
 			}),
-			runtime_bunrouter.WithRouterProducerHandler(runtime_bunrouter.POST, "/produce", func(ctx context.Context, req message.Message[message.Bytes, message.Bytes]) (message.Message[message.Bytes, message.Bytes], error) {
-				return message.Message[[]byte, []byte]{
+			runtime_bunrouter.WithRouterProducerHandler(runtime_bunrouter.POST, "/produce", func(ctx context.Context, req message.Message[message.Bytes, message.Bytes]) (*message.Message[message.Bytes, message.Bytes], error) {
+				return &message.Message[[]byte, []byte]{
 						Topic:   "produce-topic",
 						Key:     req.Key,
 						Value:   req.Value,

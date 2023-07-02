@@ -19,8 +19,8 @@ func TestRouteProducer(t *testing.T) {
 
 	routerProducer := router.NewRouteProducer(
 		router.WithRouteProducerRuntime(producer),
-		router.WithRouteBodyMap(func(ctx context.Context, req message.Message[message.Bytes, message.Bytes]) (message.Message[message.Bytes, message.Bytes], error) {
-			return req, nil
+		router.WithRouteBodyMap(func(ctx context.Context, req message.Message[message.Bytes, message.Bytes]) (*message.Message[message.Bytes, message.Bytes], error) {
+			return &req, nil
 		}),
 	)
 

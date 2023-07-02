@@ -7,8 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime"
+	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/uptrace/bunrouter"
@@ -114,7 +116,7 @@ func WithRouterHttpHandler(method string, path string, handler http.HandlerFunc)
 	}
 }
 
-func WithRouterProducerHandler(method string, path string, bodyMap router.RouteProduceMapFunction) runtime.Configuration[*Router] {
+func WithRouterProducerHandler(method string, path string, bodyMap stateless.OneToOneFunction[message.Bytes, message.Bytes, message.Bytes, message.Bytes]) runtime.Configuration[*Router] {
 	return func(r *Router) *Router {
 		handlerFunction := router.NewRouteProducer(
 			router.WithRouteProducerRuntime(r.producer),
