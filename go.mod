@@ -1,13 +1,13 @@
 module github.com/hjwalt/flows
 
-go 1.20
+go 1.18
 
 require (
 	github.com/Shopify/sarama v1.38.1
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
-	github.com/hjwalt/runway v0.0.4
+	github.com/hjwalt/runway v0.0.5
 	github.com/prometheus/client_golang v1.16.0
 	github.com/stretchr/testify v1.8.4
 	github.com/testcontainers/testcontainers-go v0.19.0

@@ -16,13 +16,11 @@ htmlcov: test
 
 tidy:
 	go mod tidy
-	go mod vendor
 	go fmt ./...
 
 update:
 	go get -u ./...
 	go mod tidy
-	go mod vendor
 	go fmt ./...
 
 # --------------------
