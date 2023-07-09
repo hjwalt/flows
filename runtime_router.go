@@ -1,9 +1,9 @@
 package flows
 
 import (
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_sarama"
+	"github.com/hjwalt/runway/runtime"
 )
 
 // Wiring configuration
@@ -13,20 +13,16 @@ type RouterConfiguration struct {
 }
 
 func (c RouterConfiguration) Runtime() runtime.Runtime {
-
-	ctrl := runtime.NewController()
-
 	// producer runtime
-	producer := KafkaProducer(ctrl, c.KafkaProducerConfiguration)
+	producer := KafkaProducer(c.KafkaProducerConfiguration)
 
 	// http runtime
 	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
 
-	// multi runtime configuration
-	multi := runtime.NewMulti(
-		runtime.WithController(ctrl),
-		runtime.WithRuntime(routerRuntime),
-		runtime.WithRuntime(producer),
-	)
-	return multi
+	return &RuntimeFacade{
+		Runtimes: []runtime.Runtime{
+			routerRuntime,
+			producer,
+		},
+	}
 }

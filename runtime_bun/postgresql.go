@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/runtime"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -22,13 +22,6 @@ func NewPostgresqlConnection(configurations ...runtime.Configuration[*Postgresql
 }
 
 // configuration
-func WithController(controller runtime.Controller) runtime.Configuration[*PostgresqlConnection] {
-	return func(c *PostgresqlConnection) *PostgresqlConnection {
-		c.Controller = controller
-		return c
-	}
-}
-
 func WithConnectionString(connectionString string) runtime.Configuration[*PostgresqlConnection] {
 	return func(c *PostgresqlConnection) *PostgresqlConnection {
 		c.ConnectionString = connectionString
@@ -55,7 +48,7 @@ type PostgresqlConnection struct {
 	ConnectionString string
 	ApplicationName  string
 	MaxOpenConns     int
-	Controller       runtime.Controller
+	// Controller       runtime.Controller
 
 	db *bun.DB
 }
@@ -91,16 +84,12 @@ func (r *PostgresqlConnection) Start() error {
 
 	logger.Info("started bun")
 
-	// mark started in controller
-	r.Controller.Started()
-
 	return nil
 }
 
 func (r *PostgresqlConnection) Stop() {
 	logger.Info("stopping bun")
 	r.db.Close()
-	r.Controller.Stopped()
 	logger.Info("stopped bun")
 }
 

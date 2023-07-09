@@ -2,12 +2,12 @@ package flows
 
 import (
 	"github.com/hjwalt/flows/join"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/runway/runtime"
 )
 
 // Wiring configuration
@@ -35,14 +35,12 @@ type JoinPostgresqlFunctionConfiguration struct {
 
 func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 
-	ctrl := runtime.NewController()
-
 	// postgres runtime
-	conn := Postgresql(ctrl, c.PostgresqlConfiguration)
+	conn := Postgresql(c.PostgresqlConfiguration)
 	repository := PostgresqlSingleStateRepository(conn, c.PersistenceTableName)
 
 	// producer runtime
-	producer := KafkaProducer(ctrl, c.KafkaProducerConfiguration)
+	producer := KafkaProducer(c.KafkaProducerConfiguration)
 
 	topics := []string{}
 	statefulTopicSwitchConfigurations := []runtime.Configuration[*stateful.SingleTopicSwitch]{}
@@ -120,7 +118,6 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 
 	consumerConfig := append(
 		c.KafkaConsumerConfiguration,
-		runtime_sarama.WithConsumerRuntimeController(ctrl),
 		runtime_sarama.WithConsumerLoop(consumerLoop),
 		runtime_sarama.WithConsumerTopic(topics...),
 	)
@@ -129,14 +126,13 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	// http runtime
 	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
 
-	// multi runtime configuration
-	multi := runtime.NewMulti(
-		runtime.WithController(ctrl),
-		runtime.WithRuntime(conn),
-		runtime.WithRuntime(routerRuntime),
-		runtime.WithRuntime(producer),
-		runtime.WithRuntime(consumer),
-		runtime.WithRuntime(retryRuntime),
-	)
-	return multi
+	return &RuntimeFacade{
+		Runtimes: []runtime.Runtime{
+			conn,
+			routerRuntime,
+			producer,
+			consumer,
+			retryRuntime,
+		},
+	}
 }

@@ -5,8 +5,8 @@ import (
 
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/metric"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/runtime"
 )
 
 // constructor
@@ -19,7 +19,7 @@ func NewSingleProducer(configurations ...runtime.Configuration[*SingleProducer])
 }
 
 // configurations
-func WithSingleProducerRuntime(producer runtime.Producer) runtime.Configuration[*SingleProducer] {
+func WithSingleProducerRuntime(producer message.Producer) runtime.Configuration[*SingleProducer] {
 	return func(psf *SingleProducer) *SingleProducer {
 		psf.producer = producer
 		return psf
@@ -42,7 +42,7 @@ func WithSingleProducerPrometheus() runtime.Configuration[*SingleProducer] {
 
 // implementation
 type SingleProducer struct {
-	producer runtime.Producer
+	producer message.Producer
 	next     SingleFunction
 	metric   metric.Produce
 }

@@ -5,9 +5,9 @@ import (
 	"database/sql"
 
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/stateful"
+	"github.com/hjwalt/runway/runtime"
 )
 
 // constructor

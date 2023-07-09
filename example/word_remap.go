@@ -6,10 +6,10 @@ import (
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/format"
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/runtime"
 )
 
 func WordRemapStatelessFunction(c context.Context, m message.Message[string, string]) (*message.Message[string, string], error) {

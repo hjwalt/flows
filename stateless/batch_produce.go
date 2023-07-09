@@ -5,7 +5,7 @@ import (
 
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/metric"
-	"github.com/hjwalt/flows/runtime"
+	"github.com/hjwalt/runway/runtime"
 )
 
 // constructor
@@ -18,7 +18,7 @@ func NewProducerBatchFunction(configurations ...runtime.Configuration[*BatchProd
 }
 
 // configuration
-func WithBatchProducerRuntime(producer runtime.Producer) runtime.Configuration[*BatchProducer] {
+func WithBatchProducerRuntime(producer message.Producer) runtime.Configuration[*BatchProducer] {
 	return func(pbf *BatchProducer) *BatchProducer {
 		pbf.producer = producer
 		return pbf
@@ -34,7 +34,7 @@ func WithBatchProducerNextFunction(next BatchFunction) runtime.Configuration[*Ba
 
 // implementation
 type BatchProducer struct {
-	producer runtime.Producer
+	producer message.Producer
 	next     BatchFunction
 	metric   metric.Produce
 }

@@ -5,9 +5,9 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/hjwalt/flows/metric"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/runtime"
 	"go.uber.org/zap"
 )
 

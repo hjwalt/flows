@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/runtime"
+	"github.com/hjwalt/runway/runtime"
 )
 
 // constructor
@@ -22,7 +22,7 @@ func NewProducerBatchIterateFunction(configurations ...runtime.Configuration[*Pr
 
 // configuration
 
-func WithBatchIterateFunctionProducer(producer runtime.Producer) runtime.Configuration[*ProducerBatchIterateFunction] {
+func WithBatchIterateFunctionProducer(producer message.Producer) runtime.Configuration[*ProducerBatchIterateFunction] {
 	return func(pbif *ProducerBatchIterateFunction) *ProducerBatchIterateFunction {
 		pbif.producer = producer
 		return pbif
@@ -45,7 +45,7 @@ func withProducerBatchIterateWrap(c *ProducerBatchIterateFunction) {
 
 // implementation
 type ProducerBatchIterateFunction struct {
-	producer runtime.Producer
+	producer message.Producer
 	next     SingleFunction
 }
 

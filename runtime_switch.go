@@ -3,7 +3,7 @@ package flows
 import (
 	"errors"
 
-	"github.com/hjwalt/flows/runtime"
+	"github.com/hjwalt/runway/runtime"
 )
 
 func NewMain() Main {

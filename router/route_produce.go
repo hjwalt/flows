@@ -8,9 +8,9 @@ import (
 
 	"github.com/hjwalt/flows/format"
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/runtime"
 )
 
 const (
@@ -35,7 +35,7 @@ func NewRouteProducer(configurations ...runtime.Configuration[*RouteProducer]) *
 }
 
 // configurations
-func WithRouteProducerRuntime(producer runtime.Producer) runtime.Configuration[*RouteProducer] {
+func WithRouteProducerRuntime(producer message.Producer) runtime.Configuration[*RouteProducer] {
 	return func(psf *RouteProducer) *RouteProducer {
 		psf.producer = producer
 		return psf
@@ -51,7 +51,7 @@ func WithRouteBodyMap(bodyMap stateless.OneToOneFunction[message.Bytes, message.
 
 // implementation
 type RouteProducer struct {
-	producer runtime.Producer
+	producer message.Producer
 	bodyMap  stateless.OneToOneFunction[message.Bytes, message.Bytes, message.Bytes, message.Bytes]
 }
 

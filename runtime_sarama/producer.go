@@ -6,11 +6,11 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/runtime"
 )
 
-func NewProducer(configurations ...runtime.Configuration[*Producer]) runtime.Producer {
+func NewProducer(configurations ...runtime.Configuration[*Producer]) message.Producer {
 	producer := &Producer{}
 	for _, configuration := range configurations {
 		producer = configuration(producer)
@@ -22,7 +22,6 @@ type Producer struct {
 	// required
 	Brokers             []string
 	SaramaConfiguration *sarama.Config
-	Controller          runtime.Controller
 
 	// set in start
 	Producer sarama.SyncProducer
@@ -49,9 +48,6 @@ func (p *Producer) Start() error {
 	if p == nil {
 		return errors.New("producer is nil")
 	}
-	if p.Controller == nil {
-		return errors.New("producer controller is nil")
-	}
 	if p.SaramaConfiguration == nil {
 		return errors.New("producer sarama configuration is nil")
 	}
@@ -70,9 +66,6 @@ func (p *Producer) Start() error {
 
 	logger.Info("started sarama producer")
 
-	// mark started in controller
-	p.Controller.Started()
-
 	return nil
 }
 
@@ -83,6 +76,5 @@ func (p *Producer) Stop() {
 		p.Producer.Close()
 	}
 
-	p.Controller.Stopped()
 	logger.Info("stopped sarama producer")
 }

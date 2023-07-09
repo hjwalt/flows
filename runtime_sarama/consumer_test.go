@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/stretchr/testify/assert"
 )
@@ -66,24 +65,7 @@ func TestConsumerStartNilShouldError(t *testing.T) {
 
 	err := consumer.Start()
 
-	assert.NotNil(err)
-	assert.Equal("consumer is nil", err.Error())
-}
-
-func TestConsumerStartNoControllerShouldError(t *testing.T) {
-	assert := assert.New(t)
-
-	consumer := runtime_sarama.NewConsumer(
-		runtime_sarama.WithConsumerBroker("test-broker:9092"),
-		runtime_sarama.WithConsumerTopic("test-topic"),
-		runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
-		runtime_sarama.WithConsumerLoop(ConsumerLoopForTest{}),
-	)
-
-	err := consumer.Start()
-
-	assert.NotNil(err)
-	assert.Equal("consumer controller is nil", err.Error())
+	assert.ErrorIs(err, runtime_sarama.ErrConsumerIsNil)
 }
 
 func TestConsumerStartEmptyTopicsShouldError(t *testing.T) {
@@ -92,14 +74,12 @@ func TestConsumerStartEmptyTopicsShouldError(t *testing.T) {
 	consumer := runtime_sarama.NewConsumer(
 		runtime_sarama.WithConsumerBroker("test-broker:9092"),
 		runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
-		runtime_sarama.WithConsumerRuntimeController(runtime.NewController()),
 		runtime_sarama.WithConsumerLoop(ConsumerLoopForTest{}),
 	)
 
 	err := consumer.Start()
 
-	assert.NotNil(err)
-	assert.Equal("consumer topics are empty", err.Error())
+	assert.ErrorIs(err, runtime_sarama.ErrConsumerTopicsEmpty)
 }
 
 func TestConsumerStartEmptyBrokersShouldError(t *testing.T) {
@@ -108,14 +88,12 @@ func TestConsumerStartEmptyBrokersShouldError(t *testing.T) {
 	consumer := runtime_sarama.NewConsumer(
 		runtime_sarama.WithConsumerTopic("test-topic"),
 		runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
-		runtime_sarama.WithConsumerRuntimeController(runtime.NewController()),
 		runtime_sarama.WithConsumerLoop(ConsumerLoopForTest{}),
 	)
 
 	err := consumer.Start()
 
-	assert.NotNil(err)
-	assert.Equal("consumer brokers are empty", err.Error())
+	assert.ErrorIs(err, runtime_sarama.ErrConsumerBrokersEmpty)
 }
 
 func TestConsumerStartEmptyConsumerLoopShouldError(t *testing.T) {
@@ -125,13 +103,11 @@ func TestConsumerStartEmptyConsumerLoopShouldError(t *testing.T) {
 		runtime_sarama.WithConsumerTopic("test-topic"),
 		runtime_sarama.WithConsumerBroker("test-broker:9092"),
 		runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
-		runtime_sarama.WithConsumerRuntimeController(runtime.NewController()),
 	)
 
 	err := consumer.Start()
 
-	assert.NotNil(err)
-	assert.Equal("consumer loop is nil", err.Error())
+	assert.ErrorIs(err, runtime_sarama.ErrConsumerLoopIsNil)
 }
 
 func TestConsumerStartMissingSaramaConfigShouldError(t *testing.T) {
@@ -140,14 +116,12 @@ func TestConsumerStartMissingSaramaConfigShouldError(t *testing.T) {
 	consumer := runtime_sarama.NewConsumer(
 		runtime_sarama.WithConsumerTopic("test-topic"),
 		runtime_sarama.WithConsumerBroker("test-broker:9092"),
-		runtime_sarama.WithConsumerRuntimeController(runtime.NewController()),
 		runtime_sarama.WithConsumerLoop(ConsumerLoopForTest{}),
 	)
 
 	err := consumer.Start()
 
-	assert.NotNil(err)
-	assert.Equal("consumer sarama configuration is nil", err.Error())
+	assert.ErrorIs(err, runtime_sarama.ErrConsumerSaramaConfigurationIsNil)
 }
 
 func TestConsumerStartMissingBrokerShouldError(t *testing.T) {
@@ -157,7 +131,6 @@ func TestConsumerStartMissingBrokerShouldError(t *testing.T) {
 		runtime_sarama.WithConsumerBroker("localhost:12345"),
 		runtime_sarama.WithConsumerTopic("test-topic"),
 		runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
-		runtime_sarama.WithConsumerRuntimeController(runtime.NewController()),
 		runtime_sarama.WithConsumerLoop(ConsumerLoopForTest{}),
 	)
 
@@ -170,18 +143,14 @@ func TestConsumerStartMissingBrokerShouldError(t *testing.T) {
 func TestConsumerRunWhenNoConsumeErrorShouldExitAfterCancel(t *testing.T) {
 	assert := assert.New(t)
 
-	controller := runtime.NewController()
-	controller.Started()
-
 	ctx, cancel := context.WithCancel(context.Background())
 
 	completed := make(chan bool, 1)
 
 	consumer := runtime_sarama.Consumer{
-		Context:    ctx,
-		Cancel:     cancel,
-		Controller: controller,
-		Group:      ConsumerGroupForTest{consumeError: false},
+		Context: ctx,
+		Cancel:  cancel,
+		Group:   ConsumerGroupForTest{consumeError: false},
 	}
 
 	go func() {
@@ -199,18 +168,14 @@ func TestConsumerRunWhenNoConsumeErrorShouldExitAfterCancel(t *testing.T) {
 func TestConsumerRunWhenConsumeErrorShouldExitImmediately(t *testing.T) {
 	assert := assert.New(t)
 
-	controller := runtime.NewController()
-	controller.Started()
-
 	ctx, cancel := context.WithCancel(context.Background())
 
 	completed := make(chan bool, 1)
 
 	consumer := runtime_sarama.Consumer{
-		Context:    ctx,
-		Cancel:     cancel,
-		Controller: controller,
-		Group:      ConsumerGroupForTest{consumeError: true},
+		Context: ctx,
+		Cancel:  cancel,
+		Group:   ConsumerGroupForTest{consumeError: true},
 	}
 
 	go func() {

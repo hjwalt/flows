@@ -1,11 +1,12 @@
 package flows
 
 import (
-	"github.com/hjwalt/flows/runtime"
+	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime_bunrouter"
+	"github.com/hjwalt/runway/runtime"
 )
 
-func RouteRuntime(producer runtime.Producer, routeConfiguration []runtime.Configuration[*runtime_bunrouter.Router]) runtime.Runtime {
+func RouteRuntime(producer message.Producer, routeConfiguration []runtime.Configuration[*runtime_bunrouter.Router]) runtime.Runtime {
 
 	routeConfig := append(
 		make([]runtime.Configuration[*runtime_bunrouter.Router], 0),

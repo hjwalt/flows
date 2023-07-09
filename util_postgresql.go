@@ -3,18 +3,14 @@ package flows
 import (
 	"github.com/hjwalt/flows/materialise"
 	"github.com/hjwalt/flows/materialise_bun"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateful_bun"
+	"github.com/hjwalt/runway/runtime"
 )
 
-func Postgresql(ctrl runtime.Controller, configs []runtime.Configuration[*runtime_bun.PostgresqlConnection]) runtime_bun.BunConnection {
-	postgresConnectionConfig := append(
-		configs,
-		runtime_bun.WithController(ctrl),
-	)
-	return runtime_bun.NewPostgresqlConnection(postgresConnectionConfig...)
+func Postgresql(configs []runtime.Configuration[*runtime_bun.PostgresqlConnection]) runtime_bun.BunConnection {
+	return runtime_bun.NewPostgresqlConnection(configs...)
 }
 
 func PostgresqlSingleStateRepository(conn runtime_bun.BunConnection, tableName string) stateful.SingleStateRepository {

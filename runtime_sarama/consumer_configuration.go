@@ -2,15 +2,8 @@ package runtime_sarama
 
 import (
 	"github.com/Shopify/sarama"
-	"github.com/hjwalt/flows/runtime"
+	"github.com/hjwalt/runway/runtime"
 )
-
-func WithConsumerRuntimeController(controller runtime.Controller) runtime.Configuration[*Consumer] {
-	return func(c *Consumer) *Consumer {
-		c.Controller = controller
-		return c
-	}
-}
 
 func WithConsumerTopic(topics ...string) runtime.Configuration[*Consumer] {
 	return func(c *Consumer) *Consumer {

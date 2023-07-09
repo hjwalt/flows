@@ -9,9 +9,9 @@ import (
 
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/router"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/uptrace/bunrouter"
 	"go.uber.org/zap"
@@ -164,7 +164,7 @@ func WithRouterPrometheus() runtime.Configuration[*Router] {
 	}
 }
 
-func WithRouterProducer(producer runtime.Producer) runtime.Configuration[*Router] {
+func WithRouterProducer(producer message.Producer) runtime.Configuration[*Router] {
 	return func(r *Router) *Router {
 		r.producer = producer
 		return r
@@ -177,7 +177,7 @@ type Router struct {
 	router   *bunrouter.Router
 	group    *bunrouter.Group
 	port     int
-	producer runtime.Producer
+	producer message.Producer
 }
 
 func (r *Router) Start() error {

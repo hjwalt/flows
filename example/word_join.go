@@ -6,12 +6,12 @@ import (
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/format"
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/reflect"
+	"github.com/hjwalt/runway/runtime"
 	"go.uber.org/zap"
 )
 

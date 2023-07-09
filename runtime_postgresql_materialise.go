@@ -3,10 +3,10 @@ package flows
 import (
 	"github.com/hjwalt/flows/materialise"
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_sarama"
+	"github.com/hjwalt/runway/runtime"
 )
 
 type MaterialisePostgresqlFunctionConfiguration[T any] struct {
@@ -18,14 +18,13 @@ type MaterialisePostgresqlFunctionConfiguration[T any] struct {
 }
 
 func (c MaterialisePostgresqlFunctionConfiguration[T]) Runtime() runtime.Runtime {
-	ctrl := runtime.NewController()
 
 	// postgres runtime
-	conn := Postgresql(ctrl, c.PostgresqlConfiguration)
+	conn := Postgresql(c.PostgresqlConfiguration)
 	repository := PostgresqlUpsertRepository[T](conn)
 
 	// producer runtime
-	producer := KafkaProducer(ctrl, c.KafkaProducerConfiguration)
+	producer := KafkaProducer(c.KafkaProducerConfiguration)
 
 	// function
 	materialiseFn := materialise.NewSingleUpsert(
@@ -36,19 +35,18 @@ func (c MaterialisePostgresqlFunctionConfiguration[T]) Runtime() runtime.Runtime
 	retriedFn, retryRuntime := WrapRetry(materialiseFn)
 
 	// consumer runtime
-	consumer := KafkaConsumerSingle(ctrl, retriedFn, c.KafkaConsumerConfiguration)
+	consumer := KafkaConsumerSingle(retriedFn, c.KafkaConsumerConfiguration)
 
 	// http runtime
 	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
 
-	// multi runtime configuration
-	multi := runtime.NewMulti(
-		runtime.WithController(ctrl),
-		runtime.WithRuntime(conn),
-		runtime.WithRuntime(routerRuntime),
-		runtime.WithRuntime(producer),
-		runtime.WithRuntime(consumer),
-		runtime.WithRuntime(retryRuntime),
-	)
-	return multi
+	return &RuntimeFacade{
+		Runtimes: []runtime.Runtime{
+			conn,
+			routerRuntime,
+			producer,
+			consumer,
+			retryRuntime,
+		},
+	}
 }

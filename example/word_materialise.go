@@ -7,9 +7,9 @@ import (
 	"github.com/hjwalt/flows/format"
 	"github.com/hjwalt/flows/materialise"
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_sarama"
+	"github.com/hjwalt/runway/runtime"
 	"github.com/uptrace/bun"
 )
 

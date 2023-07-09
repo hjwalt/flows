@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/runtime"
 	"go.uber.org/zap"
 )
 

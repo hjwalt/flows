@@ -1,8 +1,10 @@
 package runtime_retry
 
 import (
+	"sync/atomic"
+
 	"github.com/avast/retry-go"
-	"github.com/hjwalt/flows/runtime"
+	"github.com/hjwalt/runway/runtime"
 )
 
 // configurations
@@ -16,9 +18,7 @@ func WithRetryOption(options ...retry.Option) runtime.Configuration[*Retry] {
 
 // constructor
 func NewRetry(configurations ...runtime.Configuration[*Retry]) *Retry {
-	consumer := &Retry{
-		stopped: false,
-	}
+	consumer := &Retry{}
 	for _, configuration := range configurations {
 		consumer = configuration(consumer)
 	}
@@ -28,21 +28,22 @@ func NewRetry(configurations ...runtime.Configuration[*Retry]) *Retry {
 // implementation
 type Retry struct {
 	options []retry.Option
-	stopped bool
+	stopped atomic.Bool
 }
 
 func (c *Retry) Start() error {
+	c.stopped.Store(false)
 	return nil
 }
 
 func (c *Retry) Stop() {
-	c.stopped = true
+	c.stopped.Store(true)
 }
 
 func (c *Retry) Do(fnToDo func(int64) error) error {
 	tryCount := int64(0)
 	return retry.Do(func() error {
-		if c.stopped {
+		if c.stopped.Load() {
 			return Stopped()
 		}
 		tryCount += 1

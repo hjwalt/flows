@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/runtime"
+	"github.com/hjwalt/runway/runtime"
 )
 
 // constructor

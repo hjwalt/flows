@@ -1,10 +1,10 @@
 package flows
 
 import (
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/runway/runtime"
 )
 
 // Wiring configuration
@@ -16,11 +16,8 @@ type StatelessSingleFunctionConfiguration struct {
 }
 
 func (c StatelessSingleFunctionConfiguration) Runtime() runtime.Runtime {
-
-	ctrl := runtime.NewController()
-
 	// producer runtime
-	producer := KafkaProducer(ctrl, c.KafkaProducerConfiguration)
+	producer := KafkaProducer(c.KafkaProducerConfiguration)
 
 	// function wrapping
 	// - produce output messages
@@ -30,18 +27,17 @@ func (c StatelessSingleFunctionConfiguration) Runtime() runtime.Runtime {
 	produceRetry, retryRuntime := WrapRetry(messagesProduced)
 
 	// consumer runtime
-	consumer := KafkaConsumerSingle(ctrl, produceRetry, c.KafkaConsumerConfiguration)
+	consumer := KafkaConsumerSingle(produceRetry, c.KafkaConsumerConfiguration)
 
 	// http runtime
 	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
 
-	// multi runtime configuration
-	multi := runtime.NewMulti(
-		runtime.WithController(ctrl),
-		runtime.WithRuntime(routerRuntime),
-		runtime.WithRuntime(producer),
-		runtime.WithRuntime(consumer),
-		runtime.WithRuntime(retryRuntime),
-	)
-	return multi
+	return &RuntimeFacade{
+		Runtimes: []runtime.Runtime{
+			routerRuntime,
+			producer,
+			consumer,
+			retryRuntime,
+		},
+	}
 }

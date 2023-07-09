@@ -6,18 +6,18 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/google/uuid"
-	"github.com/hjwalt/flows/runtime"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/runtime"
 	"go.uber.org/zap"
 )
 
 // constructor
-func NewConsumer(configurations ...runtime.Configuration[*Consumer]) *Consumer {
+func NewConsumer(configurations ...runtime.Configuration[*Consumer]) runtime.Runtime {
 	consumer := &Consumer{}
 	for _, configuration := range configurations {
 		consumer = configuration(consumer)
 	}
-	return consumer
+	return runtime.NewRunner(consumer)
 }
 
 // implementation
@@ -27,7 +27,7 @@ type Consumer struct {
 	Brokers             []string
 	SaramaConfiguration *sarama.Config
 	Loop                ConsumerLoop
-	Controller          runtime.Controller
+	// Controller          runtime.Controller
 
 	// not required
 	GroupName string
@@ -42,22 +42,19 @@ func (c *Consumer) Start() error {
 
 	// basic validations
 	if c == nil {
-		return errors.New("consumer is nil")
-	}
-	if c.Controller == nil {
-		return errors.New("consumer controller is nil")
+		return ErrConsumerIsNil
 	}
 	if c.Loop == nil {
-		return errors.New("consumer loop is nil")
+		return ErrConsumerLoopIsNil
 	}
 	if c.SaramaConfiguration == nil {
-		return errors.New("consumer sarama configuration is nil")
+		return ErrConsumerSaramaConfigurationIsNil
 	}
 	if len(c.Topics) == 0 {
-		return errors.New("consumer topics are empty")
+		return ErrConsumerTopicsEmpty
 	}
 	if len(c.Brokers) == 0 {
-		return errors.New("consumer brokers are empty")
+		return ErrConsumerBrokersEmpty
 	}
 
 	logger.Info("starting sarama consumer")
@@ -82,9 +79,6 @@ func (c *Consumer) Start() error {
 	go c.Run()
 	logger.Info("started sarama consumer")
 
-	// mark started in controller
-	c.Controller.Started()
-
 	return nil
 }
 
@@ -101,7 +95,7 @@ func (c *Consumer) Stop() {
 	logger.Info("stopped sarama consumer")
 }
 
-func (c *Consumer) Run() {
+func (c *Consumer) Run() error {
 	logger.Info("sarama consumer run start")
 	for {
 		// `Consume` should be called inside an infinite loop, when a
@@ -118,9 +112,8 @@ func (c *Consumer) Run() {
 		}
 	}
 
-	// mark stopped when exiting loop
-	c.Controller.Stopped()
 	logger.Info("sarama consumer run end")
+	return nil
 }
 
 type ConsumerLoop interface {
@@ -130,3 +123,12 @@ type ConsumerLoop interface {
 	Start() error
 	Stop()
 }
+
+// Errors
+var (
+	ErrConsumerIsNil                    = errors.New("consumer is nil")
+	ErrConsumerLoopIsNil                = errors.New("consumer loop is nil")
+	ErrConsumerSaramaConfigurationIsNil = errors.New("consumer sarama configuration is nil")
+	ErrConsumerTopicsEmpty              = errors.New("consumer topics are empty")
+	ErrConsumerBrokersEmpty             = errors.New("consumer brokers are empty")
+)
