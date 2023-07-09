@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/hjwalt/flows/runtime_sarama"
@@ -140,48 +139,15 @@ func TestConsumerStartMissingBrokerShouldError(t *testing.T) {
 	assert.Contains(err.Error(), "kafka: client has run out of available brokers to talk to")
 }
 
-func TestConsumerRunWhenNoConsumeErrorShouldExitAfterCancel(t *testing.T) {
+func TestConsumerRunWhenConsumeErrorShouldReturn(t *testing.T) {
 	assert := assert.New(t)
+
+	consumer := runtime_sarama.Consumer{
+		Group: ConsumerGroupForTest{consumeError: true},
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	completed := make(chan bool, 1)
-
-	consumer := runtime_sarama.Consumer{
-		Context: ctx,
-		Cancel:  cancel,
-		Group:   ConsumerGroupForTest{consumeError: false},
-	}
-
-	go func() {
-		consumer.Run()
-		completed <- true
-	}()
-
-	time.Sleep(time.Millisecond)
-	assert.Equal(0, len(completed))
-	cancel()
-	time.Sleep(time.Millisecond)
-	assert.Equal(1, len(completed))
-}
-
-func TestConsumerRunWhenConsumeErrorShouldExitImmediately(t *testing.T) {
-	assert := assert.New(t)
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	completed := make(chan bool, 1)
-
-	consumer := runtime_sarama.Consumer{
-		Context: ctx,
-		Cancel:  cancel,
-		Group:   ConsumerGroupForTest{consumeError: true},
-	}
-
-	go func() {
-		consumer.Run()
-		completed <- true
-	}()
-	time.Sleep(time.Millisecond)
-	assert.Equal(1, len(completed))
+	err := consumer.Loop(ctx, cancel)
+	assert.Equal(err.Error(), "mocked consume error")
 }

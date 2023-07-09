@@ -1,11 +1,8 @@
 package runtime_bunrouter
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/router"
@@ -25,20 +22,32 @@ const (
 )
 
 // constructor
-func NewRouter(configurations ...runtime.Configuration[*Router]) *Router {
+func NewRouter(configurations ...runtime.Configuration[*Router]) runtime.Runtime {
 	router := &Router{
-		router: bunrouter.New(),
+		runtimeConfiguration: []runtime.Configuration[*runtime.HttpRunnable]{},
+		router:               bunrouter.New(),
 	}
+
 	for _, configuration := range configurations {
 		router = configuration(router)
 	}
-	return router
+
+	runtimeConfiguration := append(router.runtimeConfiguration, runtime.HttpWithHandler(router.router))
+
+	return runtime.NewHttp(runtimeConfiguration...)
 }
 
 // configuration
 func WithRouterPort(port int) runtime.Configuration[*Router] {
 	return func(r *Router) *Router {
-		r.port = port
+		r.runtimeConfiguration = append(r.runtimeConfiguration, runtime.HttpWithPort(port))
+		return r
+	}
+}
+
+func WithRouterHttpConfiguration(config runtime.Configuration[*runtime.HttpRunnable]) runtime.Configuration[*Router] {
+	return func(r *Router) *Router {
+		r.runtimeConfiguration = append(r.runtimeConfiguration, config)
 		return r
 	}
 }
@@ -173,45 +182,8 @@ func WithRouterProducer(producer message.Producer) runtime.Configuration[*Router
 
 // implementation
 type Router struct {
-	server   *http.Server
-	router   *bunrouter.Router
-	group    *bunrouter.Group
-	port     int
-	producer message.Producer
-}
-
-func (r *Router) Start() error {
-	if r.port == 0 {
-		r.port = 8080
-	}
-
-	// run server
-	r.server = &http.Server{
-		Addr:         ":" + fmt.Sprintf("%d", r.port),
-		Handler:      r.router,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-	}
-
-	go r.Run()
-
-	logger.Infof("router started")
-
-	return nil
-}
-
-func (runtime *Router) Stop() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := runtime.server.Shutdown(ctx); err != nil {
-		logger.Error("Server forced to shutdown: ", zap.Error(err))
-	}
-	logger.Infof("router stopped")
-}
-
-func (r *Router) Run() {
-	if err := r.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		panic(err)
-	}
-	logger.Infof("router run ended")
+	runtimeConfiguration []runtime.Configuration[*runtime.HttpRunnable]
+	router               *bunrouter.Router
+	group                *bunrouter.Group
+	producer             message.Producer
 }

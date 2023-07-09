@@ -35,7 +35,7 @@ func WithConsumerSaramaConfig(saramaConfig *sarama.Config) runtime.Configuration
 
 func WithConsumerLoop(loop ConsumerLoop) runtime.Configuration[*Consumer] {
 	return func(c *Consumer) *Consumer {
-		c.Loop = loop
+		c.Handler = loop
 		return c
 	}
 }
