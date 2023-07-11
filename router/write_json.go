@@ -4,12 +4,12 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/hjwalt/flows/format"
+	"github.com/hjwalt/runway/format"
 )
 
 func WriteJson[R any](w http.ResponseWriter, httpStatus int, r R, f format.Format[R]) error {
 
-	jsonBody, jsonErr := f.ToJson(r)
+	jsonBody, jsonErr := f.Marshal(r)
 	if jsonErr != nil {
 		return errors.Join(ErrorWriteJsonFormat, jsonErr)
 	}

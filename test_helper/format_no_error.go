@@ -3,7 +3,7 @@ package test_helper
 import (
 	"testing"
 
-	"github.com/hjwalt/flows/format"
+	"github.com/hjwalt/runway/format"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -2,8 +2,8 @@ package runtime_sarama
 
 import (
 	"github.com/Shopify/sarama"
-	"github.com/hjwalt/flows/format"
 	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
 )
 

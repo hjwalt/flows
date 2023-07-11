@@ -1,7 +1,7 @@
 package stateful
 
 import (
-	"github.com/hjwalt/flows/format"
+	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
 )
 

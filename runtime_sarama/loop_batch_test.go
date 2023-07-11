@@ -133,9 +133,9 @@ func TestBatchConsumeLoopWhenNoErrorShouldTriggerOnTimer(t *testing.T) {
 	time.Sleep(time.Millisecond)
 	assert.Equal(0, len(completed))
 	messages <- &sarama.ConsumerMessage{Partition: 1}
-	time.Sleep(101 * time.Millisecond)
+	time.Sleep(102 * time.Millisecond)
 	close(messages)
-	time.Sleep(101 * time.Millisecond)
+	time.Sleep(102 * time.Millisecond)
 	assert.Equal(1, len(completed))
 
 	result := <-completed

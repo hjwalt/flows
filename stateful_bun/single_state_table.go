@@ -1,10 +1,10 @@
 package stateful_bun
 
 import (
-	"github.com/hjwalt/flows/format"
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/flows/stateful"
+	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
 )
 

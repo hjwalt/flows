@@ -3,8 +3,8 @@ package stateless
 import (
 	"context"
 
-	"github.com/hjwalt/flows/format"
 	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/runway/format"
 )
 
 func ConvertOneToOne[IK any, IV any, OK any, OV any](

@@ -1,11 +1,10 @@
 package test_helper
 
 import (
-	"encoding/json"
 	"errors"
 	"strings"
 
-	"github.com/hjwalt/flows/format"
+	"github.com/hjwalt/runway/format"
 )
 
 type crappyStringFormat struct {
@@ -27,28 +26,6 @@ func (helper crappyStringFormat) Unmarshal(value []byte) (string, error) {
 		return "", errors.New(string(value))
 	}
 	return string(value), nil
-}
-
-func (helper crappyStringFormat) ToJson(value string) ([]byte, error) {
-	if strings.ToLower(value) == "error" {
-		return []byte{}, errors.New(value)
-	}
-	return json.Marshal(StringJson{Message: value})
-}
-
-func (helper crappyStringFormat) FromJson(value []byte) (string, error) {
-	if len(value) == 0 {
-		return "", nil
-	}
-	if strings.ToLower(string(value)) == "error" {
-		return "", errors.New(string(value))
-	}
-	jsonMessage := &StringJson{}
-	err := json.Unmarshal(value, jsonMessage)
-	if err != nil {
-		return "", err
-	}
-	return jsonMessage.Message, nil
 }
 
 type StringJson struct {

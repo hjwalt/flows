@@ -3,8 +3,8 @@ package stateful
 import (
 	"context"
 
-	"github.com/hjwalt/flows/format"
 	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
 	"go.uber.org/zap"

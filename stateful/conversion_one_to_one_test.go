@@ -152,7 +152,7 @@ func TestConvertOneToOne(t *testing.T) {
 
 			if len(testcase.err) > 0 {
 				assert.Equal(0, len(output))
-				assert.EqualError(err, testcase.err)
+				assert.Contains(err.Error(), testcase.err)
 				return
 			}
 

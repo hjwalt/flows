@@ -3,7 +3,7 @@ package router
 import (
 	"net/http"
 
-	"github.com/hjwalt/flows/format"
+	"github.com/hjwalt/runway/format"
 )
 
 func WriteError(w http.ResponseWriter, httpStatus int, err error) error {

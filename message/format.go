@@ -1,10 +1,8 @@
 package message
 
 import (
-	"errors"
-
-	"github.com/hjwalt/flows/format"
 	"github.com/hjwalt/flows/protobuf"
+	"github.com/hjwalt/runway/format"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -61,14 +59,6 @@ func (helper MessageFormat) Unmarshal(value []byte) (Message[[]byte, []byte], er
 		Headers:   headers,
 		Timestamp: protoMessage.Timestamp.AsTime(),
 	}, nil
-}
-
-func (helper MessageFormat) ToJson(value Message[[]byte, []byte]) ([]byte, error) {
-	return make([]byte, 0), errors.New("not supported")
-}
-
-func (helper MessageFormat) FromJson(value []byte) (Message[[]byte, []byte], error) {
-	return helper.Default(), errors.New("not supported")
 }
 
 func Format() format.Format[Message[[]byte, []byte]] {

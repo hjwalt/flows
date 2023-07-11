@@ -3,7 +3,7 @@ package configuration
 import (
 	"os"
 
-	"github.com/hjwalt/flows/format"
+	"github.com/hjwalt/runway/format"
 )
 
 func Read[T any](file string, f format.Format[T]) (T, error) {

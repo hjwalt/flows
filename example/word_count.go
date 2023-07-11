@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/hjwalt/flows"
-	"github.com/hjwalt/flows/format"
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/flows/router"
@@ -13,6 +12,7 @@ import (
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
+	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/reflect"
 	"github.com/hjwalt/runway/runtime"

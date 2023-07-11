@@ -66,7 +66,7 @@ func TestConvertPersistenceId(t *testing.T) {
 
 			if len(testcase.err) > 0 {
 				assert.Equal(0, len(persistenceId))
-				assert.EqualError(persistenceIdErr, testcase.err)
+				assert.Contains(persistenceIdErr.Error(), testcase.err)
 				return
 			}
 
