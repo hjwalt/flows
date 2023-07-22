@@ -84,8 +84,13 @@ func (r *Consumer) Loop(ctx context.Context, cancel context.CancelFunc) error {
 	// `Consume` should be called inside an infinite loop, when a
 	// server-side rebalance happens, the consumerGroup session will need to be
 	// recreated to get the new claims
+	if len(r.Group.Errors()) > 0 {
+		return <-r.Group.Errors()
+	}
+
 	if err := r.Group.Consume(ctx, r.Topics, r.Handler); err != nil {
 		if err.Error() == "kafka: tried to use a consumer group that was closed" {
+			cancel()
 			return nil
 		}
 

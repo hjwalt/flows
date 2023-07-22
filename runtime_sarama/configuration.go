@@ -12,6 +12,7 @@ func DefaultConfiguration() *sarama.Config {
 	saramaconfig.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRange
 	saramaconfig.Consumer.Offsets.AutoCommit.Enable = true
 	saramaconfig.Consumer.Offsets.Initial = sarama.OffsetOldest
+	saramaconfig.Consumer.Return.Errors = true
 
 	saramaconfig.Producer.Idempotent = false
 	saramaconfig.Producer.RequiredAcks = sarama.WaitForAll // Wait for all in-sync replicas to ack the message

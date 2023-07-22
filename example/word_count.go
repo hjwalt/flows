@@ -2,14 +2,17 @@ package example
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
+	"github.com/avast/retry-go"
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
+	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/runway/format"
@@ -44,7 +47,7 @@ func WordCountStatefulFunction(c context.Context, m message.Message[string, stri
 		Value: reflect.GetString(s.Content.Count),
 	}
 
-	return &outMessage, s, nil
+	return &outMessage, s, errors.New("test")
 }
 
 func WordCount() runtime.Runtime {
@@ -78,7 +81,14 @@ func WordCount() runtime.Runtime {
 			runtime_sarama.WithConsumerTopic("word"),
 			runtime_sarama.WithConsumerGroupName("flows-word-count"),
 		},
+		RetryConfiguration: []runtime.Configuration[*runtime_retry.Retry]{
+			runtime_retry.WithRetryOption(
+				retry.Attempts(3),
+			),
+			runtime_retry.WithRetryAbsorbError(true),
+		},
 		RouteConfiguration: []runtime.Configuration[*runtime_bunrouter.Router]{
+			runtime_bunrouter.WithRouterPort(8081),
 			runtime_bunrouter.WithRouterGroup("/api"),
 			runtime_bunrouter.WithRouterBunHandler(runtime_bunrouter.GET, "/dummy", func(w http.ResponseWriter, req bunrouter.Request) error {
 				state := &protobuf.State{

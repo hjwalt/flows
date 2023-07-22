@@ -30,7 +30,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
   
   postgres:
-    image: docker.io/postgres
+    image: docker.io/library/postgres
     hostname: postgres
     container_name: postgres
     restart: always

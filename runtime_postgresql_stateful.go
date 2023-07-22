@@ -3,6 +3,7 @@ package flows
 import (
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
+	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/runway/runtime"
@@ -13,6 +14,7 @@ type StatefulPostgresqlFunctionConfiguration struct {
 	PostgresqlConfiguration    []runtime.Configuration[*runtime_bun.PostgresqlConnection]
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
+	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
 	StatefulFunction           stateful.SingleFunction
 	PersistenceIdFunction      stateful.PersistenceIdFunction[[]byte, []byte]
 	PersistenceTableName       string
@@ -45,7 +47,7 @@ func (c StatefulPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	messagesProduced := WrapSingleProduce(stateTransaction, producer)
 
 	// - retry
-	produceRetry, retryRuntime := WrapRetry(messagesProduced)
+	produceRetry, retryRuntime := WrapRetry(messagesProduced, c.RetryConfiguration)
 
 	// consumer runtime
 	consumer := KafkaConsumerSingle(produceRetry, c.KafkaConsumerConfiguration)
