@@ -91,7 +91,7 @@ func (c *Retry) Do(fnToDo func(int64) error) error {
 		return fnToDo(tryCount)
 	}, c.options...)
 
-	if c.absorb {
+	if c.absorb && err != nil {
 		logger.ErrorErr("absorbing retry error", err)
 		return nil
 	}

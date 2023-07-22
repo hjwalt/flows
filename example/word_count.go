@@ -9,11 +9,10 @@ import (
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/flows/router"
-	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
-	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
+	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/reflect"
@@ -50,34 +49,20 @@ func WordCountStatefulFunction(c context.Context, m message.Message[string, stri
 }
 
 func WordCount() runtime.Runtime {
-	statefulFunctionConfiguration := flows.StatefulPostgresqlFunctionConfiguration{
-		PersistenceTableName: "public.flows_state",
-		PostgresqlConfiguration: []runtime.Configuration[*runtime_bun.PostgresqlConnection]{
-			runtime_bun.WithApplicationName("flows"),
-			runtime_bun.WithConnectionString("postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"),
-		},
+	statefulFunctionConfiguration := flows.StatefulPostgresqlOneToOneFunctionConfiguration[*WordCountState, string, string, string, string]{
+		Name:                     "flows-word-count",
+		InputTopic:               topic.String("word"),
+		OutputTopic:              topic.String("word-count"),
+		Function:                 WordCountStatefulFunction,
+		InputBroker:              "localhost:9092",
+		OutputBroker:             "localhost:9092",
+		HttpPort:                 8081,
+		StateFormat:              format.Protobuf[*WordCountState](),
+		StateKeyFunction:         WordCountPersistenceId,
+		PostgresTable:            "public.flows_state",
+		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
 
-		PersistenceIdFunction: stateful.ConvertPersistenceId(
-			WordCountPersistenceId,
-			format.String(),
-			format.String(),
-		),
-		StatefulFunction: stateful.ConvertOneToOne(
-			WordCountStatefulFunction,
-			format.Protobuf[*WordCountState](),
-			format.String(),
-			format.String(),
-			format.String(),
-			format.String(),
-		),
-		KafkaProducerConfiguration: []runtime.Configuration[*runtime_sarama.Producer]{
-			runtime_sarama.WithProducerBroker("localhost:9092"),
-		},
-		KafkaConsumerConfiguration: []runtime.Configuration[*runtime_sarama.Consumer]{
-			runtime_sarama.WithConsumerBroker("localhost:9092"),
-			runtime_sarama.WithConsumerTopic("word"),
-			runtime_sarama.WithConsumerGroupName("flows-word-count"),
-		},
+		// Optional configurations
 		RetryConfiguration: []runtime.Configuration[*runtime_retry.Retry]{
 			runtime_retry.WithRetryOption(
 				retry.Attempts(3),
@@ -85,7 +70,6 @@ func WordCount() runtime.Runtime {
 			runtime_retry.WithAbsorbError(true),
 		},
 		RouteConfiguration: []runtime.Configuration[*runtime_bunrouter.Router]{
-			runtime_bunrouter.WithRouterPort(8081),
 			runtime_bunrouter.WithRouterGroup("/api"),
 			runtime_bunrouter.WithRouterBunHandler(runtime_bunrouter.GET, "/dummy", func(w http.ResponseWriter, req bunrouter.Request) error {
 				state := &protobuf.State{
@@ -104,7 +88,6 @@ func WordCount() runtime.Runtime {
 				state := TestResponse{
 					Message: "test",
 				}
-
 				return router.WriteJson(w, 200, state, format.Json[TestResponse]())
 			}),
 			runtime_bunrouter.WithRouterProducerHandler(runtime_bunrouter.POST, "/produce", func(ctx context.Context, req message.Message[message.Bytes, message.Bytes]) (*message.Message[message.Bytes, message.Bytes], error) {

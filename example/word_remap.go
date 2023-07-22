@@ -5,9 +5,7 @@ import (
 
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/runtime_sarama"
-	"github.com/hjwalt/flows/stateless"
-	"github.com/hjwalt/runway/format"
+	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
 )
@@ -23,22 +21,14 @@ func WordRemapStatelessFunction(c context.Context, m message.Message[string, str
 }
 
 func WordRemap() runtime.Runtime {
-	statelessFunctionConfiguration := flows.StatelessSingleFunctionConfiguration{
-		StatelessFunction: stateless.ConvertOneToOne(
-			WordRemapStatelessFunction,
-			format.String(),
-			format.String(),
-			format.String(),
-			format.String(),
-		),
-		KafkaProducerConfiguration: []runtime.Configuration[*runtime_sarama.Producer]{
-			runtime_sarama.WithProducerBroker("localhost:9092"),
-		},
-		KafkaConsumerConfiguration: []runtime.Configuration[*runtime_sarama.Consumer]{
-			runtime_sarama.WithConsumerBroker("localhost:9092"),
-			runtime_sarama.WithConsumerTopic("word-updated"),
-			runtime_sarama.WithConsumerGroupName("flows-word-remap"),
-		},
+	statelessFunctionConfiguration := flows.StatelessOneToOneConfiguration[string, string, string, string]{
+		Name:         "flows-word-remap",
+		InputTopic:   topic.String("word"),
+		OutputTopic:  topic.String("word-updated"),
+		Function:     WordRemapStatelessFunction,
+		InputBroker:  "localhost:9092",
+		OutputBroker: "localhost:9092",
+		HttpPort:     8081,
 	}
 
 	return statelessFunctionConfiguration.Runtime()
