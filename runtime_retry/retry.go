@@ -57,7 +57,7 @@ func WithMaxDelay(delay time.Duration) runtime.Configuration[*Retry] {
 	}
 }
 
-func WithRetryAbsorbError(absorb bool) runtime.Configuration[*Retry] {
+func WithAbsorbError(absorb bool) runtime.Configuration[*Retry] {
 	return func(c *Retry) *Retry {
 		c.absorb = absorb
 		return c

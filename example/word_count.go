@@ -2,7 +2,6 @@ package example
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/avast/retry-go"
@@ -47,7 +46,7 @@ func WordCountStatefulFunction(c context.Context, m message.Message[string, stri
 		Value: reflect.GetString(s.Content.Count),
 	}
 
-	return &outMessage, s, errors.New("test")
+	return &outMessage, s, nil
 }
 
 func WordCount() runtime.Runtime {
@@ -85,7 +84,7 @@ func WordCount() runtime.Runtime {
 			runtime_retry.WithRetryOption(
 				retry.Attempts(3),
 			),
-			runtime_retry.WithRetryAbsorbError(true),
+			runtime_retry.WithAbsorbError(true),
 		},
 		RouteConfiguration: []runtime.Configuration[*runtime_bunrouter.Router]{
 			runtime_bunrouter.WithRouterPort(8081),
