@@ -21,9 +21,7 @@ func TestProducerStartNilShouldError(t *testing.T) {
 func TestProducerStartEmptyBrokersShouldError(t *testing.T) {
 	assert := assert.New(t)
 
-	producer := runtime_sarama.NewProducer(
-		runtime_sarama.WithProducerSaramaConfig(runtime_sarama.DefaultConfiguration()),
-	)
+	producer := runtime_sarama.NewProducer()
 
 	err := producer.Start()
 
@@ -38,6 +36,8 @@ func TestProducerStartMissingSaramaConfigShouldError(t *testing.T) {
 		runtime_sarama.WithProducerBroker("localhost:12345"),
 	)
 
+	producer.(*runtime_sarama.Producer).SaramaConfiguration = nil
+
 	err := producer.Start()
 
 	assert.NotNil(err)
@@ -49,7 +49,6 @@ func TestProducerStartMissingBrokerShouldError(t *testing.T) {
 
 	producer := runtime_sarama.NewProducer(
 		runtime_sarama.WithProducerBroker("localhost:12346"),
-		runtime_sarama.WithProducerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 	)
 
 	err := producer.Start()

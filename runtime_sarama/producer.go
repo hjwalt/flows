@@ -11,7 +11,9 @@ import (
 )
 
 func NewProducer(configurations ...runtime.Configuration[*Producer]) message.Producer {
-	producer := &Producer{}
+	producer := &Producer{
+		SaramaConfiguration: DefaultConfiguration(),
+	}
 	for _, configuration := range configurations {
 		producer = configuration(producer)
 	}

@@ -48,7 +48,6 @@ func WordMaterialise() runtime.Runtime {
 			runtime_bun.WithConnectionString("postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"),
 		},
 		KafkaConsumerConfiguration: []runtime.Configuration[*runtime_sarama.Consumer]{
-			runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 			runtime_sarama.WithConsumerBroker("localhost:9092"),
 			runtime_sarama.WithConsumerTopic("word-count"),
 			runtime_sarama.WithConsumerGroupName("flows-word-materialise"),

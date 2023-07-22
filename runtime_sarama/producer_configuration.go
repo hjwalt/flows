@@ -1,7 +1,6 @@
 package runtime_sarama
 
 import (
-	"github.com/Shopify/sarama"
 	"github.com/hjwalt/runway/runtime"
 )
 
@@ -12,9 +11,9 @@ func WithProducerBroker(brokers ...string) runtime.Configuration[*Producer] {
 	}
 }
 
-func WithProducerSaramaConfig(saramaConfig *sarama.Config) runtime.Configuration[*Producer] {
-	return func(p *Producer) *Producer {
-		p.SaramaConfiguration = saramaConfig
-		return p
+func WithProducerSaramaConfigModifier(modifier SaramaConfigModifier) runtime.Configuration[*Producer] {
+	return func(c *Producer) *Producer {
+		modifier(c.SaramaConfiguration)
+		return c
 	}
 }

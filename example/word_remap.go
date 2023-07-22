@@ -32,11 +32,9 @@ func WordRemap() runtime.Runtime {
 			format.String(),
 		),
 		KafkaProducerConfiguration: []runtime.Configuration[*runtime_sarama.Producer]{
-			runtime_sarama.WithProducerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 			runtime_sarama.WithProducerBroker("localhost:9092"),
 		},
 		KafkaConsumerConfiguration: []runtime.Configuration[*runtime_sarama.Consumer]{
-			runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 			runtime_sarama.WithConsumerBroker("localhost:9092"),
 			runtime_sarama.WithConsumerTopic("word-updated"),
 			runtime_sarama.WithConsumerGroupName("flows-word-remap"),

@@ -72,7 +72,6 @@ func TestConsumerStartEmptyTopicsShouldError(t *testing.T) {
 
 	consumer := runtime_sarama.NewConsumer(
 		runtime_sarama.WithConsumerBroker("test-broker:9092"),
-		runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 		runtime_sarama.WithConsumerLoop(ConsumerLoopForTest{}),
 	)
 
@@ -86,7 +85,6 @@ func TestConsumerStartEmptyBrokersShouldError(t *testing.T) {
 
 	consumer := runtime_sarama.NewConsumer(
 		runtime_sarama.WithConsumerTopic("test-topic"),
-		runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 		runtime_sarama.WithConsumerLoop(ConsumerLoopForTest{}),
 	)
 
@@ -101,7 +99,6 @@ func TestConsumerStartEmptyConsumerLoopShouldError(t *testing.T) {
 	consumer := runtime_sarama.NewConsumer(
 		runtime_sarama.WithConsumerTopic("test-topic"),
 		runtime_sarama.WithConsumerBroker("test-broker:9092"),
-		runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 	)
 
 	err := consumer.Start()
@@ -116,6 +113,10 @@ func TestConsumerStartMissingSaramaConfigShouldError(t *testing.T) {
 		runtime_sarama.WithConsumerTopic("test-topic"),
 		runtime_sarama.WithConsumerBroker("test-broker:9092"),
 		runtime_sarama.WithConsumerLoop(ConsumerLoopForTest{}),
+		func(c *runtime_sarama.Consumer) *runtime_sarama.Consumer {
+			c.SaramaConfiguration = nil
+			return c
+		},
 	)
 
 	err := consumer.Start()
@@ -129,7 +130,6 @@ func TestConsumerStartMissingBrokerShouldError(t *testing.T) {
 	consumer := runtime_sarama.NewConsumer(
 		runtime_sarama.WithConsumerBroker("localhost:12345"),
 		runtime_sarama.WithConsumerTopic("test-topic"),
-		runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 		runtime_sarama.WithConsumerLoop(ConsumerLoopForTest{}),
 	)
 

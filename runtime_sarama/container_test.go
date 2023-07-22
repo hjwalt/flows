@@ -101,7 +101,6 @@ func TestWithContainer(t *testing.T) {
 				consumer := runtime_sarama.NewConsumer(
 					runtime_sarama.WithConsumerBroker(container.Endpoint),
 					runtime_sarama.WithConsumerTopic("test-topic"),
-					runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 					runtime_sarama.WithConsumerLoop(ConsumerLoopForTest{}),
 				)
 
@@ -119,7 +118,6 @@ func TestWithContainer(t *testing.T) {
 				consumer := runtime_sarama.NewConsumer(
 					runtime_sarama.WithConsumerBroker(container.Endpoint),
 					runtime_sarama.WithConsumerTopic("test-topic"),
-					runtime_sarama.WithConsumerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 					runtime_sarama.WithConsumerLoop(ConsumerLoopForTest{}),
 					runtime_sarama.WithConsumerGroupName("consumer-group"),
 				)
@@ -138,7 +136,6 @@ func TestWithContainer(t *testing.T) {
 			test: func(t *testing.T) {
 				producer := runtime_sarama.NewProducer(
 					runtime_sarama.WithProducerBroker(container.Endpoint),
-					runtime_sarama.WithProducerSaramaConfig(runtime_sarama.DefaultConfiguration()),
 				)
 
 				err := producer.Start()

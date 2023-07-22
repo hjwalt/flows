@@ -2,6 +2,8 @@ package runtime_sarama
 
 import "github.com/Shopify/sarama"
 
+type SaramaConfigModifier func(*sarama.Config)
+
 func DefaultConfiguration() *sarama.Config {
 
 	saramaconfig := sarama.NewConfig()

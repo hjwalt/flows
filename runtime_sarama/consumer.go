@@ -13,7 +13,9 @@ import (
 
 // constructor
 func NewConsumer(configurations ...runtime.Configuration[*Consumer]) runtime.Runtime {
-	consumer := &Consumer{}
+	consumer := &Consumer{
+		SaramaConfiguration: DefaultConfiguration(),
+	}
 	for _, configuration := range configurations {
 		consumer = configuration(consumer)
 	}
