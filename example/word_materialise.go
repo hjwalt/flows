@@ -4,11 +4,8 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows"
-	"github.com/hjwalt/flows/materialise"
 	"github.com/hjwalt/flows/message"
-	"github.com/hjwalt/flows/runtime_bun"
-	"github.com/hjwalt/flows/runtime_sarama"
-	"github.com/hjwalt/runway/format"
+	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/uptrace/bun"
 )
@@ -42,17 +39,14 @@ func FlowsMaterialisedMap(c context.Context, m message.Message[string, string]) 
 }
 
 func WordMaterialise() runtime.Runtime {
-	materialiseConfiguration := flows.MaterialisePostgresqlFunctionConfiguration[FlowsMaterialised]{
-		PostgresqlConfiguration: []runtime.Configuration[*runtime_bun.PostgresqlConnection]{
-			runtime_bun.WithApplicationName("flows"),
-			runtime_bun.WithConnectionString("postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"),
-		},
-		KafkaConsumerConfiguration: []runtime.Configuration[*runtime_sarama.Consumer]{
-			runtime_sarama.WithConsumerBroker("localhost:9092"),
-			runtime_sarama.WithConsumerTopic("word-count"),
-			runtime_sarama.WithConsumerGroupName("flows-word-materialise"),
-		},
-		MaterialiseMapFunction: materialise.ConvertOneToOne(FlowsMaterialisedMap, format.String(), format.String()),
+	materialiseConfiguration := flows.MaterialisePostgresqlOneToOneFunctionConfiguration[FlowsMaterialised, string, string]{
+		Name:                     "flows-word-materialise",
+		InputTopic:               topic.String("word-count"),
+		Function:                 FlowsMaterialisedMap,
+		InputBroker:              "localhost:9092",
+		OutputBroker:             "localhost:9092",
+		HttpPort:                 8081,
+		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
 	}
 
 	return materialiseConfiguration.Runtime()

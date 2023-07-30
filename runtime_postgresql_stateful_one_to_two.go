@@ -1,6 +1,7 @@
 package flows
 
 import (
+	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
@@ -64,6 +65,9 @@ func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2
 	// route configs
 	routeConfigs := []runtime.Configuration[*runtime_bunrouter.Router]{
 		runtime_bunrouter.WithRouterPort(c.HttpPort),
+		runtime_bunrouter.WithRouterFlow(
+			router.WithFlowStatefulOneToTwo(c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo, c.PostgresTable),
+		),
 	}
 	if len(c.RouteConfiguration) > 0 {
 		routeConfigs = append(routeConfigs, c.RouteConfiguration...)

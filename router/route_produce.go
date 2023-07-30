@@ -20,7 +20,6 @@ const (
 )
 
 // route
-
 type BasicResponse struct {
 	Message string `json:"message"`
 }

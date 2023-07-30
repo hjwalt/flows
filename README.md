@@ -122,6 +122,9 @@ In this codebase, option two is the chosen option for reasons of:
 
 ![Join Pattern](docs/join-pattern.drawio.png "Join Pattern")
 
+It is recommended to use your own custom intermediate topic mapper for better control of your dataflow.
+However, a standard implementation is provided as a reference.
+
 ### Consumers
 
 Consumer functions can be used to materialise into databases either as a batch or per message. 
