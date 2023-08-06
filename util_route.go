@@ -2,7 +2,6 @@ package flows
 
 import (
 	"context"
-	"errors"
 
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/runway/inverse"
@@ -15,30 +14,21 @@ const (
 )
 
 func RegisterRoute(config []runtime.Configuration[*runtime_bunrouter.Router]) {
+	inverse.RegisterConfiguration[*runtime_bunrouter.Router](QualifierRouteConfiguration, runtime_bunrouter.WithRouterPrometheus())
+	inverse.Register[runtime.Configuration[*runtime_bunrouter.Router]](QualifierRouteConfiguration, InjectorRouteProducer)
 	inverse.RegisterInstances(QualifierRouteConfiguration, config)
-	inverse.Register(QualifierRoute, InjectorRoute)
+	inverse.RegisterWithConfigurationRequired[*runtime_bunrouter.Router](
+		QualifierRoute,
+		QualifierRouteConfiguration,
+		runtime_bunrouter.NewRouter,
+	)
 	inverse.Register(QualifierRuntime, InjectorRuntime(QualifierRoute))
 }
 
-func InjectorRoute(ctx context.Context) (runtime.Runtime, error) {
+func InjectorRouteProducer(ctx context.Context) (runtime.Configuration[*runtime_bunrouter.Router], error) {
 	producer, getProducerError := GetKafkaProducer(ctx)
 	if getProducerError != nil {
 		return nil, getProducerError
 	}
-
-	configurations, getConfigurationError := inverse.GetAll[runtime.Configuration[*runtime_bunrouter.Router]](ctx, QualifierRouteConfiguration)
-	if getConfigurationError != nil && !errors.Is(getConfigurationError, inverse.ErrNotInjected) {
-		return nil, getConfigurationError
-	}
-
-	routeConfig := append(
-		make([]runtime.Configuration[*runtime_bunrouter.Router], 0),
-		runtime_bunrouter.WithRouterPrometheus(),
-		runtime_bunrouter.WithRouterProducer(producer),
-	)
-	routeConfig = append(
-		routeConfig,
-		configurations...,
-	)
-	return runtime_bunrouter.NewRouter(routeConfig...), nil
+	return runtime_bunrouter.WithRouterProducer(producer), nil
 }

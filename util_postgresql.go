@@ -2,7 +2,6 @@ package flows
 
 import (
 	"context"
-	"errors"
 
 	"github.com/hjwalt/flows/materialise"
 	"github.com/hjwalt/flows/materialise_bun"
@@ -24,16 +23,12 @@ const (
 // Postgresql connection
 func RegisterPostgresql(config []runtime.Configuration[*runtime_bun.PostgresqlConnection]) {
 	inverse.RegisterInstances(QualifierPostgresqlConnectionConfiguration, config)
-	inverse.Register(QualifierPostgresqlConnection, InjectorPostgresqlConnection)
+	inverse.RegisterWithConfigurationRequired[*runtime_bun.PostgresqlConnection](
+		QualifierPostgresqlConnection,
+		QualifierPostgresqlConnectionConfiguration,
+		runtime_bun.NewPostgresqlConnection,
+	)
 	inverse.Register(QualifierRuntime, InjectorRuntime(QualifierPostgresqlConnection))
-}
-
-func InjectorPostgresqlConnection(ctx context.Context) (runtime_bun.BunConnection, error) {
-	configurations, getConfigurationError := inverse.GetAll[runtime.Configuration[*runtime_bun.PostgresqlConnection]](ctx, QualifierPostgresqlConnectionConfiguration)
-	if getConfigurationError != nil && !errors.Is(getConfigurationError, inverse.ErrNotInjected) {
-		return nil, getConfigurationError
-	}
-	return runtime_bun.NewPostgresqlConnection(configurations...), nil
 }
 
 // Single state repository

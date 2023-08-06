@@ -2,7 +2,6 @@ package flows
 
 import (
 	"context"
-	"errors"
 
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime_sarama"
@@ -25,16 +24,12 @@ func RegisterProducerConfig(config []runtime.Configuration[*runtime_sarama.Produ
 }
 
 func RegisterProducer() {
-	inverse.Register(QualifierKafkaProducer, InjectorKafkaProducer)
+	inverse.RegisterWithConfigurationRequired[*runtime_sarama.Producer](
+		QualifierKafkaProducer,
+		QualifierKafkaProducerConfiguration,
+		runtime_sarama.NewProducer,
+	)
 	inverse.Register(QualifierRuntime, InjectorRuntime(QualifierKafkaProducer))
-}
-
-func InjectorKafkaProducer(ctx context.Context) (message.Producer, error) {
-	configurations, getConfigurationError := inverse.GetAll[runtime.Configuration[*runtime_sarama.Producer]](ctx, QualifierKafkaProducerConfiguration)
-	if getConfigurationError != nil {
-		return nil, getConfigurationError
-	}
-	return runtime_sarama.NewProducer(configurations...), nil
 }
 
 func GetKafkaProducer(ctx context.Context) (message.Producer, error) {
@@ -42,22 +37,21 @@ func GetKafkaProducer(ctx context.Context) (message.Producer, error) {
 }
 
 // Consumer
-
 func RegisterConsumerSingleConfig(config []runtime.Configuration[*runtime_sarama.Consumer]) {
 	inverse.RegisterInstances(QualifierKafkaConsumerSingleConfiguration, config)
+	inverse.Register[runtime.Configuration[*runtime_sarama.Consumer]](QualifierKafkaConsumerSingleConfiguration, InjectorKafkaConsumerSingleLoop)
 }
 
 func RegisterConsumerSingle() {
-	inverse.Register(QualifierKafkaConsumerSingle, InjectorKafkaConsumerSingle)
+	inverse.RegisterWithConfigurationRequired[*runtime_sarama.Consumer](
+		QualifierKafkaConsumerSingle,
+		QualifierKafkaConsumerSingleConfiguration,
+		runtime_sarama.NewConsumer,
+	)
 	inverse.Register(QualifierRuntime, InjectorRuntime(QualifierKafkaConsumerSingle))
 }
 
-func InjectorKafkaConsumerSingle(ctx context.Context) (runtime.Runtime, error) {
-	configurations, getConfigurationError := inverse.GetAll[runtime.Configuration[*runtime_sarama.Consumer]](ctx, QualifierKafkaConsumerSingleConfiguration)
-	if getConfigurationError != nil && !errors.Is(getConfigurationError, inverse.ErrNotInjected) {
-		return nil, getConfigurationError
-	}
-
+func InjectorKafkaConsumerSingleLoop(ctx context.Context) (runtime.Configuration[*runtime_sarama.Consumer], error) {
 	singleFunction, getSingleFunctionError := inverse.GetLast[stateless.SingleFunction](ctx, QualifierKafkaConsumerSingleFunction)
 	if getSingleFunctionError != nil {
 		return nil, getSingleFunctionError
@@ -69,11 +63,5 @@ func InjectorKafkaConsumerSingle(ctx context.Context) (runtime.Runtime, error) {
 		runtime_sarama.WithLoopSinglePrometheus(),
 	)
 
-	// consumer runtime
-	consumerConfig := append(
-		configurations,
-		runtime_sarama.WithConsumerLoop(consumerLoop),
-	)
-
-	return runtime_sarama.NewConsumer(consumerConfig...), nil
+	return runtime_sarama.WithConsumerLoop(consumerLoop), nil
 }
