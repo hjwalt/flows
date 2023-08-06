@@ -33,6 +33,7 @@ type JoinPostgresqlFunctionConfiguration struct {
 	IntermediateTopicName      string
 	PersistenceTableName       string
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
+	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
@@ -128,13 +129,19 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	// http runtime
 	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
 
+	// add additional runtimes
+	runtimes := []runtime.Runtime{
+		conn,
+		routerRuntime,
+		producer,
+		consumer,
+		retryRuntime,
+	}
+	if len(c.AdditionalRuntimes) > 0 {
+		runtimes = append(c.AdditionalRuntimes, runtimes...)
+	}
+
 	return &RuntimeFacade{
-		Runtimes: []runtime.Runtime{
-			conn,
-			routerRuntime,
-			producer,
-			consumer,
-			retryRuntime,
-		},
+		Runtimes: runtimes,
 	}
 }

@@ -25,6 +25,7 @@ type MaterialisePostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any] s
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
+	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Runtime() runtime.Runtime {
@@ -74,6 +75,7 @@ func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Runtime()
 		KafkaConsumerConfiguration: kafkaConsumerConfigs,
 		RouteConfiguration:         routeConfigs,
 		RetryConfiguration:         c.RetryConfiguration,
+		AdditionalRuntimes:         c.AdditionalRuntimes,
 	}
 
 	return statefulFunctionConfiguration.Runtime()

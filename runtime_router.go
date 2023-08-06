@@ -10,6 +10,7 @@ import (
 type RouterConfiguration struct {
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
+	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c RouterConfiguration) Runtime() runtime.Runtime {
@@ -19,10 +20,16 @@ func (c RouterConfiguration) Runtime() runtime.Runtime {
 	// http runtime
 	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
 
+	// add additional runtimes
+	runtimes := []runtime.Runtime{
+		routerRuntime,
+		producer,
+	}
+	if len(c.AdditionalRuntimes) > 0 {
+		runtimes = append(c.AdditionalRuntimes, runtimes...)
+	}
+
 	return &RuntimeFacade{
-		Runtimes: []runtime.Runtime{
-			routerRuntime,
-			producer,
-		},
+		Runtimes: runtimes,
 	}
 }

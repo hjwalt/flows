@@ -19,6 +19,7 @@ type StatefulPostgresqlFunctionConfiguration struct {
 	PersistenceIdFunction      stateful.PersistenceIdFunction[[]byte, []byte]
 	PersistenceTableName       string
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
+	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c StatefulPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
@@ -55,13 +56,19 @@ func (c StatefulPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	// http runtime
 	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
 
+	// add additional runtimes
+	runtimes := []runtime.Runtime{
+		conn,
+		routerRuntime,
+		producer,
+		consumer,
+		retryRuntime,
+	}
+	if len(c.AdditionalRuntimes) > 0 {
+		runtimes = append(c.AdditionalRuntimes, runtimes...)
+	}
+
 	return &RuntimeFacade{
-		Runtimes: []runtime.Runtime{
-			conn,
-			routerRuntime,
-			producer,
-			consumer,
-			retryRuntime,
-		},
+		Runtimes: runtimes,
 	}
 }

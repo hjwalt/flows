@@ -15,6 +15,7 @@ type StatelessSingleFunctionConfiguration struct {
 	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
 	StatelessFunction          stateless.SingleFunction
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
+	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c StatelessSingleFunctionConfiguration) Runtime() runtime.Runtime {
@@ -34,12 +35,18 @@ func (c StatelessSingleFunctionConfiguration) Runtime() runtime.Runtime {
 	// http runtime
 	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
 
+	// add additional runtimes
+	runtimes := []runtime.Runtime{
+		routerRuntime,
+		producer,
+		consumer,
+		retryRuntime,
+	}
+	if len(c.AdditionalRuntimes) > 0 {
+		runtimes = append(c.AdditionalRuntimes, runtimes...)
+	}
+
 	return &RuntimeFacade{
-		Runtimes: []runtime.Runtime{
-			routerRuntime,
-			producer,
-			consumer,
-			retryRuntime,
-		},
+		Runtimes: runtimes,
 	}
 }

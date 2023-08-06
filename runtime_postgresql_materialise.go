@@ -17,6 +17,7 @@ type MaterialisePostgresqlFunctionConfiguration[T any] struct {
 	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
 	MaterialiseMapFunction     materialise.MapFunction[message.Bytes, message.Bytes, T]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
+	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c MaterialisePostgresqlFunctionConfiguration[T]) Runtime() runtime.Runtime {
@@ -42,13 +43,19 @@ func (c MaterialisePostgresqlFunctionConfiguration[T]) Runtime() runtime.Runtime
 	// http runtime
 	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
 
+	// add additional runtimes
+	runtimes := []runtime.Runtime{
+		conn,
+		routerRuntime,
+		producer,
+		consumer,
+		retryRuntime,
+	}
+	if len(c.AdditionalRuntimes) > 0 {
+		runtimes = append(c.AdditionalRuntimes, runtimes...)
+	}
+
 	return &RuntimeFacade{
-		Runtimes: []runtime.Runtime{
-			conn,
-			routerRuntime,
-			producer,
-			consumer,
-			retryRuntime,
-		},
+		Runtimes: runtimes,
 	}
 }
