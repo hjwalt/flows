@@ -31,7 +31,6 @@ type StatefulPostgresqlOneToTwoFunctionConfiguration[S any, IK any, IV any, OK1 
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
 	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
-	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2, OV2]) Runtime() runtime.Runtime {
@@ -83,7 +82,6 @@ func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2
 		KafkaConsumerConfiguration: kafkaConsumerConfigs,
 		RouteConfiguration:         routeConfigs,
 		RetryConfiguration:         c.RetryConfiguration,
-		AdditionalRuntimes:         c.AdditionalRuntimes,
 	}
 
 	return statefulFunctionConfiguration.Runtime()

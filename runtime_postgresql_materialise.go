@@ -1,12 +1,16 @@
 package flows
 
 import (
+	"context"
+
 	"github.com/hjwalt/flows/materialise"
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
+	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 )
 
@@ -17,45 +21,41 @@ type MaterialisePostgresqlFunctionConfiguration[T any] struct {
 	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
 	MaterialiseMapFunction     materialise.MapFunction[message.Bytes, message.Bytes, T]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
-	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c MaterialisePostgresqlFunctionConfiguration[T]) Runtime() runtime.Runtime {
+	RegisterPostgresql(c.PostgresqlConfiguration)
+	RegisterPostgresqlUpsert[T]()
+	RegisterRetry(c.RetryConfiguration)
+	RegisterProducerConfig(c.KafkaProducerConfiguration)
+	RegisterProducer()
+	RegisterConsumerSingleConfig(c.KafkaConsumerConfiguration)
+	RegisterConsumerSingle()
+	RegisterRoute(c.RouteConfiguration)
+	inverse.Register[stateless.SingleFunction](QualifierKafkaConsumerSingleFunction, func(ctx context.Context) (stateless.SingleFunction, error) {
+		retry, err := GetRetry(ctx)
+		if err != nil {
+			return nil, err
+		}
+		repository, err := GetPostgresqlUpsertRepository[T](ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	// postgres runtime
-	conn := Postgresql(c.PostgresqlConfiguration)
-	repository := PostgresqlUpsertRepository[T](conn)
+		wrappedFunction := materialise.NewSingleUpsert(
+			materialise.WithSingleUpsertMapFunction(c.MaterialiseMapFunction),
+			materialise.WithSingleUpsertRepository(repository),
+		)
+		wrappedFunction = stateless.NewSingleRetry(
+			stateless.WithSingleRetryNextFunction(wrappedFunction),
+			stateless.WithSingleRetryRuntime(retry),
+			stateless.WithSingleRetryPrometheus(),
+		)
 
-	// producer runtime
-	producer := KafkaProducer(c.KafkaProducerConfiguration)
-
-	// function
-	materialiseFn := materialise.NewSingleUpsert(
-		materialise.WithSingleUpsertRepository(repository),
-		materialise.WithSingleUpsertMapFunction(c.MaterialiseMapFunction),
-	)
-
-	retriedFn, retryRuntime := WrapRetry(materialiseFn, c.RetryConfiguration)
-
-	// consumer runtime
-	consumer := KafkaConsumerSingle(retriedFn, c.KafkaConsumerConfiguration)
-
-	// http runtime
-	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
-
-	// add additional runtimes
-	runtimes := []runtime.Runtime{
-		conn,
-		routerRuntime,
-		producer,
-		consumer,
-		retryRuntime,
-	}
-	if len(c.AdditionalRuntimes) > 0 {
-		runtimes = append(c.AdditionalRuntimes, runtimes...)
-	}
+		return wrappedFunction, nil
+	})
 
 	return &RuntimeFacade{
-		Runtimes: runtimes,
+		Runtimes: InjectedRuntimes(),
 	}
 }

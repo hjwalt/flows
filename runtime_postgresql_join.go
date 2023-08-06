@@ -1,6 +1,8 @@
 package flows
 
 import (
+	"context"
+
 	"github.com/hjwalt/flows/join"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
@@ -8,6 +10,7 @@ import (
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 )
 
@@ -33,17 +36,9 @@ type JoinPostgresqlFunctionConfiguration struct {
 	IntermediateTopicName      string
 	PersistenceTableName       string
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
-	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
-
-	// postgres runtime
-	conn := Postgresql(c.PostgresqlConfiguration)
-	repository := PostgresqlSingleStateRepository(conn, c.PersistenceTableName)
-
-	// producer runtime
-	producer := KafkaProducer(c.KafkaProducerConfiguration)
 
 	topics := []string{}
 	statefulTopicSwitchConfigurations := []runtime.Configuration[*stateful.SingleTopicSwitch]{}
@@ -62,86 +57,84 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 		persistenceIdConfigurations = append(persistenceIdConfigurations, stateful.WithPersistenceIdSwitchPersistenceIdFunction(topic, persistenceIdFn))
 	}
 
-	// stateful topic switch and persistence id switch
-	statefulTopicSwitch := stateful.NewSingleTopicSwitch(statefulTopicSwitchConfigurations...)
-	persistenceIdTopicSwitch := stateful.NewSinglePersistenceIdSwitch(persistenceIdConfigurations...)
+	// setting the topics for consumers
+	consumerTopics := append(topics, c.IntermediateTopicName)
+	inverse.RegisterInstance[runtime.Configuration[*runtime_sarama.Consumer]](QualifierKafkaConsumerSingleConfiguration, runtime_sarama.WithConsumerTopic(consumerTopics...))
 
-	// stateful function switch
-	// - offset deduplication
-	offsetDeduplicated := stateful.NewSingleStatefulDeduplicate(
-		stateful.WithSingleStatefulDeduplicateNextFunction(statefulTopicSwitch),
-	)
+	RegisterPostgresql(c.PostgresqlConfiguration)
+	RegisterPostgresqlSingleState(c.PersistenceTableName)
+	RegisterRetry(c.RetryConfiguration)
+	RegisterProducerConfig(c.KafkaProducerConfiguration)
+	RegisterProducer()
+	RegisterConsumerSingleConfig(c.KafkaConsumerConfiguration)
+	RegisterConsumerSingle()
+	RegisterRoute(c.RouteConfiguration)
+	inverse.Register[stateless.SingleFunction](QualifierKafkaConsumerSingleFunction, func(ctx context.Context) (stateless.SingleFunction, error) {
+		retry, err := GetRetry(ctx)
+		if err != nil {
+			return nil, err
+		}
+		producer, err := GetKafkaProducer(ctx)
+		if err != nil {
+			return nil, err
+		}
+		repository, err := GetPostgresqlSingleStateRepository(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	// - transaction with bun
-	stateTransaction := stateful.NewSingleReadWrite(
-		stateful.WithSingleReadWriteTransactionPersistenceIdFunc(persistenceIdTopicSwitch),
-		stateful.WithSingleReadWriteRepository(repository),
-		stateful.WithSingleReadWriteStatefulFunction(offsetDeduplicated),
-	)
+		// Intermediate to join stateful switching function
+		statefulWrappedFunction := stateful.NewSingleTopicSwitch(statefulTopicSwitchConfigurations...)
 
-	// - intermediate to join function
-	intermediateToJoin := join.NewIntermediateToJoinMap(
-		join.WithIntermediateToJoinMapTransactionWrappedFunction(stateTransaction),
-	)
+		statefulWrappedFunction = stateful.NewSingleStatefulDeduplicate(
+			stateful.WithSingleStatefulDeduplicateNextFunction(statefulWrappedFunction),
+		)
 
-	// generating source to intermediate join
-	sourceToIntermediateMap := join.NewSourceToIntermediateMap(
-		join.WithSourceToIntermediateMapIntermediateTopic(c.IntermediateTopicName),
-		join.WithSourceToIntermediateMapPersistenceIdFunction(persistenceIdTopicSwitch),
-	)
+		persistenceIdTopicSwitch := stateful.NewSinglePersistenceIdSwitch(persistenceIdConfigurations...)
+		stateTransaction := stateful.NewSingleReadWrite(
+			stateful.WithSingleReadWriteTransactionPersistenceIdFunc(persistenceIdTopicSwitch),
+			stateful.WithSingleReadWriteRepository(repository),
+			stateful.WithSingleReadWriteStatefulFunction(statefulWrappedFunction),
+		)
 
-	// generating stateless topic switch
-	statelessTopicSwitchConfigurations := []runtime.Configuration[*stateless.SingleTopicSwitch]{
-		stateless.WithSingleTopicSwitchStatelessSingleFunction(c.IntermediateTopicName, intermediateToJoin),
-	}
+		intermediateToJoin := join.NewIntermediateToJoinMap(
+			join.WithIntermediateToJoinMapTransactionWrappedFunction(stateTransaction),
+		)
 
-	for _, topic := range topics {
-		statelessTopicSwitchConfigurations = append(statelessTopicSwitchConfigurations, stateless.WithSingleTopicSwitchStatelessSingleFunction(topic, sourceToIntermediateMap))
-	}
+		// Stateless topic switch
 
-	statelessTopicSwitch := stateless.NewSingleTopicSwitch(
-		statelessTopicSwitchConfigurations...,
-	)
+		// adding intermediate to join into stateless topic switch
+		statelessTopicSwitchConfigurations := []runtime.Configuration[*stateless.SingleTopicSwitch]{
+			stateless.WithSingleTopicSwitchStatelessSingleFunction(c.IntermediateTopicName, intermediateToJoin),
+		}
+		// generating source to intermediate join to be added into stateless topic switch
+		sourceToIntermediateMap := join.NewSourceToIntermediateMap(
+			join.WithSourceToIntermediateMapIntermediateTopic(c.IntermediateTopicName),
+			join.WithSourceToIntermediateMapPersistenceIdFunction(persistenceIdTopicSwitch),
+		)
+		for _, topic := range topics {
+			// adding source to intermediate join into stateless topic switch
+			statelessTopicSwitchConfigurations = append(statelessTopicSwitchConfigurations, stateless.WithSingleTopicSwitchStatelessSingleFunction(topic, sourceToIntermediateMap))
+		}
+		wrappedFunction := stateless.NewSingleTopicSwitch(
+			statelessTopicSwitchConfigurations...,
+		)
 
-	// stateless topic switch wrapping
-	// - produce output messages
-	messagesProduced := WrapSingleProduce(statelessTopicSwitch, producer)
+		wrappedFunction = stateless.NewSingleProducer(
+			stateless.WithSingleProducerNextFunction(wrappedFunction),
+			stateless.WithSingleProducerRuntime(producer),
+			stateless.WithSingleProducerPrometheus(),
+		)
+		wrappedFunction = stateless.NewSingleRetry(
+			stateless.WithSingleRetryNextFunction(wrappedFunction),
+			stateless.WithSingleRetryRuntime(retry),
+			stateless.WithSingleRetryPrometheus(),
+		)
 
-	// - retry
-	produceRetry, retryRuntime := WrapRetry(messagesProduced, c.RetryConfiguration)
-
-	// sarama consumer loop
-	consumerLoop := runtime_sarama.NewSingleLoop(
-		runtime_sarama.WithLoopSingleFunction(produceRetry),
-		runtime_sarama.WithLoopSinglePrometheus(),
-	)
-
-	// consumer runtime
-	topics = append(topics, c.IntermediateTopicName)
-
-	consumerConfig := append(
-		c.KafkaConsumerConfiguration,
-		runtime_sarama.WithConsumerLoop(consumerLoop),
-		runtime_sarama.WithConsumerTopic(topics...),
-	)
-	consumer := runtime_sarama.NewConsumer(consumerConfig...)
-
-	// http runtime
-	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
-
-	// add additional runtimes
-	runtimes := []runtime.Runtime{
-		conn,
-		routerRuntime,
-		producer,
-		consumer,
-		retryRuntime,
-	}
-	if len(c.AdditionalRuntimes) > 0 {
-		runtimes = append(c.AdditionalRuntimes, runtimes...)
-	}
+		return wrappedFunction, nil
+	})
 
 	return &RuntimeFacade{
-		Runtimes: runtimes,
+		Runtimes: InjectedRuntimes(),
 	}
 }

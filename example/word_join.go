@@ -6,6 +6,7 @@ import (
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime_bun"
+	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/runway/format"
@@ -112,6 +113,9 @@ func WordJoin() runtime.Runtime {
 		KafkaConsumerConfiguration: []runtime.Configuration[*runtime_sarama.Consumer]{
 			runtime_sarama.WithConsumerBroker("localhost:9092"),
 			runtime_sarama.WithConsumerGroupName("flows-word-join"),
+		},
+		RouteConfiguration: []runtime.Configuration[*runtime_bunrouter.Router]{
+			runtime_bunrouter.WithRouterPort(8081),
 		},
 	}
 

@@ -22,7 +22,6 @@ type StatelessOneToOneExplodeConfiguration[IK any, IV any, OK any, OV any] struc
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
 	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
-	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) Runtime() runtime.Runtime {
@@ -62,7 +61,6 @@ func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) Runtime() runtime
 		KafkaConsumerConfiguration: kafkaConsumerConfigs,
 		RouteConfiguration:         routeConfigs,
 		RetryConfiguration:         c.RetryConfiguration,
-		AdditionalRuntimes:         c.AdditionalRuntimes,
 	}
 
 	return statelessFunctionConfiguration.Runtime()

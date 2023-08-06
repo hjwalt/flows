@@ -21,7 +21,6 @@ type RouterAdapterConfiguration[Request any, InputKey any, InputValue any] struc
 	HttpPort                   int
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
-	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Runtime() runtime.Runtime {
@@ -54,7 +53,6 @@ func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Runtime() run
 	routerConfiguration := RouterConfiguration{
 		KafkaProducerConfiguration: kafkaProducerConfigs,
 		RouteConfiguration:         routeConfigs,
-		AdditionalRuntimes:         c.AdditionalRuntimes,
 	}
 
 	return routerConfiguration.Runtime()

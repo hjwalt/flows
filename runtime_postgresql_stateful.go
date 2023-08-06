@@ -1,11 +1,15 @@
 package flows
 
 import (
+	"context"
+
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
+	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 )
 
@@ -19,56 +23,56 @@ type StatefulPostgresqlFunctionConfiguration struct {
 	PersistenceIdFunction      stateful.PersistenceIdFunction[[]byte, []byte]
 	PersistenceTableName       string
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
-	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c StatefulPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
+	RegisterPostgresql(c.PostgresqlConfiguration)
+	RegisterPostgresqlSingleState(c.PersistenceTableName)
+	RegisterRetry(c.RetryConfiguration)
+	RegisterProducerConfig(c.KafkaProducerConfiguration)
+	RegisterProducer()
+	RegisterConsumerSingleConfig(c.KafkaConsumerConfiguration)
+	RegisterConsumerSingle()
+	RegisterRoute(c.RouteConfiguration)
+	inverse.Register[stateless.SingleFunction](QualifierKafkaConsumerSingleFunction, func(ctx context.Context) (stateless.SingleFunction, error) {
+		retry, err := GetRetry(ctx)
+		if err != nil {
+			return nil, err
+		}
+		producer, err := GetKafkaProducer(ctx)
+		if err != nil {
+			return nil, err
+		}
+		repository, err := GetPostgresqlSingleStateRepository(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	// postgres runtime
-	conn := Postgresql(c.PostgresqlConfiguration)
-	repository := PostgresqlSingleStateRepository(conn, c.PersistenceTableName)
+		wrappedStatefulFunction := c.StatefulFunction
+		wrappedStatefulFunction = stateful.NewSingleStatefulDeduplicate(
+			stateful.WithSingleStatefulDeduplicateNextFunction(wrappedStatefulFunction),
+		)
 
-	// producer runtime
-	producer := KafkaProducer(c.KafkaProducerConfiguration)
+		wrappedFunction := stateful.NewSingleReadWrite(
+			stateful.WithSingleReadWriteStatefulFunction(wrappedStatefulFunction),
+			stateful.WithSingleReadWriteTransactionPersistenceIdFunc(c.PersistenceIdFunction),
+			stateful.WithSingleReadWriteRepository(repository),
+		)
+		wrappedFunction = stateless.NewSingleProducer(
+			stateless.WithSingleProducerNextFunction(wrappedFunction),
+			stateless.WithSingleProducerRuntime(producer),
+			stateless.WithSingleProducerPrometheus(),
+		)
+		wrappedFunction = stateless.NewSingleRetry(
+			stateless.WithSingleRetryNextFunction(wrappedFunction),
+			stateless.WithSingleRetryRuntime(retry),
+			stateless.WithSingleRetryPrometheus(),
+		)
 
-	// function wrapping
-	// - offset deduplication
-	offsetDeduplicated := stateful.NewSingleStatefulDeduplicate(
-		stateful.WithSingleStatefulDeduplicateNextFunction(c.StatefulFunction),
-	)
-
-	// - transaction with bun
-	stateTransaction := stateful.NewSingleReadWrite(
-		stateful.WithSingleReadWriteTransactionPersistenceIdFunc(c.PersistenceIdFunction),
-		stateful.WithSingleReadWriteRepository(repository),
-		stateful.WithSingleReadWriteStatefulFunction(offsetDeduplicated),
-	)
-
-	// - produce output messages
-	messagesProduced := WrapSingleProduce(stateTransaction, producer)
-
-	// - retry
-	produceRetry, retryRuntime := WrapRetry(messagesProduced, c.RetryConfiguration)
-
-	// consumer runtime
-	consumer := KafkaConsumerSingle(produceRetry, c.KafkaConsumerConfiguration)
-
-	// http runtime
-	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
-
-	// add additional runtimes
-	runtimes := []runtime.Runtime{
-		conn,
-		routerRuntime,
-		producer,
-		consumer,
-		retryRuntime,
-	}
-	if len(c.AdditionalRuntimes) > 0 {
-		runtimes = append(c.AdditionalRuntimes, runtimes...)
-	}
+		return wrappedFunction, nil
+	})
 
 	return &RuntimeFacade{
-		Runtimes: runtimes,
+		Runtimes: InjectedRuntimes(),
 	}
 }

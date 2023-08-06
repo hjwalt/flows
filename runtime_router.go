@@ -10,26 +10,14 @@ import (
 type RouterConfiguration struct {
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
-	AdditionalRuntimes         []runtime.Runtime
 }
 
 func (c RouterConfiguration) Runtime() runtime.Runtime {
-	// producer runtime
-	producer := KafkaProducer(c.KafkaProducerConfiguration)
-
-	// http runtime
-	routerRuntime := RouteRuntime(producer, c.RouteConfiguration)
-
-	// add additional runtimes
-	runtimes := []runtime.Runtime{
-		routerRuntime,
-		producer,
-	}
-	if len(c.AdditionalRuntimes) > 0 {
-		runtimes = append(c.AdditionalRuntimes, runtimes...)
-	}
+	RegisterProducerConfig(c.KafkaProducerConfiguration)
+	RegisterProducer()
+	RegisterRoute(c.RouteConfiguration)
 
 	return &RuntimeFacade{
-		Runtimes: runtimes,
+		Runtimes: InjectedRuntimes(),
 	}
 }
