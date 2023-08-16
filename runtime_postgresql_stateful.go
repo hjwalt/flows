@@ -3,6 +3,7 @@ package flows
 import (
 	"context"
 
+	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
@@ -31,10 +32,11 @@ func (c StatefulPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	RegisterRetry(c.RetryConfiguration)
 	RegisterProducerConfig(c.KafkaProducerConfiguration)
 	RegisterProducer()
-	RegisterConsumerSingleConfig(c.KafkaConsumerConfiguration)
-	RegisterConsumerSingle()
+	RegisterConsumerKeyedConfig(c.KafkaConsumerConfiguration)
+	RegisterConsumer()
 	RegisterRoute(c.RouteConfiguration)
-	inverse.Register[stateless.SingleFunction](QualifierKafkaConsumerSingleFunction, func(ctx context.Context) (stateless.SingleFunction, error) {
+	inverse.RegisterInstance[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](QualifierKafkaConsumerKeyFunction, c.PersistenceIdFunction)
+	inverse.Register[stateless.BatchFunction](QualifierKafkaConsumerBatchFunction, func(ctx context.Context) (stateless.BatchFunction, error) {
 		retry, err := GetRetry(ctx)
 		if err != nil {
 			return nil, err
@@ -58,18 +60,26 @@ func (c StatefulPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 			stateful.WithSingleReadWriteTransactionPersistenceIdFunc(c.PersistenceIdFunction),
 			stateful.WithSingleReadWriteRepository(repository),
 		)
-		wrappedFunction = stateless.NewSingleProducer(
-			stateless.WithSingleProducerNextFunction(wrappedFunction),
-			stateless.WithSingleProducerRuntime(producer),
-			stateless.WithSingleProducerPrometheus(),
-		)
+
 		wrappedFunction = stateless.NewSingleRetry(
 			stateless.WithSingleRetryNextFunction(wrappedFunction),
 			stateless.WithSingleRetryRuntime(retry),
 			stateless.WithSingleRetryPrometheus(),
 		)
 
-		return wrappedFunction, nil
+		wrappedBatch := stateless.NewProducerBatchIterateFunction(
+			stateless.WithBatchIterateFunctionNextFunction(wrappedFunction),
+			stateless.WithBatchIterateFunctionProducer(producer),
+			stateless.WithBatchIterateProducerPrometheus(),
+		)
+
+		wrappedBatch = stateless.NewBatchRetry(
+			stateless.WithBatchRetryNextFunction(wrappedBatch),
+			stateless.WithBatchRetryRuntime(retry),
+			stateless.WithBatchRetryPrometheus(),
+		)
+
+		return wrappedBatch, nil
 	})
 
 	return &RuntimeFacade{

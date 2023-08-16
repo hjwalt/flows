@@ -36,7 +36,7 @@ func WordCountStatefulFunction(c context.Context, m message.Message[string, stri
 	// update state
 	s.Content.Count += 1
 
-	logger.Info("count", zap.Int64("count", s.Content.Count))
+	logger.Info("count", zap.Int64("count", s.Content.Count), zap.String("key", m.Key))
 
 	// create output message
 	outMessage := message.Message[string, string]{

@@ -35,8 +35,8 @@ func WithBatchRetryNextFunction(next BatchFunction) runtime.Configuration[*Batch
 	}
 }
 
-func WithBatchRetryPrometheus() runtime.Configuration[*SingleRetry] {
-	return func(sr *SingleRetry) *SingleRetry {
+func WithBatchRetryPrometheus() runtime.Configuration[*BatchRetry] {
+	return func(sr *BatchRetry) *BatchRetry {
 		sr.metric = metric.PrometheusRetry()
 		return sr
 	}

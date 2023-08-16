@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows/join"
+	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
@@ -44,7 +45,7 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	statefulTopicSwitchConfigurations := []runtime.Configuration[*stateful.SingleTopicSwitch]{}
 	persistenceIdConfigurations := []runtime.Configuration[*stateful.PersistenceIdSwitch]{}
 
-	// generatic stateful transaction
+	// generating stateful switches for persistence id and stateful function
 	for topic, statefulFn := range c.StatefulFunctions {
 		persistenceIdFn, persistenceIdFnExists := c.PersistenceIdFunctions[topic]
 		if !persistenceIdFnExists {
@@ -56,20 +57,23 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 		statefulTopicSwitchConfigurations = append(statefulTopicSwitchConfigurations, stateful.WithSingleTopicSwitchStatefulSingleFunction(topic, statefulFn))
 		persistenceIdConfigurations = append(persistenceIdConfigurations, stateful.WithPersistenceIdSwitchPersistenceIdFunction(topic, persistenceIdFn))
 	}
+	keyedPersistenceIdConfigurations := append(persistenceIdConfigurations, stateful.WithPersistenceIdSwitchPersistenceIdFunction(c.IntermediateTopicName, intermediateTopicKeyFunction))
+	keyedPersistenceId := stateful.NewSinglePersistenceIdSwitch(keyedPersistenceIdConfigurations...)
 
 	// setting the topics for consumers
 	consumerTopics := append(topics, c.IntermediateTopicName)
-	inverse.RegisterInstance[runtime.Configuration[*runtime_sarama.Consumer]](QualifierKafkaConsumerSingleConfiguration, runtime_sarama.WithConsumerTopic(consumerTopics...))
+	inverse.RegisterInstance[runtime.Configuration[*runtime_sarama.Consumer]](QualifierKafkaConsumerConfiguration, runtime_sarama.WithConsumerTopic(consumerTopics...))
 
 	RegisterPostgresql(c.PostgresqlConfiguration)
 	RegisterPostgresqlSingleState(c.PersistenceTableName)
 	RegisterRetry(c.RetryConfiguration)
 	RegisterProducerConfig(c.KafkaProducerConfiguration)
 	RegisterProducer()
-	RegisterConsumerSingleConfig(c.KafkaConsumerConfiguration)
-	RegisterConsumerSingle()
+	RegisterConsumerKeyedConfig(c.KafkaConsumerConfiguration)
+	RegisterConsumer()
 	RegisterRoute(c.RouteConfiguration)
-	inverse.Register[stateless.SingleFunction](QualifierKafkaConsumerSingleFunction, func(ctx context.Context) (stateless.SingleFunction, error) {
+	inverse.RegisterInstance[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](QualifierKafkaConsumerKeyFunction, keyedPersistenceId)
+	inverse.Register[stateless.BatchFunction](QualifierKafkaConsumerBatchFunction, func(ctx context.Context) (stateless.BatchFunction, error) {
 		retry, err := GetRetry(ctx)
 		if err != nil {
 			return nil, err
@@ -85,12 +89,12 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 
 		// Intermediate to join stateful switching function
 		statefulWrappedFunction := stateful.NewSingleTopicSwitch(statefulTopicSwitchConfigurations...)
+		persistenceIdTopicSwitch := stateful.NewSinglePersistenceIdSwitch(persistenceIdConfigurations...)
 
 		statefulWrappedFunction = stateful.NewSingleStatefulDeduplicate(
 			stateful.WithSingleStatefulDeduplicateNextFunction(statefulWrappedFunction),
 		)
 
-		persistenceIdTopicSwitch := stateful.NewSinglePersistenceIdSwitch(persistenceIdConfigurations...)
 		stateTransaction := stateful.NewSingleReadWrite(
 			stateful.WithSingleReadWriteTransactionPersistenceIdFunc(persistenceIdTopicSwitch),
 			stateful.WithSingleReadWriteRepository(repository),
@@ -120,21 +124,36 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 			statelessTopicSwitchConfigurations...,
 		)
 
-		wrappedFunction = stateless.NewSingleProducer(
-			stateless.WithSingleProducerNextFunction(wrappedFunction),
-			stateless.WithSingleProducerRuntime(producer),
-			stateless.WithSingleProducerPrometheus(),
-		)
 		wrappedFunction = stateless.NewSingleRetry(
 			stateless.WithSingleRetryNextFunction(wrappedFunction),
 			stateless.WithSingleRetryRuntime(retry),
 			stateless.WithSingleRetryPrometheus(),
 		)
 
-		return wrappedFunction, nil
+		wrappedBatch := stateless.NewProducerBatchIterateFunction(
+			stateless.WithBatchIterateFunctionNextFunction(wrappedFunction),
+			stateless.WithBatchIterateFunctionProducer(producer),
+			stateless.WithBatchIterateProducerPrometheus(),
+		)
+
+		wrappedBatch = stateless.NewBatchRetry(
+			stateless.WithBatchRetryNextFunction(wrappedBatch),
+			stateless.WithBatchRetryRuntime(retry),
+			stateless.WithBatchRetryPrometheus(),
+		)
+
+		return wrappedBatch, nil
 	})
 
 	return &RuntimeFacade{
 		Runtimes: InjectedRuntimes(),
 	}
+}
+
+func intermediateTopicKeyFunction(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
+	keyValue, keyError := join.IntermediateKeyFormat.Unmarshal(m.Key)
+	if keyError != nil {
+		return "", keyError
+	}
+	return keyValue.PersistenceId, nil
 }

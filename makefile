@@ -31,6 +31,9 @@ run:
 reset:
 	./script/reset.sh
 
+add:
+	./script/add.sh
+
 listen:
 	./script/listen.sh
 

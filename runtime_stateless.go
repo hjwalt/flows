@@ -3,10 +3,13 @@ package flows
 import (
 	"context"
 
+	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
+	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 )
@@ -24,10 +27,11 @@ func (c StatelessSingleFunctionConfiguration) Runtime() runtime.Runtime {
 	RegisterRetry(c.RetryConfiguration)
 	RegisterProducerConfig(c.KafkaProducerConfiguration)
 	RegisterProducer()
-	RegisterConsumerSingleConfig(c.KafkaConsumerConfiguration)
-	RegisterConsumerSingle()
+	RegisterConsumerKeyedConfig(c.KafkaConsumerConfiguration)
+	RegisterConsumer()
 	RegisterRoute(c.RouteConfiguration)
-	inverse.Register[stateless.SingleFunction](QualifierKafkaConsumerSingleFunction, func(ctx context.Context) (stateless.SingleFunction, error) {
+	inverse.RegisterInstance[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](QualifierKafkaConsumerKeyFunction, statelessBase64PersistenceId)
+	inverse.Register[stateless.BatchFunction](QualifierKafkaConsumerBatchFunction, func(ctx context.Context) (stateless.BatchFunction, error) {
 		retry, err := GetRetry(ctx)
 		if err != nil {
 			return nil, err
@@ -38,21 +42,50 @@ func (c StatelessSingleFunctionConfiguration) Runtime() runtime.Runtime {
 		}
 
 		wrappedFunction := c.StatelessFunction
-		wrappedFunction = stateless.NewSingleProducer(
-			stateless.WithSingleProducerNextFunction(wrappedFunction),
-			stateless.WithSingleProducerRuntime(producer),
-			stateless.WithSingleProducerPrometheus(),
-		)
+
 		wrappedFunction = stateless.NewSingleRetry(
 			stateless.WithSingleRetryNextFunction(wrappedFunction),
 			stateless.WithSingleRetryRuntime(retry),
 			stateless.WithSingleRetryPrometheus(),
 		)
 
-		return wrappedFunction, nil
+		wrappedBatch := stateless.NewProducerBatchIterateFunction(
+			stateless.WithBatchIterateFunctionNextFunction(wrappedFunction),
+			stateless.WithBatchIterateFunctionProducer(producer),
+			stateless.WithBatchIterateProducerPrometheus(),
+		)
+
+		wrappedBatch = stateless.NewBatchRetry(
+			stateless.WithBatchRetryNextFunction(wrappedBatch),
+			stateless.WithBatchRetryRuntime(retry),
+			stateless.WithBatchRetryPrometheus(),
+		)
+
+		return wrappedBatch, nil
 	})
 
 	return &RuntimeFacade{
 		Runtimes: InjectedRuntimes(),
 	}
+}
+
+var (
+	base64Format = format.Base64()
+	bytesFormat  = format.Bytes()
+)
+
+func statelessBase64PersistenceId(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
+	base64Message, conversionErr := message.Convert(
+		m,
+		bytesFormat,
+		bytesFormat,
+		base64Format,
+		bytesFormat,
+	)
+
+	if conversionErr != nil {
+		return "", conversionErr
+	}
+
+	return base64Message.Key, nil
 }

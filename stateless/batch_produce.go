@@ -32,6 +32,13 @@ func WithBatchProducerNextFunction(next BatchFunction) runtime.Configuration[*Ba
 	}
 }
 
+func WithBatchProducerPrometheus() runtime.Configuration[*BatchProducer] {
+	return func(psf *BatchProducer) *BatchProducer {
+		psf.metric = metric.PrometheusProduce()
+		return psf
+	}
+}
+
 // implementation
 type BatchProducer struct {
 	producer message.Producer

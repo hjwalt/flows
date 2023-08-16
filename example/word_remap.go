@@ -8,10 +8,11 @@ import (
 	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
+	"go.uber.org/zap"
 )
 
 func WordRemapStatelessFunction(c context.Context, m message.Message[string, string]) (*message.Message[string, string], error) {
-	logger.Info("applying")
+	logger.Info("count", zap.String("remap", m.Value+" updated"), zap.String("key", m.Key))
 	return &message.Message[string, string]{
 		Topic:   "word-updated",
 		Key:     m.Key,

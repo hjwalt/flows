@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/metric"
 	"github.com/hjwalt/runway/runtime"
 )
 
@@ -14,10 +15,13 @@ func NewProducerBatchIterateFunction(configurations ...runtime.Configuration[*Pr
 		batchIterateFunction = configuration(batchIterateFunction)
 	}
 
-	// wrap next function with produce per iteration
-	withProducerBatchIterateWrap(batchIterateFunction)
+	batchFunction := BatchProducer{
+		producer: batchIterateFunction.producer,
+		next:     batchIterateFunction.Apply,
+		metric:   batchIterateFunction.metric,
+	}
 
-	return batchIterateFunction.Apply
+	return batchFunction.Apply
 }
 
 // configuration
@@ -36,24 +40,29 @@ func WithBatchIterateFunctionNextFunction(next SingleFunction) runtime.Configura
 	}
 }
 
-func withProducerBatchIterateWrap(c *ProducerBatchIterateFunction) {
-	c.next = NewSingleProducer(
-		WithSingleProducerRuntime(c.producer),
-		WithSingleProducerNextFunction(c.next),
-	)
+func WithBatchIterateProducerPrometheus() runtime.Configuration[*ProducerBatchIterateFunction] {
+	return func(psf *ProducerBatchIterateFunction) *ProducerBatchIterateFunction {
+		psf.metric = metric.PrometheusProduce()
+		return psf
+	}
 }
 
 // implementation
 type ProducerBatchIterateFunction struct {
 	producer message.Producer
 	next     SingleFunction
+	metric   metric.Produce
 }
 
 func (r *ProducerBatchIterateFunction) Apply(c context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+	res := make([]message.Message[message.Bytes, message.Bytes], 0)
+
 	for _, m := range ms {
-		if _, err := r.next(c, m); err != nil {
+		if mres, err := r.next(c, m); err != nil {
 			return make([]message.Message[message.Bytes, message.Bytes], 0), err
+		} else {
+			res = append(res, mres...)
 		}
 	}
-	return make([]message.Message[message.Bytes, message.Bytes], 0), nil
+	return res, nil
 }
