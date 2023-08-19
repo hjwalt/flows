@@ -258,8 +258,8 @@ func TestSingleDeduplicate(t *testing.T) {
 
 			assert := assert.New(t)
 
-			fn := stateful.NewSingleStatefulDeduplicate(
-				stateful.WithSingleStatefulDeduplicateNextFunction(
+			fn := stateful.NewDeduplicate(
+				stateful.WithDeduplicateNextFunction(
 					func(c context.Context, m message.Message[message.Bytes, message.Bytes], inState stateful.State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], stateful.State[message.Bytes], error) {
 						return []message.Message[message.Bytes, message.Bytes]{m}, inState, nil
 					},

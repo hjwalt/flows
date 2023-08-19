@@ -26,7 +26,7 @@ type StatefulPostgresqlFunctionConfiguration struct {
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c StatefulPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
+func (c StatefulPostgresqlFunctionConfiguration) Register() {
 	RegisterPostgresql(c.PostgresqlConfiguration)
 	RegisterPostgresqlSingleState(c.PersistenceTableName)
 	RegisterRetry(c.RetryConfiguration)
@@ -51,14 +51,14 @@ func (c StatefulPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 		}
 
 		wrappedStatefulFunction := c.StatefulFunction
-		wrappedStatefulFunction = stateful.NewSingleStatefulDeduplicate(
-			stateful.WithSingleStatefulDeduplicateNextFunction(wrappedStatefulFunction),
+		wrappedStatefulFunction = stateful.NewDeduplicate(
+			stateful.WithDeduplicateNextFunction(wrappedStatefulFunction),
 		)
 
-		wrappedBatch := stateful.NewBatchReadWrite(
-			stateful.WithBatchReadWriteStatefulFunction(wrappedStatefulFunction),
-			stateful.WithBatchReadWritePersistenceIdFunc(c.PersistenceIdFunction),
-			stateful.WithBatchReadWriteRepository(repository),
+		wrappedBatch := stateful.NewReadWrite(
+			stateful.WithReadWriteFunction(wrappedStatefulFunction),
+			stateful.WithReadWritePersistenceIdFunc(c.PersistenceIdFunction),
+			stateful.WithReadWriteRepository(repository),
 		)
 
 		wrappedBatch = stateless.NewProducerBatchFunction(
@@ -75,6 +75,10 @@ func (c StatefulPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 
 		return wrappedBatch, nil
 	})
+}
+
+func (c StatefulPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
+	c.Register()
 
 	return &RuntimeFacade{
 		Runtimes: InjectedRuntimes(),

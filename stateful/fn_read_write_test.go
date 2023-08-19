@@ -54,12 +54,12 @@ func TestBatchSimpleApplySuccessful(t *testing.T) {
 		State: map[string]stateful.State[[]byte]{},
 	}
 
-	txFn := stateful.NewBatchReadWrite(
-		stateful.WithBatchReadWritePersistenceIdFunc(func(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
+	txFn := stateful.NewReadWrite(
+		stateful.WithReadWritePersistenceIdFunc(func(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
 			return string(m.Key), nil
 		}),
-		stateful.WithBatchReadWriteRepository(repo),
-		stateful.WithBatchReadWriteStatefulFunction(func(c context.Context, m message.Message[message.Bytes, message.Bytes], inState stateful.State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], stateful.State[message.Bytes], error) {
+		stateful.WithReadWriteRepository(repo),
+		stateful.WithReadWriteFunction(func(c context.Context, m message.Message[message.Bytes, message.Bytes], inState stateful.State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], stateful.State[message.Bytes], error) {
 			applyCount += 1
 			inState.Content = []byte(string(inState.Content) + string(m.Value))
 			return []message.Message[message.Bytes, message.Bytes]{

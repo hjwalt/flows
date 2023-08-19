@@ -37,6 +37,11 @@ func TestUpsertStandard(t *testing.T) {
 	repo.Upsert(ctx, []*TestEntity{
 		{
 			Id:           "1",
+			KeyContent:   "keyother",
+			ValueContent: "valueother",
+		},
+		{
+			Id:           "1",
 			KeyContent:   "key1",
 			ValueContent: "value1",
 		},

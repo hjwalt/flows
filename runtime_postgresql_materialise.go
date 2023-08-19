@@ -24,7 +24,7 @@ type MaterialisePostgresqlFunctionConfiguration[T any] struct {
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c MaterialisePostgresqlFunctionConfiguration[T]) Runtime() runtime.Runtime {
+func (c MaterialisePostgresqlFunctionConfiguration[T]) Register() {
 	RegisterPostgresql(c.PostgresqlConfiguration)
 	RegisterPostgresqlUpsert[T]()
 	RegisterRetry(c.RetryConfiguration)
@@ -33,13 +33,9 @@ func (c MaterialisePostgresqlFunctionConfiguration[T]) Runtime() runtime.Runtime
 	RegisterConsumerKeyedConfig(c.KafkaConsumerConfiguration)
 	RegisterConsumer()
 	RegisterRoute(c.RouteConfiguration)
-	inverse.RegisterInstance[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](QualifierKafkaConsumerKeyFunction, statelessBase64PersistenceId)
+	inverse.RegisterInstance[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](QualifierKafkaConsumerKeyFunction, stateless.Base64PersistenceId)
 	inverse.Register[stateless.BatchFunction](QualifierKafkaConsumerBatchFunction, func(ctx context.Context) (stateless.BatchFunction, error) {
 		retry, err := GetRetry(ctx)
-		if err != nil {
-			return nil, err
-		}
-		producer, err := GetKafkaProducer(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -48,21 +44,9 @@ func (c MaterialisePostgresqlFunctionConfiguration[T]) Runtime() runtime.Runtime
 			return nil, err
 		}
 
-		wrappedFunction := materialise.NewSingleUpsert(
-			materialise.WithSingleUpsertMapFunction(c.MaterialiseMapFunction),
-			materialise.WithSingleUpsertRepository(repository),
-		)
-
-		wrappedFunction = stateless.NewSingleRetry(
-			stateless.WithSingleRetryNextFunction(wrappedFunction),
-			stateless.WithSingleRetryRuntime(retry),
-			stateless.WithSingleRetryPrometheus(),
-		)
-
-		wrappedBatch := stateless.NewProducerBatchIterateFunction(
-			stateless.WithBatchIterateFunctionNextFunction(wrappedFunction),
-			stateless.WithBatchIterateFunctionProducer(producer),
-			stateless.WithBatchIterateProducerPrometheus(),
+		wrappedBatch := materialise.NewBatchUpsert(
+			materialise.WithBatchUpsertMapFunction(c.MaterialiseMapFunction),
+			materialise.WithBatchUpsertRepository(repository),
 		)
 
 		wrappedBatch = stateless.NewBatchRetry(
@@ -73,6 +57,10 @@ func (c MaterialisePostgresqlFunctionConfiguration[T]) Runtime() runtime.Runtime
 
 		return wrappedBatch, nil
 	})
+}
+
+func (c MaterialisePostgresqlFunctionConfiguration[T]) Runtime() runtime.Runtime {
+	c.Register()
 
 	return &RuntimeFacade{
 		Runtimes: InjectedRuntimes(),

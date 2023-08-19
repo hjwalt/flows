@@ -17,7 +17,7 @@ import (
 )
 
 // constructor
-func NewKeyedHandler(configurations ...runtime.Configuration[*KeyedHandler]) ConsumerLoop {
+func NewKeyedHandler(configurations ...runtime.Configuration[*KeyedHandler]) ConsumerHandler {
 	loop := &KeyedHandler{}
 	for _, configuration := range configurations {
 		loop = configuration(loop)

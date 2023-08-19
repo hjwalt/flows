@@ -53,7 +53,7 @@ func RegisterConsumer() {
 }
 
 func InjectorKafkaConsumerHandlerConfiguration(ctx context.Context) (runtime.Configuration[*runtime_sarama.Consumer], error) {
-	consumerHandler, getConsumerHandlerError := inverse.GetLast[runtime_sarama.ConsumerLoop](ctx, QualifierKafkaConsumerHandler)
+	consumerHandler, getConsumerHandlerError := inverse.GetLast[runtime_sarama.ConsumerHandler](ctx, QualifierKafkaConsumerHandler)
 	if getConsumerHandlerError != nil {
 		return nil, getConsumerHandlerError
 	}
@@ -63,10 +63,10 @@ func InjectorKafkaConsumerHandlerConfiguration(ctx context.Context) (runtime.Con
 
 func RegisterConsumerKeyedConfig(config []runtime.Configuration[*runtime_sarama.Consumer]) {
 	inverse.RegisterInstances(QualifierKafkaConsumerConfiguration, config)
-	inverse.Register[runtime_sarama.ConsumerLoop](QualifierKafkaConsumerHandler, InjectorKafkaConsumerKeyedHandler)
+	inverse.Register[runtime_sarama.ConsumerHandler](QualifierKafkaConsumerHandler, InjectorKafkaConsumerKeyedHandler)
 }
 
-func InjectorKafkaConsumerKeyedHandler(ctx context.Context) (runtime_sarama.ConsumerLoop, error) {
+func InjectorKafkaConsumerKeyedHandler(ctx context.Context) (runtime_sarama.ConsumerHandler, error) {
 	batchFunction, getBatchFunctionError := inverse.GetLast[stateless.BatchFunction](ctx, QualifierKafkaConsumerBatchFunction)
 	if getBatchFunctionError != nil {
 		return nil, getBatchFunctionError

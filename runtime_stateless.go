@@ -9,7 +9,6 @@ import (
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateless"
-	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 )
@@ -23,14 +22,14 @@ type StatelessSingleFunctionConfiguration struct {
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c StatelessSingleFunctionConfiguration) Runtime() runtime.Runtime {
+func (c StatelessSingleFunctionConfiguration) Register() {
 	RegisterRetry(c.RetryConfiguration)
 	RegisterProducerConfig(c.KafkaProducerConfiguration)
 	RegisterProducer()
 	RegisterConsumerKeyedConfig(c.KafkaConsumerConfiguration)
 	RegisterConsumer()
 	RegisterRoute(c.RouteConfiguration)
-	inverse.RegisterInstance[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](QualifierKafkaConsumerKeyFunction, statelessBase64PersistenceId)
+	inverse.RegisterInstance[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](QualifierKafkaConsumerKeyFunction, stateless.Base64PersistenceId)
 	inverse.Register[stateless.BatchFunction](QualifierKafkaConsumerBatchFunction, func(ctx context.Context) (stateless.BatchFunction, error) {
 		retry, err := GetRetry(ctx)
 		if err != nil {
@@ -63,29 +62,12 @@ func (c StatelessSingleFunctionConfiguration) Runtime() runtime.Runtime {
 
 		return wrappedBatch, nil
 	})
+}
+
+func (c StatelessSingleFunctionConfiguration) Runtime() runtime.Runtime {
+	c.Register()
 
 	return &RuntimeFacade{
 		Runtimes: InjectedRuntimes(),
 	}
-}
-
-var (
-	base64Format = format.Base64()
-	bytesFormat  = format.Bytes()
-)
-
-func statelessBase64PersistenceId(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
-	base64Message, conversionErr := message.Convert(
-		m,
-		bytesFormat,
-		bytesFormat,
-		base64Format,
-		bytesFormat,
-	)
-
-	if conversionErr != nil {
-		return "", conversionErr
-	}
-
-	return base64Message.Key, nil
 }

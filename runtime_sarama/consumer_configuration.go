@@ -32,7 +32,7 @@ func WithConsumerSaramaConfigModifier(modifier SaramaConfigModifier) runtime.Con
 	}
 }
 
-func WithConsumerLoop(loop ConsumerLoop) runtime.Configuration[*Consumer] {
+func WithConsumerLoop(loop ConsumerHandler) runtime.Configuration[*Consumer] {
 	return func(c *Consumer) *Consumer {
 		c.Handler = loop
 		return c

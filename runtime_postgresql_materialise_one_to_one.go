@@ -27,7 +27,7 @@ type MaterialisePostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any] s
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Runtime() runtime.Runtime {
+func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Register() {
 
 	// postgres configs
 	postgresConfigs := []runtime.Configuration[*runtime_bun.PostgresqlConnection]{
@@ -76,5 +76,13 @@ func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Runtime()
 		RetryConfiguration:         c.RetryConfiguration,
 	}
 
-	return statefulFunctionConfiguration.Runtime()
+	statefulFunctionConfiguration.Register()
+}
+
+func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Runtime() runtime.Runtime {
+	c.Register()
+
+	return &RuntimeFacade{
+		Runtimes: InjectedRuntimes(),
+	}
 }

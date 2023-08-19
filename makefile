@@ -37,6 +37,9 @@ add:
 listen:
 	./script/listen.sh
 
+select:
+	./script/select.sh
+
 group-delete:
 	./script/group-delete.sh
 	

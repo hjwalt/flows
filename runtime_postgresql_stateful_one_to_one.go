@@ -32,7 +32,7 @@ type StatefulPostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any, OK a
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) Runtime() runtime.Runtime {
+func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) Register() {
 
 	// postgres configs
 	postgresConfigs := []runtime.Configuration[*runtime_bun.PostgresqlConnection]{
@@ -83,5 +83,13 @@ func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) Runt
 		RetryConfiguration:         c.RetryConfiguration,
 	}
 
-	return statefulFunctionConfiguration.Runtime()
+	statefulFunctionConfiguration.Register()
+}
+
+func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) Runtime() runtime.Runtime {
+	c.Register()
+
+	return &RuntimeFacade{
+		Runtimes: InjectedRuntimes(),
+	}
 }

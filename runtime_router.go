@@ -12,10 +12,14 @@ type RouterConfiguration struct {
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c RouterConfiguration) Runtime() runtime.Runtime {
+func (c RouterConfiguration) Register() {
 	RegisterProducerConfig(c.KafkaProducerConfiguration)
 	RegisterProducer()
 	RegisterRoute(c.RouteConfiguration)
+}
+
+func (c RouterConfiguration) Runtime() runtime.Runtime {
+	c.Register()
 
 	return &RuntimeFacade{
 		Runtimes: InjectedRuntimes(),

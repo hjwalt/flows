@@ -27,7 +27,7 @@ type Consumer struct {
 	Topics              []string
 	Brokers             []string
 	SaramaConfiguration *sarama.Config
-	Handler             ConsumerLoop
+	Handler             ConsumerHandler
 
 	// not required
 	GroupName string
@@ -102,7 +102,7 @@ func (r *Consumer) Loop(ctx context.Context, cancel context.CancelFunc) error {
 	return nil
 }
 
-type ConsumerLoop interface {
+type ConsumerHandler interface {
 	ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error
 	Setup(sarama.ConsumerGroupSession) error
 	Cleanup(sarama.ConsumerGroupSession) error

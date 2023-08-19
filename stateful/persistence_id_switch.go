@@ -8,7 +8,7 @@ import (
 )
 
 // constructor
-func NewSinglePersistenceIdSwitch(configurations ...runtime.Configuration[*PersistenceIdSwitch]) PersistenceIdFunction[[]byte, []byte] {
+func NewPersistenceIdSwitch(configurations ...runtime.Configuration[*PersistenceIdSwitch]) PersistenceIdFunction[[]byte, []byte] {
 	persistenceIdFunction := &PersistenceIdSwitch{
 		functions: make(map[string]PersistenceIdFunction[[]byte, []byte]),
 	}

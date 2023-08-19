@@ -83,3 +83,11 @@ func (r *SourceToIntermediateMap) Apply(c context.Context, ms []message.Message[
 
 var IntermediateValueFormat = message.Format()
 var IntermediateKeyFormat = format.Protobuf[*protobuf.JoinKey]()
+
+func IntermediateTopicKeyFunction(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
+	keyValue, keyError := IntermediateKeyFormat.Unmarshal(m.Key)
+	if keyError != nil {
+		return "", keyError
+	}
+	return keyValue.PersistenceId, nil
+}

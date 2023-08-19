@@ -5,7 +5,34 @@ import (
 	"errors"
 
 	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/runway/runtime"
 )
+
+// constructor
+func NewBatchUpsert[T any](configurations ...runtime.Configuration[*BatchUpsert[T]]) stateless.BatchFunction {
+	r := &BatchUpsert[T]{}
+
+	for _, configuration := range configurations {
+		r = configuration(r)
+	}
+	return r.Apply
+}
+
+// configuration
+func WithBatchUpsertRepository[T any](repository UpsertRepository[T]) runtime.Configuration[*BatchUpsert[T]] {
+	return func(c *BatchUpsert[T]) *BatchUpsert[T] {
+		c.repository = repository
+		return c
+	}
+}
+
+func WithBatchUpsertMapFunction[T any](mapper MapFunction[message.Bytes, message.Bytes, T]) runtime.Configuration[*BatchUpsert[T]] {
+	return func(c *BatchUpsert[T]) *BatchUpsert[T] {
+		c.mapper = mapper
+		return c
+	}
+}
 
 type BatchUpsert[T any] struct {
 	repository UpsertRepository[T]

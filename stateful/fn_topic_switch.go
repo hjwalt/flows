@@ -11,8 +11,8 @@ import (
 )
 
 // constructor
-func NewSingleTopicSwitch(configurations ...runtime.Configuration[*SingleTopicSwitch]) SingleFunction {
-	singleFunction := &SingleTopicSwitch{
+func NewTopicSwitch(configurations ...runtime.Configuration[*TopicSwitch]) SingleFunction {
+	singleFunction := &TopicSwitch{
 		functions: make(map[string]SingleFunction),
 	}
 	for _, configuration := range configurations {
@@ -22,19 +22,19 @@ func NewSingleTopicSwitch(configurations ...runtime.Configuration[*SingleTopicSw
 }
 
 // configuration
-func WithSingleTopicSwitchStatefulSingleFunction(topic string, f SingleFunction) runtime.Configuration[*SingleTopicSwitch] {
-	return func(sts *SingleTopicSwitch) *SingleTopicSwitch {
+func WithTopicSwitchFunction(topic string, f SingleFunction) runtime.Configuration[*TopicSwitch] {
+	return func(sts *TopicSwitch) *TopicSwitch {
 		sts.functions[topic] = f
 		return sts
 	}
 }
 
 // implementation
-type SingleTopicSwitch struct {
+type TopicSwitch struct {
 	functions map[string]SingleFunction
 }
 
-func (r *SingleTopicSwitch) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes], s State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], State[message.Bytes], error) {
+func (r *TopicSwitch) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes], s State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], State[message.Bytes], error) {
 	logger.Info("stateful switch", zap.String("topic", m.Topic))
 	fn, fnExists := r.functions[m.Topic]
 	if !fnExists {

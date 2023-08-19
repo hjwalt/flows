@@ -12,8 +12,8 @@ import (
 )
 
 // constructor
-func NewBatchReadWrite(configurations ...runtime.Configuration[*BatchReadWrite]) stateless.BatchFunction {
-	singleFunction := &BatchReadWrite{}
+func NewReadWrite(configurations ...runtime.Configuration[*ReadWrite]) stateless.BatchFunction {
+	singleFunction := &ReadWrite{}
 	for _, configuration := range configurations {
 		singleFunction = configuration(singleFunction)
 	}
@@ -21,35 +21,35 @@ func NewBatchReadWrite(configurations ...runtime.Configuration[*BatchReadWrite])
 }
 
 // configuration
-func WithBatchReadWritePersistenceIdFunc(persistenceIdFunc func(context.Context, message.Message[message.Bytes, message.Bytes]) (string, error)) runtime.Configuration[*BatchReadWrite] {
-	return func(st *BatchReadWrite) *BatchReadWrite {
+func WithReadWritePersistenceIdFunc(persistenceIdFunc func(context.Context, message.Message[message.Bytes, message.Bytes]) (string, error)) runtime.Configuration[*ReadWrite] {
+	return func(st *ReadWrite) *ReadWrite {
 		st.persistenceIdFunc = persistenceIdFunc
 		return st
 	}
 }
 
-func WithBatchReadWriteRepository(repository Repository) runtime.Configuration[*BatchReadWrite] {
-	return func(st *BatchReadWrite) *BatchReadWrite {
+func WithReadWriteRepository(repository Repository) runtime.Configuration[*ReadWrite] {
+	return func(st *ReadWrite) *ReadWrite {
 		st.repository = repository
 		return st
 	}
 }
 
-func WithBatchReadWriteStatefulFunction(next SingleFunction) runtime.Configuration[*BatchReadWrite] {
-	return func(st *BatchReadWrite) *BatchReadWrite {
+func WithReadWriteFunction(next SingleFunction) runtime.Configuration[*ReadWrite] {
+	return func(st *ReadWrite) *ReadWrite {
 		st.next = next
 		return st
 	}
 }
 
 // implementation
-type BatchReadWrite struct {
+type ReadWrite struct {
 	next              SingleFunction
 	persistenceIdFunc func(context.Context, message.Message[message.Bytes, message.Bytes]) (string, error)
 	repository        Repository
 }
 
-func (r *BatchReadWrite) Apply(c context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+func (r *ReadWrite) Apply(c context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
 
 	// prepare persistence id and message map
 	persistenceIds := make([]string, len(ms))

@@ -23,7 +23,7 @@ type RouterAdapterConfiguration[Request any, InputKey any, InputValue any] struc
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Runtime() runtime.Runtime {
+func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register() {
 
 	// producer configs
 	kafkaProducerConfigs := []runtime.Configuration[*runtime_sarama.Producer]{
@@ -55,5 +55,13 @@ func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Runtime() run
 		RouteConfiguration:         routeConfigs,
 	}
 
-	return routerConfiguration.Runtime()
+	routerConfiguration.Register()
+}
+
+func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Runtime() runtime.Runtime {
+	c.Register()
+
+	return &RuntimeFacade{
+		Runtimes: InjectedRuntimes(),
+	}
 }

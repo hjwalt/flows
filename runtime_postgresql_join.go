@@ -39,10 +39,9 @@ type JoinPostgresqlFunctionConfiguration struct {
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
-
+func (c JoinPostgresqlFunctionConfiguration) Register() {
 	topics := []string{}
-	statefulTopicSwitchConfigurations := []runtime.Configuration[*stateful.SingleTopicSwitch]{}
+	statefulTopicSwitchConfigurations := []runtime.Configuration[*stateful.TopicSwitch]{}
 	persistenceIdConfigurations := []runtime.Configuration[*stateful.PersistenceIdSwitch]{}
 
 	// generating stateful switches for persistence id and stateful function
@@ -54,11 +53,11 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 		}
 
 		topics = append(topics, topic)
-		statefulTopicSwitchConfigurations = append(statefulTopicSwitchConfigurations, stateful.WithSingleTopicSwitchStatefulSingleFunction(topic, statefulFn))
+		statefulTopicSwitchConfigurations = append(statefulTopicSwitchConfigurations, stateful.WithTopicSwitchFunction(topic, statefulFn))
 		persistenceIdConfigurations = append(persistenceIdConfigurations, stateful.WithPersistenceIdSwitchPersistenceIdFunction(topic, persistenceIdFn))
 	}
-	keyedPersistenceIdConfigurations := append(persistenceIdConfigurations, stateful.WithPersistenceIdSwitchPersistenceIdFunction(c.IntermediateTopicName, intermediateTopicKeyFunction))
-	keyedPersistenceId := stateful.NewSinglePersistenceIdSwitch(keyedPersistenceIdConfigurations...)
+	keyedPersistenceIdConfigurations := append(persistenceIdConfigurations, stateful.WithPersistenceIdSwitchPersistenceIdFunction(c.IntermediateTopicName, join.IntermediateTopicKeyFunction))
+	keyedPersistenceId := stateful.NewPersistenceIdSwitch(keyedPersistenceIdConfigurations...)
 
 	// setting the topics for consumers
 	consumerTopics := append(topics, c.IntermediateTopicName)
@@ -88,17 +87,17 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 		}
 
 		// Intermediate to join stateful switching function
-		statefulWrappedFunction := stateful.NewSingleTopicSwitch(statefulTopicSwitchConfigurations...)
-		persistenceIdTopicSwitch := stateful.NewSinglePersistenceIdSwitch(persistenceIdConfigurations...)
+		statefulWrappedFunction := stateful.NewTopicSwitch(statefulTopicSwitchConfigurations...)
+		persistenceIdTopicSwitch := stateful.NewPersistenceIdSwitch(persistenceIdConfigurations...)
 
-		statefulWrappedFunction = stateful.NewSingleStatefulDeduplicate(
-			stateful.WithSingleStatefulDeduplicateNextFunction(statefulWrappedFunction),
+		statefulWrappedFunction = stateful.NewDeduplicate(
+			stateful.WithDeduplicateNextFunction(statefulWrappedFunction),
 		)
 
-		stateTransaction := stateful.NewBatchReadWrite(
-			stateful.WithBatchReadWritePersistenceIdFunc(persistenceIdTopicSwitch),
-			stateful.WithBatchReadWriteRepository(repository),
-			stateful.WithBatchReadWriteStatefulFunction(statefulWrappedFunction),
+		stateTransaction := stateful.NewReadWrite(
+			stateful.WithReadWritePersistenceIdFunc(persistenceIdTopicSwitch),
+			stateful.WithReadWriteRepository(repository),
+			stateful.WithReadWriteFunction(statefulWrappedFunction),
 		)
 
 		intermediateToJoin := join.NewIntermediateToJoinMap(
@@ -132,16 +131,12 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 
 		return wrappedBatch, nil
 	})
+}
+
+func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
+	c.Register()
 
 	return &RuntimeFacade{
 		Runtimes: InjectedRuntimes(),
 	}
-}
-
-func intermediateTopicKeyFunction(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
-	keyValue, keyError := join.IntermediateKeyFormat.Unmarshal(m.Key)
-	if keyError != nil {
-		return "", keyError
-	}
-	return keyValue.PersistenceId, nil
 }

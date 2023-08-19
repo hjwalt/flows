@@ -11,8 +11,8 @@ import (
 )
 
 // constructor
-func NewSingleStatefulDeduplicate(configurations ...runtime.Configuration[*SingleStatefulDeduplicate]) SingleFunction {
-	singleFunction := &SingleStatefulDeduplicate{}
+func NewDeduplicate(configurations ...runtime.Configuration[*Deduplicate]) SingleFunction {
+	singleFunction := &Deduplicate{}
 	for _, configuration := range configurations {
 		singleFunction = configuration(singleFunction)
 	}
@@ -20,19 +20,19 @@ func NewSingleStatefulDeduplicate(configurations ...runtime.Configuration[*Singl
 }
 
 // configuration
-func WithSingleStatefulDeduplicateNextFunction(next SingleFunction) runtime.Configuration[*SingleStatefulDeduplicate] {
-	return func(st *SingleStatefulDeduplicate) *SingleStatefulDeduplicate {
+func WithDeduplicateNextFunction(next SingleFunction) runtime.Configuration[*Deduplicate] {
+	return func(st *Deduplicate) *Deduplicate {
 		st.next = next
 		return st
 	}
 }
 
 // implementation
-type SingleStatefulDeduplicate struct {
+type Deduplicate struct {
 	next SingleFunction
 }
 
-func (r SingleStatefulDeduplicate) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes], inState State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], State[message.Bytes], error) {
+func (r Deduplicate) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes], inState State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], State[message.Bytes], error) {
 
 	s := SetDefault(inState)
 

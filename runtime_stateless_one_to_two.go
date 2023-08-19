@@ -25,7 +25,7 @@ type StatelessOneToTwoConfiguration[IK any, IV any, OK1 any, OV1 any, OK2 any, O
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Runtime() runtime.Runtime {
+func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Register() {
 
 	// consumer configs
 	kafkaConsumerConfigs := []runtime.Configuration[*runtime_sarama.Consumer]{
@@ -64,5 +64,13 @@ func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Runtime() ru
 		RetryConfiguration:         c.RetryConfiguration,
 	}
 
-	return statelessFunctionConfiguration.Runtime()
+	statelessFunctionConfiguration.Register()
+}
+
+func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Runtime() runtime.Runtime {
+	c.Register()
+
+	return &RuntimeFacade{
+		Runtimes: InjectedRuntimes(),
+	}
 }

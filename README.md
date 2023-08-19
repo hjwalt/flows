@@ -237,3 +237,8 @@ You only need to add `DOCKER_HOST` according to your `podman info`. Example:
 ```
 export DOCKER_HOST=unix:///run/user/1000/podman/podman.sock
 ```
+
+## Microbatching
+
+Microbatching is applied in this repository to achieve better throughput.
+Maximum batching wait time can be configured.
