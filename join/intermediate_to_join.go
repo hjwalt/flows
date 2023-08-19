@@ -14,7 +14,7 @@ import (
 var ErrorIntermediateToJoinDeserialiseMessage = errors.New("error deserialising message")
 
 // constructor
-func NewIntermediateToJoinMap(configurations ...runtime.Configuration[*IntermediateToJoinMap]) stateless.SingleFunction {
+func NewIntermediateToJoinMap(configurations ...runtime.Configuration[*IntermediateToJoinMap]) stateless.BatchFunction {
 	singleFunction := &IntermediateToJoinMap{}
 	for _, configuration := range configurations {
 		singleFunction = configuration(singleFunction)
@@ -23,7 +23,7 @@ func NewIntermediateToJoinMap(configurations ...runtime.Configuration[*Intermedi
 }
 
 // configuration
-func WithIntermediateToJoinMapTransactionWrappedFunction(f stateless.SingleFunction) runtime.Configuration[*IntermediateToJoinMap] {
+func WithIntermediateToJoinMapTransactionWrappedFunction(f stateless.BatchFunction) runtime.Configuration[*IntermediateToJoinMap] {
 	return func(itjm *IntermediateToJoinMap) *IntermediateToJoinMap {
 		itjm.transactionWrapped = f
 		return itjm
@@ -32,18 +32,24 @@ func WithIntermediateToJoinMapTransactionWrappedFunction(f stateless.SingleFunct
 
 // implementation
 type IntermediateToJoinMap struct {
-	transactionWrapped stateless.SingleFunction
+	transactionWrapped stateless.BatchFunction
 }
 
-func (r *IntermediateToJoinMap) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
-	logger.Info("intermediate to join", zap.String("topic", m.Topic))
-	messageDeserialized, messageDeserialisationError := IntermediateValueFormat.Unmarshal(m.Value)
-	if messageDeserialisationError != nil {
-		return make([]message.Message[[]byte, []byte], 0), errors.Join(ErrorIntermediateToJoinDeserialiseMessage, messageDeserialisationError)
+func (r *IntermediateToJoinMap) Apply(c context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+	messagesToMap := make([]message.Message[message.Bytes, message.Bytes], len(ms))
+
+	for i, m := range ms {
+		logger.Info("intermediate to join", zap.String("topic", m.Topic))
+		messageDeserialized, messageDeserialisationError := IntermediateValueFormat.Unmarshal(m.Value)
+		if messageDeserialisationError != nil {
+			return make([]message.Message[[]byte, []byte], 0), errors.Join(ErrorIntermediateToJoinDeserialiseMessage, messageDeserialisationError)
+		}
+
+		messageDeserialized.Partition = m.Partition
+		messageDeserialized.Offset = m.Offset
+
+		messagesToMap[i] = messageDeserialized
 	}
 
-	messageDeserialized.Partition = m.Partition
-	messageDeserialized.Offset = m.Offset
-
-	return r.transactionWrapped(c, messageDeserialized)
+	return r.transactionWrapped(c, messagesToMap)
 }

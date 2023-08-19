@@ -7,15 +7,16 @@ import (
 	"github.com/hjwalt/flows/protobuf"
 )
 
-func NewSingleState[S any](content S) SingleState[S] {
-	singleState := SingleState[S]{
+func NewState[S any](id string, content S) State[S] {
+	singleState := State[S]{
+		Id:      id,
 		Content: content,
 	}
 	return SetDefault(singleState)
 }
 
-type SingleState[S any] struct {
-	PersistenceId      string
+type State[S any] struct {
+	Id                 string
 	Internal           *protobuf.State
 	Results            *protobuf.Results
 	Content            S
@@ -23,7 +24,7 @@ type SingleState[S any] struct {
 	UpdatedTimestampMs int64
 }
 
-func SetDefault[S any](s SingleState[S]) SingleState[S] {
+func SetDefault[S any](s State[S]) State[S] {
 	stateToUse := s
 
 	if stateToUse.Internal == nil {
@@ -63,7 +64,9 @@ func SetDefault[S any](s SingleState[S]) SingleState[S] {
 	return stateToUse
 }
 
-type SingleStateRepository interface {
-	Get(ctx context.Context, persistenceId string) (SingleState[message.Bytes], error)
-	Upsert(ctx context.Context, persistenceId string, dbState SingleState[message.Bytes]) error
+type Repository interface {
+	Get(ctx context.Context, persistenceId string) (State[message.Bytes], error)
+	GetAll(ctx context.Context, persistenceId []string) (map[string]State[message.Bytes], error)
+	Upsert(ctx context.Context, persistenceId string, dbState State[message.Bytes]) error
+	UpsertAll(ctx context.Context, stateMap map[string]State[message.Bytes]) error
 }

@@ -34,7 +34,7 @@ type SingleTopicSwitch struct {
 	functions map[string]SingleFunction
 }
 
-func (r *SingleTopicSwitch) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes], s SingleState[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], SingleState[message.Bytes], error) {
+func (r *SingleTopicSwitch) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes], s State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], State[message.Bytes], error) {
 	logger.Info("stateful switch", zap.String("topic", m.Topic))
 	fn, fnExists := r.functions[m.Topic]
 	if !fnExists {

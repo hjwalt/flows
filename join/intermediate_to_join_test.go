@@ -15,9 +15,11 @@ func TestIntermediateToJoinMap(t *testing.T) {
 	topics := make(chan string, 10)
 
 	fn := join.NewIntermediateToJoinMap(
-		join.WithIntermediateToJoinMapTransactionWrappedFunction(func(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
-			topics <- m.Topic
-			return []message.Message[message.Bytes, message.Bytes]{m}, nil
+		join.WithIntermediateToJoinMapTransactionWrappedFunction(func(ctx context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+			for _, m := range ms {
+				topics <- m.Topic
+			}
+			return ms, nil
 		}),
 	)
 
@@ -58,10 +60,12 @@ func TestIntermediateToJoinMap(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			res, err := fn(context.Background(), message.Message[message.Bytes, message.Bytes]{
-				Topic: "intermediate-topic",
-				Key:   c.key,
-				Value: c.value,
+			res, err := fn(context.Background(), []message.Message[message.Bytes, message.Bytes]{
+				{
+					Topic: "intermediate-topic",
+					Key:   c.key,
+					Value: c.value,
+				},
 			})
 
 			if c.err == nil {

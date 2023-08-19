@@ -8,8 +8,8 @@ import (
 	"github.com/hjwalt/runway/logger"
 )
 
-type SingleStateTable struct {
-	PersistenceId      string `bun:",pk"`
+type StateTable struct {
+	Id                 string `bun:",pk"`
 	Internal           []byte
 	Results            []byte
 	Content            []byte
@@ -20,22 +20,22 @@ type SingleStateTable struct {
 var InternalStateProtoFormat = format.Protobuf[*protobuf.State]()
 var ResultsStateProtoFormat = format.Protobuf[*protobuf.Results]()
 
-func TableToState(dbState *SingleStateTable) (stateful.SingleState[message.Bytes], error) {
+func TableToState(dbState *StateTable) (stateful.State[message.Bytes], error) {
 
 	internalValue, internalMapErr := format.Convert(dbState.Internal, format.Bytes(), InternalStateProtoFormat)
 	if internalMapErr != nil {
 		logger.ErrorErr("single state mapping error", internalMapErr)
-		return stateful.SingleState[message.Bytes]{}, internalMapErr
+		return stateful.State[message.Bytes]{}, internalMapErr
 	}
 
 	resultValue, resultMapErr := format.Convert(dbState.Results, format.Bytes(), ResultsStateProtoFormat)
 	if resultMapErr != nil {
 		logger.ErrorErr("single state mapping error", resultMapErr)
-		return stateful.SingleState[message.Bytes]{}, resultMapErr
+		return stateful.State[message.Bytes]{}, resultMapErr
 	}
 
-	return stateful.SingleState[message.Bytes]{
-		PersistenceId:      dbState.PersistenceId,
+	return stateful.State[message.Bytes]{
+		Id:                 dbState.Id,
 		Internal:           internalValue,
 		Results:            resultValue,
 		Content:            dbState.Content,
@@ -44,21 +44,21 @@ func TableToState(dbState *SingleStateTable) (stateful.SingleState[message.Bytes
 	}, nil
 }
 
-func StateToTable(nextState stateful.SingleState[message.Bytes]) (*SingleStateTable, error) {
+func StateToTable(nextState stateful.State[message.Bytes]) (*StateTable, error) {
 	internalBytes, internalMapErr := format.Convert(nextState.Internal, InternalStateProtoFormat, format.Bytes())
 	if internalMapErr != nil {
 		logger.ErrorErr("single state mapping error", internalMapErr)
-		return &SingleStateTable{}, internalMapErr
+		return &StateTable{}, internalMapErr
 	}
 
 	resultBytes, resultMapErr := format.Convert(nextState.Results, ResultsStateProtoFormat, format.Bytes())
 	if resultMapErr != nil {
 		logger.ErrorErr("single state mapping error", resultMapErr)
-		return &SingleStateTable{}, resultMapErr
+		return &StateTable{}, resultMapErr
 	}
 
-	return &SingleStateTable{
-		PersistenceId:      nextState.PersistenceId,
+	return &StateTable{
+		Id:                 nextState.Id,
 		Internal:           internalBytes,
 		Results:            resultBytes,
 		Content:            nextState.Content,

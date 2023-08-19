@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
-	"github.com/google/uuid"
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/metric"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/reflect"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/runway/structure"
 	"go.uber.org/zap"
@@ -75,7 +75,7 @@ type KeyedHandler struct {
 
 func (h *KeyedHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	khs := &keyedHandlerState{
-		id:             uuid.New().String(),
+		id:             "claim-" + claim.Topic() + "-" + reflect.GetString(claim.Partition()),
 		messageClaimed: make(chan *sarama.ConsumerMessage),
 		countReached:   make(chan bool),
 		keys:           structure.NewSet[string](),

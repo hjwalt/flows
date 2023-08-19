@@ -95,10 +95,10 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 			stateful.WithSingleStatefulDeduplicateNextFunction(statefulWrappedFunction),
 		)
 
-		stateTransaction := stateful.NewSingleReadWrite(
-			stateful.WithSingleReadWriteTransactionPersistenceIdFunc(persistenceIdTopicSwitch),
-			stateful.WithSingleReadWriteRepository(repository),
-			stateful.WithSingleReadWriteStatefulFunction(statefulWrappedFunction),
+		stateTransaction := stateful.NewBatchReadWrite(
+			stateful.WithBatchReadWritePersistenceIdFunc(persistenceIdTopicSwitch),
+			stateful.WithBatchReadWriteRepository(repository),
+			stateful.WithBatchReadWriteStatefulFunction(statefulWrappedFunction),
 		)
 
 		intermediateToJoin := join.NewIntermediateToJoinMap(
@@ -107,33 +107,21 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 
 		// Stateless topic switch
 
-		// adding intermediate to join into stateless topic switch
-		statelessTopicSwitchConfigurations := []runtime.Configuration[*stateless.SingleTopicSwitch]{
-			stateless.WithSingleTopicSwitchStatelessSingleFunction(c.IntermediateTopicName, intermediateToJoin),
-		}
 		// generating source to intermediate join to be added into stateless topic switch
 		sourceToIntermediateMap := join.NewSourceToIntermediateMap(
 			join.WithSourceToIntermediateMapIntermediateTopic(c.IntermediateTopicName),
 			join.WithSourceToIntermediateMapPersistenceIdFunction(persistenceIdTopicSwitch),
 		)
-		for _, topic := range topics {
-			// adding source to intermediate join into stateless topic switch
-			statelessTopicSwitchConfigurations = append(statelessTopicSwitchConfigurations, stateless.WithSingleTopicSwitchStatelessSingleFunction(topic, sourceToIntermediateMap))
-		}
-		wrappedFunction := stateless.NewSingleTopicSwitch(
-			statelessTopicSwitchConfigurations...,
+
+		topicSwitch := join.NewJoinSwitch(
+			join.WithJoinSwitchIntermediateTopicFunction(c.IntermediateTopicName, intermediateToJoin),
+			join.WithJoinSwitchSourceTopicFunction(sourceToIntermediateMap),
 		)
 
-		wrappedFunction = stateless.NewSingleRetry(
-			stateless.WithSingleRetryNextFunction(wrappedFunction),
-			stateless.WithSingleRetryRuntime(retry),
-			stateless.WithSingleRetryPrometheus(),
-		)
-
-		wrappedBatch := stateless.NewProducerBatchIterateFunction(
-			stateless.WithBatchIterateFunctionNextFunction(wrappedFunction),
-			stateless.WithBatchIterateFunctionProducer(producer),
-			stateless.WithBatchIterateProducerPrometheus(),
+		wrappedBatch := stateless.NewProducerBatchFunction(
+			stateless.WithBatchProducerNextFunction(topicSwitch),
+			stateless.WithBatchProducerRuntime(producer),
+			stateless.WithBatchProducerPrometheus(),
 		)
 
 		wrappedBatch = stateless.NewBatchRetry(

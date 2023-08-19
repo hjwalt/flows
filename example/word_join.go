@@ -20,7 +20,7 @@ func WordJoinPersistenceId(ctx context.Context, m message.Message[string, string
 	return m.Key, nil
 }
 
-func WordJoinCountFunction(c context.Context, m message.Message[string, string], s stateful.SingleState[*WordJoinState]) (*message.Message[string, string], stateful.SingleState[*WordJoinState], error) {
+func WordJoinCountFunction(c context.Context, m message.Message[string, string], s stateful.State[*WordJoinState]) (*message.Message[string, string], stateful.State[*WordJoinState], error) {
 	logger.Info("applying")
 
 	// setting defaults
@@ -43,7 +43,7 @@ func WordJoinCountFunction(c context.Context, m message.Message[string, string],
 	return &outMessage, s, nil
 }
 
-func WordJoinWordFunction(c context.Context, m message.Message[string, string], s stateful.SingleState[*WordJoinState]) (*message.Message[string, string], stateful.SingleState[*WordJoinState], error) {
+func WordJoinWordFunction(c context.Context, m message.Message[string, string], s stateful.State[*WordJoinState]) (*message.Message[string, string], stateful.State[*WordJoinState], error) {
 	logger.Info("applying")
 
 	// setting defaults

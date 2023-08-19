@@ -10,23 +10,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type SingleStateRepositoryForTest struct {
-	ProxiedGet    func(ctx context.Context, persistenceId string) (stateful.SingleState[message.Bytes], error)
-	ProxiedUpsert func(ctx context.Context, persistenceId string, dbState stateful.SingleState[message.Bytes]) error
+type RepositoryForTest struct {
+	ProxiedGet       func(ctx context.Context, persistenceId string) (stateful.State[message.Bytes], error)
+	ProxiedGetAll    func(ctx context.Context, persistenceId []string) (map[string]stateful.State[message.Bytes], error)
+	ProxiedUpsert    func(ctx context.Context, persistenceId string, dbState stateful.State[message.Bytes]) error
+	ProxiedUpsertAll func(ctx context.Context, stateMap map[string]stateful.State[message.Bytes]) error
 }
 
-func (r SingleStateRepositoryForTest) Get(ctx context.Context, persistenceId string) (stateful.SingleState[message.Bytes], error) {
+func (r RepositoryForTest) Get(ctx context.Context, persistenceId string) (stateful.State[message.Bytes], error) {
 	return r.ProxiedGet(ctx, persistenceId)
 }
 
-func (r SingleStateRepositoryForTest) Upsert(ctx context.Context, persistenceId string, dbState stateful.SingleState[message.Bytes]) error {
+func (r RepositoryForTest) GetAll(ctx context.Context, persistenceId []string) (map[string]stateful.State[message.Bytes], error) {
+	return r.ProxiedGetAll(ctx, persistenceId)
+}
+
+func (r RepositoryForTest) Upsert(ctx context.Context, persistenceId string, dbState stateful.State[message.Bytes]) error {
 	return r.ProxiedUpsert(ctx, persistenceId, dbState)
+}
+
+func (r RepositoryForTest) UpsertAll(ctx context.Context, stateMap map[string]stateful.State[message.Bytes]) error {
+	return r.ProxiedUpsertAll(ctx, stateMap)
 }
 
 func TestSingleStateDefault(t *testing.T) {
 	// assert := assert.New(t)
 
-	expected := stateful.SingleState[message.Bytes]{
+	expected := stateful.State[message.Bytes]{
 		Internal: &protobuf.State{
 			State: &protobuf.State_V1{
 				V1: &protobuf.StateV1{
@@ -45,21 +55,21 @@ func TestSingleStateDefault(t *testing.T) {
 
 	cases := []struct {
 		name       string
-		inputState stateful.SingleState[message.Bytes]
+		inputState stateful.State[message.Bytes]
 	}{
 		{
 			name:       "TestSingleStateDefaultEmpty",
-			inputState: stateful.SingleState[message.Bytes]{},
+			inputState: stateful.State[message.Bytes]{},
 		},
 		{
 			name: "TestSingleStateDefaultOnlyInternal",
-			inputState: stateful.SingleState[message.Bytes]{
+			inputState: stateful.State[message.Bytes]{
 				Internal: &protobuf.State{},
 			},
 		},
 		{
 			name: "TestSingleStateDefaultOnlyInternalWithV1",
-			inputState: stateful.SingleState[message.Bytes]{
+			inputState: stateful.State[message.Bytes]{
 				Internal: &protobuf.State{
 					State: &protobuf.State_V1{},
 				},
@@ -67,7 +77,7 @@ func TestSingleStateDefault(t *testing.T) {
 		},
 		{
 			name: "TestSingleStateDefaultOnlyInternalWithV1Content",
-			inputState: stateful.SingleState[message.Bytes]{
+			inputState: stateful.State[message.Bytes]{
 				Internal: &protobuf.State{
 					State: &protobuf.State_V1{
 						V1: &protobuf.StateV1{},
@@ -77,13 +87,13 @@ func TestSingleStateDefault(t *testing.T) {
 		},
 		{
 			name: "TestSingleStateDefaultOnlyResults",
-			inputState: stateful.SingleState[message.Bytes]{
+			inputState: stateful.State[message.Bytes]{
 				Results: &protobuf.Results{},
 			},
 		},
 		{
 			name: "TestSingleStateDefaultOnlyResultsWithV1",
-			inputState: stateful.SingleState[message.Bytes]{
+			inputState: stateful.State[message.Bytes]{
 				Results: &protobuf.Results{
 					Result: &protobuf.Results_V1{},
 				},
@@ -91,7 +101,7 @@ func TestSingleStateDefault(t *testing.T) {
 		},
 		{
 			name: "TestSingleStateDefaultOnlyResultsWithV1Content",
-			inputState: stateful.SingleState[message.Bytes]{
+			inputState: stateful.State[message.Bytes]{
 				Results: &protobuf.Results{
 					Result: &protobuf.Results_V1{
 						V1: &protobuf.ResultV1{},

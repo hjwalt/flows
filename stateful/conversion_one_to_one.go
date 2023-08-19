@@ -16,7 +16,7 @@ func ConvertOneToOne[S any, IK any, IV any, OK any, OV any](
 	ok format.Format[OK],
 	ov format.Format[OV],
 ) SingleFunction {
-	return func(ctx context.Context, m message.Message[message.Bytes, message.Bytes], ss SingleState[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], SingleState[message.Bytes], error) {
+	return func(ctx context.Context, m message.Message[message.Bytes, message.Bytes], ss State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], State[message.Bytes], error) {
 
 		formattedMessage, unmarshalError := message.Convert(m, format.Bytes(), format.Bytes(), ik, iv)
 		if unmarshalError != nil {
@@ -58,7 +58,7 @@ func ConvertTopicOneToOne[S any, IK any, IV any, OK any, OV any](
 	inputTopic topic.Topic[IK, IV],
 	outputTopic topic.Topic[OK, OV],
 ) SingleFunction {
-	return func(ctx context.Context, m message.Message[message.Bytes, message.Bytes], ss SingleState[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], SingleState[message.Bytes], error) {
+	return func(ctx context.Context, m message.Message[message.Bytes, message.Bytes], ss State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], State[message.Bytes], error) {
 
 		formattedMessage, unmarshalError := message.Convert(m, format.Bytes(), format.Bytes(), inputTopic.KeyFormat(), inputTopic.ValueFormat())
 		if unmarshalError != nil {

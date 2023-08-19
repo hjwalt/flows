@@ -57,25 +57,25 @@ func TestSingleDeduplicate(t *testing.T) {
 	cases := []struct {
 		name         string
 		inputMessage message.Message[message.Bytes, message.Bytes]
-		inputState   stateful.SingleState[message.Bytes]
+		inputState   stateful.State[message.Bytes]
 		assertions   func(
 			assert *assert.Assertions,
 			inputMessage message.Message[message.Bytes, message.Bytes],
-			inputState stateful.SingleState[message.Bytes],
+			inputState stateful.State[message.Bytes],
 			resultMessages []message.Message[message.Bytes, message.Bytes],
-			resultState stateful.SingleState[message.Bytes],
+			resultState stateful.State[message.Bytes],
 			resultError error)
 	}{
 		{
 			name:         "TestSingleStatefulDeduplicateNilInternalStateShouldApply",
 			inputMessage: byteInputMessage,
-			inputState:   stateful.SingleState[message.Bytes]{},
+			inputState:   stateful.State[message.Bytes]{},
 			assertions: func(
 				assert *assert.Assertions,
 				inputMessage message.Message[message.Bytes, message.Bytes],
-				inputState stateful.SingleState[message.Bytes],
+				inputState stateful.State[message.Bytes],
 				resultMessages []message.Message[message.Bytes, message.Bytes],
-				resultState stateful.SingleState[message.Bytes],
+				resultState stateful.State[message.Bytes],
 				resultError error,
 			) {
 				assert.NotNil(resultMessages)
@@ -96,7 +96,7 @@ func TestSingleDeduplicate(t *testing.T) {
 		{
 			name:         "TestSingleStatefulDeduplicateSkippingWithoutOutput",
 			inputMessage: byteInputMessage,
-			inputState: stateful.SingleState[message.Bytes]{
+			inputState: stateful.State[message.Bytes]{
 				Internal: &protobuf.State{
 					State: &protobuf.State_V1{
 						V1: &protobuf.StateV1{
@@ -117,9 +117,9 @@ func TestSingleDeduplicate(t *testing.T) {
 			assertions: func(
 				assert *assert.Assertions,
 				inputMessage message.Message[message.Bytes, message.Bytes],
-				inputState stateful.SingleState[message.Bytes],
+				inputState stateful.State[message.Bytes],
 				resultMessages []message.Message[message.Bytes, message.Bytes],
-				resultState stateful.SingleState[message.Bytes],
+				resultState stateful.State[message.Bytes],
 				resultError error,
 			) {
 				assert.NotNil(resultMessages)
@@ -132,7 +132,7 @@ func TestSingleDeduplicate(t *testing.T) {
 		{
 			name:         "TestSingleStatefulDeduplicateSkippingWithOutput",
 			inputMessage: byteInputMessage,
-			inputState: stateful.SingleState[message.Bytes]{
+			inputState: stateful.State[message.Bytes]{
 				Internal: &protobuf.State{
 					State: &protobuf.State_V1{
 						V1: &protobuf.StateV1{
@@ -153,9 +153,9 @@ func TestSingleDeduplicate(t *testing.T) {
 			assertions: func(
 				assert *assert.Assertions,
 				inputMessage message.Message[message.Bytes, message.Bytes],
-				inputState stateful.SingleState[message.Bytes],
+				inputState stateful.State[message.Bytes],
 				resultMessages []message.Message[message.Bytes, message.Bytes],
-				resultState stateful.SingleState[message.Bytes],
+				resultState stateful.State[message.Bytes],
 				resultError error,
 			) {
 				assert.NotNil(resultMessages)
@@ -169,7 +169,7 @@ func TestSingleDeduplicate(t *testing.T) {
 		{
 			name:         "TestSingleStatefulDeduplicateActingWithoutResultAppend",
 			inputMessage: byteInputMessage,
-			inputState: stateful.SingleState[message.Bytes]{
+			inputState: stateful.State[message.Bytes]{
 				Internal: &protobuf.State{
 					State: &protobuf.State_V1{
 						V1: &protobuf.StateV1{
@@ -190,9 +190,9 @@ func TestSingleDeduplicate(t *testing.T) {
 			assertions: func(
 				assert *assert.Assertions,
 				inputMessage message.Message[message.Bytes, message.Bytes],
-				inputState stateful.SingleState[message.Bytes],
+				inputState stateful.State[message.Bytes],
 				resultMessages []message.Message[message.Bytes, message.Bytes],
-				resultState stateful.SingleState[message.Bytes],
+				resultState stateful.State[message.Bytes],
 				resultError error,
 			) {
 
@@ -212,7 +212,7 @@ func TestSingleDeduplicate(t *testing.T) {
 		{
 			name:         "TestSingleStatefulDeduplicateActingWithResultAppend",
 			inputMessage: byteInputMessage,
-			inputState: stateful.SingleState[message.Bytes]{
+			inputState: stateful.State[message.Bytes]{
 				Internal: &protobuf.State{
 					State: &protobuf.State_V1{
 						V1: &protobuf.StateV1{
@@ -231,9 +231,9 @@ func TestSingleDeduplicate(t *testing.T) {
 			assertions: func(
 				assert *assert.Assertions,
 				inputMessage message.Message[message.Bytes, message.Bytes],
-				inputState stateful.SingleState[message.Bytes],
+				inputState stateful.State[message.Bytes],
 				resultMessages []message.Message[message.Bytes, message.Bytes],
-				resultState stateful.SingleState[message.Bytes],
+				resultState stateful.State[message.Bytes],
 				resultError error,
 			) {
 
@@ -260,7 +260,7 @@ func TestSingleDeduplicate(t *testing.T) {
 
 			fn := stateful.NewSingleStatefulDeduplicate(
 				stateful.WithSingleStatefulDeduplicateNextFunction(
-					func(c context.Context, m message.Message[message.Bytes, message.Bytes], inState stateful.SingleState[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], stateful.SingleState[message.Bytes], error) {
+					func(c context.Context, m message.Message[message.Bytes, message.Bytes], inState stateful.State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], stateful.State[message.Bytes], error) {
 						return []message.Message[message.Bytes, message.Bytes]{m}, inState, nil
 					},
 				),

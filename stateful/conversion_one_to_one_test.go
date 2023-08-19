@@ -106,7 +106,7 @@ func TestConvertOneToOne(t *testing.T) {
 	}
 
 	crappyStringFormat := test_helper.CrappyStringFormat()
-	oneToOne := func(ctx context.Context, m message.Message[string, string], ss stateful.SingleState[string]) (*message.Message[string, string], stateful.SingleState[string], error) {
+	oneToOne := func(ctx context.Context, m message.Message[string, string], ss stateful.State[string]) (*message.Message[string, string], stateful.State[string], error) {
 
 		if strings.ToLower(m.Key) == "stupid error" {
 			return &message.Message[string, string]{},
@@ -146,7 +146,7 @@ func TestConvertOneToOne(t *testing.T) {
 		t.Run(testcase.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			output, outputState, err := converted(context.Background(), testcase.input, stateful.NewSingleState(testcase.inputState))
+			output, outputState, err := converted(context.Background(), testcase.input, stateful.NewState("test", testcase.inputState))
 
 			assert.Equal(testcase.outputState, outputState.Content)
 

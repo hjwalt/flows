@@ -1,0 +1,6 @@
+- model: StateTable
+  rows:
+    - id: test
+      created_timestamp_ms: 100
+    - id: test-another
+      created_timestamp_ms: 200

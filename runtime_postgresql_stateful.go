@@ -55,22 +55,16 @@ func (c StatefulPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 			stateful.WithSingleStatefulDeduplicateNextFunction(wrappedStatefulFunction),
 		)
 
-		wrappedFunction := stateful.NewSingleReadWrite(
-			stateful.WithSingleReadWriteStatefulFunction(wrappedStatefulFunction),
-			stateful.WithSingleReadWriteTransactionPersistenceIdFunc(c.PersistenceIdFunction),
-			stateful.WithSingleReadWriteRepository(repository),
+		wrappedBatch := stateful.NewBatchReadWrite(
+			stateful.WithBatchReadWriteStatefulFunction(wrappedStatefulFunction),
+			stateful.WithBatchReadWritePersistenceIdFunc(c.PersistenceIdFunction),
+			stateful.WithBatchReadWriteRepository(repository),
 		)
 
-		wrappedFunction = stateless.NewSingleRetry(
-			stateless.WithSingleRetryNextFunction(wrappedFunction),
-			stateless.WithSingleRetryRuntime(retry),
-			stateless.WithSingleRetryPrometheus(),
-		)
-
-		wrappedBatch := stateless.NewProducerBatchIterateFunction(
-			stateless.WithBatchIterateFunctionNextFunction(wrappedFunction),
-			stateless.WithBatchIterateFunctionProducer(producer),
-			stateless.WithBatchIterateProducerPrometheus(),
+		wrappedBatch = stateless.NewProducerBatchFunction(
+			stateless.WithBatchProducerNextFunction(wrappedBatch),
+			stateless.WithBatchProducerRuntime(producer),
+			stateless.WithBatchProducerPrometheus(),
 		)
 
 		wrappedBatch = stateless.NewBatchRetry(

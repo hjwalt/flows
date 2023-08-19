@@ -32,7 +32,7 @@ type SingleStatefulDeduplicate struct {
 	next SingleFunction
 }
 
-func (r SingleStatefulDeduplicate) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes], inState SingleState[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], SingleState[message.Bytes], error) {
+func (r SingleStatefulDeduplicate) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes], inState State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], State[message.Bytes], error) {
 
 	s := SetDefault(inState)
 

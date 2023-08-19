@@ -1,4 +1,0 @@
-- model: SingleStateTable
-  rows:
-    - persistence_id: test
-      created_timestamp_ms: 100
