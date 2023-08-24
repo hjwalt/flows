@@ -2,7 +2,6 @@ package flows
 
 import (
 	"context"
-	"time"
 
 	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime_sarama"
@@ -13,14 +12,15 @@ import (
 )
 
 const (
-	QualifierKafkaProducerConfiguration  = "QualifierKafkaProducerConfiguration"
-	QualifierKafkaProducer               = "QualifierKafkaProducer"
-	QualifierKafkaConsumerConfiguration  = "QualifierKafkaConsumerConfiguration"
-	QualifierKafkaConsumer               = "QualifierKafkaConsumer"
-	QualifierKafkaConsumerHandler        = "QualifierKafkaConsumerHandler"
-	QualifierKafkaConsumerSingleFunction = "QualifierKafkaConsumerSingleFunction"
-	QualifierKafkaConsumerBatchFunction  = "QualifierKafkaConsumerBatchFunction"
-	QualifierKafkaConsumerKeyFunction    = "QualifierKafkaConsumerKeyFunction"
+	QualifierKafkaProducerConfiguration     = "QualifierKafkaProducerConfiguration"
+	QualifierKafkaProducer                  = "QualifierKafkaProducer"
+	QualifierKafkaConsumerConfiguration     = "QualifierKafkaConsumerConfiguration"
+	QualifierKafkaConsumer                  = "QualifierKafkaConsumer"
+	QualifierKafkaConsumerHandler           = "QualifierKafkaConsumerHandler"
+	QualifierKafkaConsumerSingleFunction    = "QualifierKafkaConsumerSingleFunction"
+	QualifierKafkaConsumerBatchFunction     = "QualifierKafkaConsumerBatchFunction"
+	QualifierKafkaConsumerKeyFunction       = "QualifierKafkaConsumerKeyFunction"
+	QualifierKafkaKeyedHandlerConfiguration = "QualifierKafkaKeyedHandlerConfiguration"
 )
 
 // Producer
@@ -63,28 +63,28 @@ func InjectorKafkaConsumerHandlerConfiguration(ctx context.Context) (runtime.Con
 
 func RegisterConsumerKeyedConfig(config []runtime.Configuration[*runtime_sarama.Consumer]) {
 	inverse.RegisterInstances(QualifierKafkaConsumerConfiguration, config)
-	inverse.Register[runtime_sarama.ConsumerHandler](QualifierKafkaConsumerHandler, InjectorKafkaConsumerKeyedHandler)
+	inverse.RegisterWithConfigurationRequired[*runtime_sarama.KeyedHandler](
+		QualifierKafkaConsumerHandler,
+		QualifierKafkaKeyedHandlerConfiguration,
+		runtime_sarama.NewKeyedHandler,
+	)
+	inverse.Register[runtime.Configuration[*runtime_sarama.KeyedHandler]](QualifierKafkaKeyedHandlerConfiguration, InjectorKafkaConsumerKeyedHandlerBatchFunctionConfiguration)
+	inverse.Register[runtime.Configuration[*runtime_sarama.KeyedHandler]](QualifierKafkaKeyedHandlerConfiguration, InjectorKafkaConsumerKeyedHandlerKeyFunctionConfiguration)
+	inverse.RegisterConfiguration[*runtime_sarama.KeyedHandler](QualifierKafkaKeyedHandlerConfiguration, runtime_sarama.WithKeyedHandlerPrometheus())
 }
 
-func InjectorKafkaConsumerKeyedHandler(ctx context.Context) (runtime_sarama.ConsumerHandler, error) {
+func InjectorKafkaConsumerKeyedHandlerBatchFunctionConfiguration(ctx context.Context) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
 	batchFunction, getBatchFunctionError := inverse.GetLast[stateless.BatchFunction](ctx, QualifierKafkaConsumerBatchFunction)
 	if getBatchFunctionError != nil {
 		return nil, getBatchFunctionError
 	}
+	return runtime_sarama.WithKeyedHandlerFunction(batchFunction), nil
+}
 
+func InjectorKafkaConsumerKeyedHandlerKeyFunctionConfiguration(ctx context.Context) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
 	keyFunction, getKeyFunctionError := inverse.GetLast[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](ctx, QualifierKafkaConsumerKeyFunction)
 	if getKeyFunctionError != nil {
 		return nil, getKeyFunctionError
 	}
-
-	// sarama consumer loop
-	consumerLoop := runtime_sarama.NewKeyedHandler(
-		runtime_sarama.WithKeyedHandlerMaxBufferred(1000),
-		runtime_sarama.WithKeyedHandlerMaxDelay(100*time.Millisecond),
-		runtime_sarama.WithKeyedHandlerFunction(batchFunction),
-		runtime_sarama.WithKeyedHandlerKeyFunction(keyFunction),
-		runtime_sarama.WithKeyedHandlerPrometheus(),
-	)
-
-	return consumerLoop, nil
+	return runtime_sarama.WithKeyedHandlerKeyFunction(keyFunction), nil
 }

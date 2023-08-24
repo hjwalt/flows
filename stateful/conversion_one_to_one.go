@@ -20,17 +20,17 @@ func ConvertOneToOne[S any, IK any, IV any, OK any, OV any](
 
 		formattedMessage, unmarshalError := message.Convert(m, format.Bytes(), format.Bytes(), ik, iv)
 		if unmarshalError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, unmarshalError
+			return message.EmptySlice(), ss, unmarshalError
 		}
 
 		formattedState, stateUnmarshalError := ConvertSingleState(ss, format.Bytes(), s)
 		if stateUnmarshalError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, stateUnmarshalError
+			return message.EmptySlice(), ss, stateUnmarshalError
 		}
 
 		res, nextState, fnError := source(ctx, formattedMessage, formattedState)
 		if fnError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, fnError
+			return message.EmptySlice(), ss, fnError
 		}
 
 		byteResultMessages := make([]message.Message[[]byte, []byte], 0)
@@ -38,14 +38,14 @@ func ConvertOneToOne[S any, IK any, IV any, OK any, OV any](
 		if res != nil {
 			bytesResMessage, marshalError := message.Convert(*res, ok, ov, format.Bytes(), format.Bytes())
 			if marshalError != nil {
-				return make([]message.Message[[]byte, []byte], 0), ss, marshalError
+				return message.EmptySlice(), ss, marshalError
 			}
 			byteResultMessages = append(byteResultMessages, bytesResMessage)
 		}
 
 		bytesNextState, stateMarshalError := ConvertSingleState(nextState, s, format.Bytes())
 		if stateMarshalError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, stateMarshalError
+			return message.EmptySlice(), ss, stateMarshalError
 		}
 
 		return byteResultMessages, bytesNextState, nil
@@ -62,17 +62,17 @@ func ConvertTopicOneToOne[S any, IK any, IV any, OK any, OV any](
 
 		formattedMessage, unmarshalError := message.Convert(m, format.Bytes(), format.Bytes(), inputTopic.KeyFormat(), inputTopic.ValueFormat())
 		if unmarshalError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, unmarshalError
+			return message.EmptySlice(), ss, unmarshalError
 		}
 
 		formattedState, stateUnmarshalError := ConvertSingleState(ss, format.Bytes(), s)
 		if stateUnmarshalError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, stateUnmarshalError
+			return message.EmptySlice(), ss, stateUnmarshalError
 		}
 
 		res, nextState, fnError := source(ctx, formattedMessage, formattedState)
 		if fnError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, fnError
+			return message.EmptySlice(), ss, fnError
 		}
 
 		byteResultMessages := make([]message.Message[[]byte, []byte], 0)
@@ -80,7 +80,7 @@ func ConvertTopicOneToOne[S any, IK any, IV any, OK any, OV any](
 		if res != nil {
 			bytesResMessage, marshalError := message.Convert(*res, outputTopic.KeyFormat(), outputTopic.ValueFormat(), format.Bytes(), format.Bytes())
 			if marshalError != nil {
-				return make([]message.Message[[]byte, []byte], 0), ss, marshalError
+				return message.EmptySlice(), ss, marshalError
 			}
 			bytesResMessage.Topic = outputTopic.Topic()
 			byteResultMessages = append(byteResultMessages, bytesResMessage)
@@ -88,7 +88,7 @@ func ConvertTopicOneToOne[S any, IK any, IV any, OK any, OV any](
 
 		bytesNextState, stateMarshalError := ConvertSingleState(nextState, s, format.Bytes())
 		if stateMarshalError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, stateMarshalError
+			return message.EmptySlice(), ss, stateMarshalError
 		}
 
 		return byteResultMessages, bytesNextState, nil

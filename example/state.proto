@@ -7,6 +7,11 @@ message WordCountState {
   int64 count = 1;
 }
 
+message WordCollectState {
+  string word = 2;
+  int64 count = 1;
+}
+
 message WordJoinState {
   int64 count = 1;
   string word = 2;

@@ -13,3 +13,7 @@ type Message[K any, V any] struct {
 }
 
 type Bytes = []byte
+
+func EmptySlice() []Message[Bytes, Bytes] {
+	return []Message[Bytes, Bytes]{}
+}

@@ -45,7 +45,7 @@ func WithReadWriteFunction(next SingleFunction) runtime.Configuration[*ReadWrite
 // implementation
 type ReadWrite struct {
 	next              SingleFunction
-	persistenceIdFunc func(context.Context, message.Message[message.Bytes, message.Bytes]) (string, error)
+	persistenceIdFunc PersistenceIdFunction[message.Bytes, message.Bytes]
 	repository        Repository
 }
 
@@ -57,7 +57,7 @@ func (r *ReadWrite) Apply(c context.Context, ms []message.Message[message.Bytes,
 	for i, m := range ms {
 		persistenceId, persistenceIdErr := r.persistenceIdFunc(c, m)
 		if persistenceIdErr != nil {
-			return make([]message.Message[[]byte, []byte], 0), errors.Join(persistenceIdErr, ErrBatchReadWrite, ErrPersistenceId)
+			return message.EmptySlice(), errors.Join(persistenceIdErr, ErrBatchReadWrite, ErrPersistenceId)
 		}
 		persistenceIds[i] = persistenceId
 
@@ -67,7 +67,7 @@ func (r *ReadWrite) Apply(c context.Context, ms []message.Message[message.Bytes,
 	// read states
 	currentStates, readErr := r.repository.GetAll(c, persistenceIds)
 	if readErr != nil {
-		return make([]message.Message[[]byte, []byte], 0), errors.Join(readErr, ErrBatchReadWrite, ErrStateGet)
+		return message.EmptySlice(), errors.Join(readErr, ErrBatchReadWrite, ErrStateGet)
 	}
 
 	// prepare result holder
@@ -87,7 +87,7 @@ func (r *ReadWrite) Apply(c context.Context, ms []message.Message[message.Bytes,
 		nextMessages, nextState, nextApplyErr := r.next(c, m, currentState)
 		if nextApplyErr != nil {
 			logger.ErrorErr("bun state last result mapping error", nextApplyErr)
-			return make([]message.Message[[]byte, []byte], 0), nextApplyErr
+			return message.EmptySlice(), nextApplyErr
 		}
 
 		// set next updated value
@@ -103,7 +103,7 @@ func (r *ReadWrite) Apply(c context.Context, ms []message.Message[message.Bytes,
 	upsertErr := r.repository.UpsertAll(c, nextStateMap)
 	if upsertErr != nil {
 		logger.ErrorErr("bun state upsert error", upsertErr)
-		return make([]message.Message[[]byte, []byte], 0), upsertErr
+		return message.EmptySlice(), upsertErr
 	}
 
 	return resultMessages, nil

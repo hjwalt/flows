@@ -86,6 +86,7 @@ Flows sits at the core of the [Kappa Architecture](https://hazelcast.com/glossar
 2. Stateful functions
 3. Join as combination of stateless and stateful functions
 4. Materialisation
+5. Collector
 
 ### Stateless
 
@@ -125,10 +126,24 @@ In this codebase, option two is the chosen option for reasons of:
 It is recommended to use your own custom intermediate topic mapper for better control of your dataflow.
 However, a standard implementation is provided as a reference.
 
-### Consumers
+### Materialiser
 
-Consumer functions can be used to materialise into databases either as a batch or per message. 
-It can also be used to interface with external parties where relevant.
+Materialise function batch upserts into database.
+
+### Collector
+
+In an extremely high throughput situation, it makes a lot of sense to:
+
+1. Pre-aggregate input topics
+2. Perform stateful operation against pre-aggregated output
+
+This reduces the amount of state writes performed.
+Even when RAM based reliable redundant storage is used, it is still wise to pre-aggregate in a very high throughput situation against stateful operations.
+
+Example:
+
+1. In an ecommerce inventory handling for orders, the orders can be pre-aggregated (to a certain extent where the message size does not blow up the Kafka cluster), and final inventory check is performed one time for all the pre-aggregated orders
+2. In an event space management system, the updates against seat booking can be pre-aggregated before checking against the entire section
 
 ## Limitations
 

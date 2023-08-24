@@ -18,7 +18,11 @@ import (
 
 // constructor
 func NewKeyedHandler(configurations ...runtime.Configuration[*KeyedHandler]) ConsumerHandler {
-	loop := &KeyedHandler{}
+	loop := &KeyedHandler{
+		MaxBufferred: 1000,
+		MaxPerKey:    1,
+		MaxDelay:     100 * time.Millisecond,
+	}
 	for _, configuration := range configurations {
 		loop = configuration(loop)
 	}
@@ -36,6 +40,13 @@ func WithKeyedHandlerMaxBufferred(maxBuffered int64) runtime.Configuration[*Keye
 func WithKeyedHandlerMaxDelay(maxDelay time.Duration) runtime.Configuration[*KeyedHandler] {
 	return func(cbl *KeyedHandler) *KeyedHandler {
 		cbl.MaxDelay = maxDelay
+		return cbl
+	}
+}
+
+func WithKeyedHandlerMaxPerKey(maxPerKey int64) runtime.Configuration[*KeyedHandler] {
+	return func(cbl *KeyedHandler) *KeyedHandler {
+		cbl.MaxPerKey = maxPerKey
 		return cbl
 	}
 }
@@ -66,6 +77,7 @@ type KeyedHandler struct {
 	// batching configuration
 	MaxBufferred int64
 	MaxDelay     time.Duration
+	MaxPerKey    int64
 	F            stateless.BatchFunction
 	K            stateful.PersistenceIdFunction[message.Bytes, message.Bytes]
 
@@ -78,7 +90,7 @@ func (h *KeyedHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim s
 		id:             "claim-" + claim.Topic() + "-" + reflect.GetString(claim.Partition()),
 		messageClaimed: make(chan *sarama.ConsumerMessage),
 		countReached:   make(chan bool),
-		keys:           structure.NewSet[string](),
+		keyCount:       structure.NewCountMap[string](),
 	}
 	khs.context, khs.cancel = context.WithCancel(context.Background())
 
@@ -128,7 +140,7 @@ func (h *KeyedHandler) ConsumeClaimIteration(session sarama.ConsumerGroupSession
 			return true, keyError
 		}
 
-		if khs.keys.Contain(keyForMessage) {
+		if khs.keyCount.Get(keyForMessage) >= h.MaxPerKey {
 			// prevents updating the same key on the same batch
 			if err := khs.consumeBatch("key", h.MaxDelay, session, h.F, h.metric); err != nil {
 				return true, err
@@ -137,7 +149,7 @@ func (h *KeyedHandler) ConsumeClaimIteration(session sarama.ConsumerGroupSession
 
 		khs.messages = append(khs.messages, flowMessage)
 		khs.messageToCommit = saramaMessage
-		khs.keys.Add(keyForMessage)
+		khs.keyCount.Add(keyForMessage, 1)
 
 		if len(khs.messages) >= int(h.MaxBufferred) {
 			if err := khs.consumeBatch("batch", h.MaxDelay, session, h.F, h.metric); err != nil {
@@ -161,7 +173,7 @@ type keyedHandlerState struct {
 	// batched data
 	messageToCommit *sarama.ConsumerMessage
 	messages        []message.Message[[]byte, []byte]
-	keys            structure.Set[string]
+	keyCount        structure.CountMap[string]
 
 	// batching mechanic
 	countReached chan bool
@@ -177,7 +189,7 @@ func (khs *keyedHandlerState) reset(maxDelay time.Duration) {
 	khs.messageToCommit = nil
 	khs.messages = make([]message.Message[[]byte, []byte], 0)
 	khs.timerReached = time.After(maxDelay)
-	khs.keys.Clear()
+	khs.keyCount.Clear()
 }
 
 func (khs *keyedHandlerState) claimLoop(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) {

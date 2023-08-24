@@ -10,6 +10,7 @@ func main() {
 	m := flows.NewMain()
 
 	m.Register("word-count", example.WordCount)
+	m.Register("word-collect", example.WordCollect)
 	m.Register("word-remap", example.WordRemap)
 	m.Register("word-join", example.WordJoin)
 	m.Register("word-materialise", example.WordMaterialise)
