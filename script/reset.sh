@@ -10,6 +10,7 @@ kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC
 kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC_JOIN
 kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC-count
 kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC-updated
+kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $TARGET_TOPIC-collect
 kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $JOIN_INTERMEDIATE_TOPIC
 kafka-topics --bootstrap-server $TARGET_BROKER --delete --topic $JOIN_OUTPUT_TOPIC
 
@@ -17,6 +18,7 @@ kafka-topics --bootstrap-server $TARGET_BROKER --create --partitions 10 --topic 
 kafka-topics --bootstrap-server $TARGET_BROKER --create --partitions 10 --topic $TARGET_TOPIC_JOIN
 kafka-topics --bootstrap-server $TARGET_BROKER --create --partitions 10 --topic $TARGET_TOPIC-count
 kafka-topics --bootstrap-server $TARGET_BROKER --create --partitions 10 --topic $TARGET_TOPIC-updated
+kafka-topics --bootstrap-server $TARGET_BROKER --create --partitions 10 --topic $TARGET_TOPIC-collect
 kafka-topics --bootstrap-server $TARGET_BROKER --create --partitions 10 --topic $JOIN_INTERMEDIATE_TOPIC
 kafka-topics --bootstrap-server $TARGET_BROKER --create --partitions 10 --topic $JOIN_OUTPUT_TOPIC
 
