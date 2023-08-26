@@ -13,9 +13,11 @@ type RouterConfiguration struct {
 }
 
 func (c RouterConfiguration) Register() {
-	RegisterProducerConfig(c.KafkaProducerConfiguration)
+	RegisterProducerConfig(c.KafkaProducerConfiguration...)
 	RegisterProducer()
-	RegisterRoute(c.RouteConfiguration)
+	RegisterRouteConfigDefault()
+	RegisterRouteConfig(c.RouteConfiguration...)
+	RegisterRoute()
 }
 
 func (c RouterConfiguration) Runtime() runtime.Runtime {

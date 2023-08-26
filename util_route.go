@@ -13,10 +13,16 @@ const (
 	QualifierRoute              = "QualifierRoute"
 )
 
-func RegisterRoute(config []runtime.Configuration[*runtime_bunrouter.Router]) {
+func RegisterRouteConfigDefault() {
 	inverse.RegisterConfiguration[*runtime_bunrouter.Router](QualifierRouteConfiguration, runtime_bunrouter.WithRouterPrometheus())
 	inverse.Register[runtime.Configuration[*runtime_bunrouter.Router]](QualifierRouteConfiguration, InjectorRouteProducer)
+}
+
+func RegisterRouteConfig(config ...runtime.Configuration[*runtime_bunrouter.Router]) {
 	inverse.RegisterInstances(QualifierRouteConfiguration, config)
+}
+
+func RegisterRoute() {
 	inverse.RegisterWithConfigurationRequired[*runtime_bunrouter.Router](
 		QualifierRoute,
 		QualifierRouteConfiguration,

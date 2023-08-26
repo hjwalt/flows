@@ -21,8 +21,11 @@ const (
 )
 
 // Postgresql connection
-func RegisterPostgresql(config []runtime.Configuration[*runtime_bun.PostgresqlConnection]) {
+func RegisterPostgresqlConfig(config ...runtime.Configuration[*runtime_bun.PostgresqlConnection]) {
 	inverse.RegisterInstances(QualifierPostgresqlConnectionConfiguration, config)
+}
+
+func RegisterPostgresql() {
 	inverse.RegisterWithConfigurationRequired[*runtime_bun.PostgresqlConnection](
 		QualifierPostgresqlConnection,
 		QualifierPostgresqlConnectionConfiguration,

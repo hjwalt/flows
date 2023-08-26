@@ -26,8 +26,6 @@ func WordCountPersistenceId(ctx context.Context, m message.Message[string, strin
 }
 
 func WordCountStatefulFunction(c context.Context, m message.Message[string, string], s stateful.State[*WordCountState]) (*message.Message[string, string], stateful.State[*WordCountState], error) {
-	logger.Info("applying")
-
 	// setting defaults
 	if s.Content == nil {
 		s.Content = &WordCountState{Count: 0}

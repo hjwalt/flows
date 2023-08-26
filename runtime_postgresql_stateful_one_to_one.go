@@ -33,53 +33,33 @@ type StatefulPostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any, OK a
 }
 
 func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) Register() {
-
-	// postgres configs
-	postgresConfigs := []runtime.Configuration[*runtime_bun.PostgresqlConnection]{
+	RegisterPostgresqlConfig(
 		runtime_bun.WithApplicationName(c.Name),
 		runtime_bun.WithConnectionString(c.PostgresConnectionString),
-	}
-	if len(c.PostgresqlConfiguration) > 0 {
-		postgresConfigs = append(postgresConfigs, c.PostgresqlConfiguration...)
-	}
-
-	// consumer configs
-	kafkaConsumerConfigs := []runtime.Configuration[*runtime_sarama.Consumer]{
+	)
+	RegisterConsumerConfig(
 		runtime_sarama.WithConsumerBroker(c.InputBroker),
 		runtime_sarama.WithConsumerTopic(c.InputTopic.Topic()),
 		runtime_sarama.WithConsumerGroupName(c.Name),
-	}
-	if len(c.KafkaConsumerConfiguration) > 0 {
-		kafkaConsumerConfigs = append(kafkaConsumerConfigs, c.KafkaConsumerConfiguration...)
-	}
-
-	// producer configs
-	kafkaProducerConfigs := []runtime.Configuration[*runtime_sarama.Producer]{
+	)
+	RegisterProducerConfig(
 		runtime_sarama.WithProducerBroker(c.OutputBroker),
-	}
-	if len(c.KafkaProducerConfiguration) > 0 {
-		kafkaProducerConfigs = append(kafkaProducerConfigs, c.KafkaProducerConfiguration...)
-	}
-
-	// route configs
-	routeConfigs := []runtime.Configuration[*runtime_bunrouter.Router]{
+	)
+	RegisterRouteConfig(
 		runtime_bunrouter.WithRouterPort(c.HttpPort),
 		runtime_bunrouter.WithRouterFlow(
 			router.WithFlowStatefulOneToOne(c.InputTopic, c.OutputTopic, c.PostgresTable),
 		),
-	}
-	if len(c.RouteConfiguration) > 0 {
-		routeConfigs = append(routeConfigs, c.RouteConfiguration...)
-	}
+	)
 
 	statefulFunctionConfiguration := StatefulPostgresqlFunctionConfiguration{
 		PersistenceTableName:       c.PostgresTable,
 		PersistenceIdFunction:      stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
 		StatefulFunction:           stateful.ConvertTopicOneToOne(c.Function, c.StateFormat, c.InputTopic, c.OutputTopic),
-		PostgresqlConfiguration:    postgresConfigs,
-		KafkaProducerConfiguration: kafkaProducerConfigs,
-		KafkaConsumerConfiguration: kafkaConsumerConfigs,
-		RouteConfiguration:         routeConfigs,
+		PostgresqlConfiguration:    c.PostgresqlConfiguration,
+		KafkaProducerConfiguration: c.KafkaProducerConfiguration,
+		KafkaConsumerConfiguration: c.KafkaConsumerConfiguration,
+		RouteConfiguration:         c.RouteConfiguration,
 		RetryConfiguration:         c.RetryConfiguration,
 	}
 

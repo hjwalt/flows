@@ -10,7 +10,6 @@ import (
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateless"
-	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 )
 
@@ -27,13 +26,16 @@ type CollectorConfiguration struct {
 
 func (c CollectorConfiguration) Register() {
 	RegisterRetry(c.RetryConfiguration)
-	RegisterProducerConfig(c.KafkaProducerConfiguration)
+	RegisterProducerConfig(c.KafkaProducerConfiguration...)
 	RegisterProducer()
-	RegisterConsumerKeyedConfig(c.KafkaConsumerConfiguration)
+	RegisterConsumerConfig(c.KafkaConsumerConfiguration...)
+	RegisterConsumerKeyedConfig()
 	RegisterConsumer()
-	RegisterRoute(c.RouteConfiguration)
-	inverse.RegisterInstance[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](QualifierKafkaConsumerKeyFunction, c.PersistenceIdFunction)
-	inverse.Register[stateless.BatchFunction](QualifierKafkaConsumerBatchFunction, func(ctx context.Context) (stateless.BatchFunction, error) {
+	RegisterRouteConfigDefault()
+	RegisterRouteConfig(c.RouteConfiguration...)
+	RegisterRoute()
+	RegisterConsumerKeyedKeyFunction(c.PersistenceIdFunction)
+	RegisterConsumerKeyedFunction(func(ctx context.Context) (stateless.BatchFunction, error) {
 		retry, err := GetRetry(ctx)
 		if err != nil {
 			return nil, err

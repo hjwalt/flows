@@ -26,41 +26,26 @@ type StatelessOneToTwoConfiguration[IK any, IV any, OK1 any, OV1 any, OK2 any, O
 }
 
 func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Register() {
-
-	// consumer configs
-	kafkaConsumerConfigs := []runtime.Configuration[*runtime_sarama.Consumer]{
+	RegisterConsumerConfig(
 		runtime_sarama.WithConsumerBroker(c.InputBroker),
 		runtime_sarama.WithConsumerTopic(c.InputTopic.Topic()),
 		runtime_sarama.WithConsumerGroupName(c.Name),
-	}
-	if len(c.KafkaConsumerConfiguration) > 0 {
-		kafkaConsumerConfigs = append(kafkaConsumerConfigs, c.KafkaConsumerConfiguration...)
-	}
-
-	// producer configs
-	kafkaProducerConfigs := []runtime.Configuration[*runtime_sarama.Producer]{
+	)
+	RegisterProducerConfig(
 		runtime_sarama.WithProducerBroker(c.OutputBroker),
-	}
-	if len(c.KafkaProducerConfiguration) > 0 {
-		kafkaProducerConfigs = append(kafkaProducerConfigs, c.KafkaProducerConfiguration...)
-	}
-
-	// route configs
-	routeConfigs := []runtime.Configuration[*runtime_bunrouter.Router]{
+	)
+	RegisterRouteConfig(
 		runtime_bunrouter.WithRouterPort(c.HttpPort),
 		runtime_bunrouter.WithRouterFlow(
 			router.WithFlowStatelessOneToTwo(c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo),
 		),
-	}
-	if len(c.RouteConfiguration) > 0 {
-		routeConfigs = append(routeConfigs, c.RouteConfiguration...)
-	}
+	)
 
 	statelessFunctionConfiguration := StatelessSingleFunctionConfiguration{
 		StatelessFunction:          stateless.ConvertTopicOneToTwo(c.Function, c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo),
-		KafkaProducerConfiguration: kafkaProducerConfigs,
-		KafkaConsumerConfiguration: kafkaConsumerConfigs,
-		RouteConfiguration:         routeConfigs,
+		KafkaProducerConfiguration: c.KafkaProducerConfiguration,
+		KafkaConsumerConfiguration: c.KafkaConsumerConfiguration,
+		RouteConfiguration:         c.RouteConfiguration,
 		RetryConfiguration:         c.RetryConfiguration,
 	}
 

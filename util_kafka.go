@@ -24,7 +24,7 @@ const (
 )
 
 // Producer
-func RegisterProducerConfig(config []runtime.Configuration[*runtime_sarama.Producer]) {
+func RegisterProducerConfig(config ...runtime.Configuration[*runtime_sarama.Producer]) {
 	inverse.RegisterInstances(QualifierKafkaProducerConfiguration, config)
 }
 
@@ -41,6 +41,10 @@ func GetKafkaProducer(ctx context.Context) (message.Producer, error) {
 	return inverse.GetLast[message.Producer](ctx, QualifierKafkaProducer)
 }
 
+func RegisterConsumerConfig(config ...runtime.Configuration[*runtime_sarama.Consumer]) {
+	inverse.RegisterInstances(QualifierKafkaConsumerConfiguration, config)
+}
+
 // Consumer
 func RegisterConsumer() {
 	inverse.RegisterWithConfigurationRequired[*runtime_sarama.Consumer](
@@ -49,10 +53,10 @@ func RegisterConsumer() {
 		runtime_sarama.NewConsumer,
 	)
 	inverse.Register(QualifierRuntime, InjectorRuntime(QualifierKafkaConsumer))
-	inverse.Register[runtime.Configuration[*runtime_sarama.Consumer]](QualifierKafkaConsumerConfiguration, InjectorKafkaConsumerHandlerConfiguration)
+	inverse.Register[runtime.Configuration[*runtime_sarama.Consumer]](QualifierKafkaConsumerConfiguration, InjectorConsumerHandlerConfiguration)
 }
 
-func InjectorKafkaConsumerHandlerConfiguration(ctx context.Context) (runtime.Configuration[*runtime_sarama.Consumer], error) {
+func InjectorConsumerHandlerConfiguration(ctx context.Context) (runtime.Configuration[*runtime_sarama.Consumer], error) {
 	consumerHandler, getConsumerHandlerError := inverse.GetLast[runtime_sarama.ConsumerHandler](ctx, QualifierKafkaConsumerHandler)
 	if getConsumerHandlerError != nil {
 		return nil, getConsumerHandlerError
@@ -61,19 +65,18 @@ func InjectorKafkaConsumerHandlerConfiguration(ctx context.Context) (runtime.Con
 	return runtime_sarama.WithConsumerLoop(consumerHandler), nil
 }
 
-func RegisterConsumerKeyedConfig(config []runtime.Configuration[*runtime_sarama.Consumer]) {
-	inverse.RegisterInstances(QualifierKafkaConsumerConfiguration, config)
+func RegisterConsumerKeyedConfig() {
 	inverse.RegisterWithConfigurationRequired[*runtime_sarama.KeyedHandler](
 		QualifierKafkaConsumerHandler,
 		QualifierKafkaKeyedHandlerConfiguration,
 		runtime_sarama.NewKeyedHandler,
 	)
-	inverse.Register[runtime.Configuration[*runtime_sarama.KeyedHandler]](QualifierKafkaKeyedHandlerConfiguration, InjectorKafkaConsumerKeyedHandlerBatchFunctionConfiguration)
-	inverse.Register[runtime.Configuration[*runtime_sarama.KeyedHandler]](QualifierKafkaKeyedHandlerConfiguration, InjectorKafkaConsumerKeyedHandlerKeyFunctionConfiguration)
+	inverse.Register[runtime.Configuration[*runtime_sarama.KeyedHandler]](QualifierKafkaKeyedHandlerConfiguration, InjectorConsumerKeyedHandlerBatchFunctionConfiguration)
+	inverse.Register[runtime.Configuration[*runtime_sarama.KeyedHandler]](QualifierKafkaKeyedHandlerConfiguration, InjectorConsumerKeyedHandlerKeyFunctionConfiguration)
 	inverse.RegisterConfiguration[*runtime_sarama.KeyedHandler](QualifierKafkaKeyedHandlerConfiguration, runtime_sarama.WithKeyedHandlerPrometheus())
 }
 
-func InjectorKafkaConsumerKeyedHandlerBatchFunctionConfiguration(ctx context.Context) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
+func InjectorConsumerKeyedHandlerBatchFunctionConfiguration(ctx context.Context) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
 	batchFunction, getBatchFunctionError := inverse.GetLast[stateless.BatchFunction](ctx, QualifierKafkaConsumerBatchFunction)
 	if getBatchFunctionError != nil {
 		return nil, getBatchFunctionError
@@ -81,10 +84,18 @@ func InjectorKafkaConsumerKeyedHandlerBatchFunctionConfiguration(ctx context.Con
 	return runtime_sarama.WithKeyedHandlerFunction(batchFunction), nil
 }
 
-func InjectorKafkaConsumerKeyedHandlerKeyFunctionConfiguration(ctx context.Context) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
+func InjectorConsumerKeyedHandlerKeyFunctionConfiguration(ctx context.Context) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
 	keyFunction, getKeyFunctionError := inverse.GetLast[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](ctx, QualifierKafkaConsumerKeyFunction)
 	if getKeyFunctionError != nil {
 		return nil, getKeyFunctionError
 	}
 	return runtime_sarama.WithKeyedHandlerKeyFunction(keyFunction), nil
+}
+
+func RegisterConsumerKeyedKeyFunction(persistenceIdFunction stateful.PersistenceIdFunction[message.Bytes, message.Bytes]) {
+	inverse.RegisterInstance[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](QualifierKafkaConsumerKeyFunction, persistenceIdFunction)
+}
+
+func RegisterConsumerKeyedFunction(batchFunctionInjector func(ctx context.Context) (stateless.BatchFunction, error)) {
+	inverse.Register[stateless.BatchFunction](QualifierKafkaConsumerBatchFunction, batchFunctionInjector)
 }
