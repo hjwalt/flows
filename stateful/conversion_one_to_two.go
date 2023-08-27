@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/structure"
 )
@@ -66,9 +65,9 @@ func ConvertOneToTwo[S any, IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 any](
 func ConvertTopicOneToTwo[S any, IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 any](
 	source OneToTwoFunction[S, IK, IV, OK1, OV1, OK2, OV2],
 	s format.Format[S],
-	inputTopic topic.Topic[IK, IV],
-	outputTopic1 topic.Topic[OK1, OV1],
-	outputTopic2 topic.Topic[OK2, OV2],
+	inputTopic flow.Topic[IK, IV],
+	outputTopic1 flow.Topic[OK1, OV1],
+	outputTopic2 flow.Topic[OK2, OV2],
 ) SingleFunction {
 	return func(ctx context.Context, m flow.Message[structure.Bytes, structure.Bytes], ss State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], State[structure.Bytes], error) {
 
@@ -94,7 +93,7 @@ func ConvertTopicOneToTwo[S any, IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 
 			if marshalError != nil {
 				return make([]flow.Message[[]byte, []byte], 0), ss, marshalError
 			}
-			bytesResMessage.Topic = outputTopic1.Topic()
+			bytesResMessage.Topic = outputTopic1.Name()
 			byteResultMessages = append(byteResultMessages, bytesResMessage)
 		}
 
@@ -103,7 +102,7 @@ func ConvertTopicOneToTwo[S any, IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 
 			if marshalError != nil {
 				return make([]flow.Message[[]byte, []byte], 0), ss, marshalError
 			}
-			bytesResMessage.Topic = outputTopic2.Topic()
+			bytesResMessage.Topic = outputTopic2.Name()
 			byteResultMessages = append(byteResultMessages, bytesResMessage)
 		}
 

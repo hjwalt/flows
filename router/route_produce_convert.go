@@ -5,7 +5,6 @@ import (
 
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateless"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/structure"
 )
@@ -44,7 +43,7 @@ func RouteProduceBodyMapConvert[Req any, Key any, Value any](
 func RouteProduceTopicBodyMapConvert[Req any, Key any, Value any](
 	source stateless.OneToOneFunction[structure.Bytes, Req, Key, Value],
 	requestFormat format.Format[Req],
-	produceTopic topic.Topic[Key, Value],
+	produceTopic flow.Topic[Key, Value],
 ) stateless.OneToOneFunction[structure.Bytes, structure.Bytes, structure.Bytes, structure.Bytes] {
 	return func(ctx context.Context, m flow.Message[[]byte, []byte]) (*flow.Message[[]byte, []byte], error) {
 
@@ -66,7 +65,7 @@ func RouteProduceTopicBodyMapConvert[Req any, Key any, Value any](
 		if marshalError != nil {
 			return nil, marshalError
 		}
-		bytesResMessage.Topic = produceTopic.Topic()
+		bytesResMessage.Topic = produceTopic.Name()
 
 		return &bytesResMessage, nil
 	}

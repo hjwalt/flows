@@ -8,7 +8,6 @@ import (
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/logger"
@@ -57,8 +56,8 @@ func WordCollect() runtime.Runtime {
 
 	runtimeConfig := flows.CollectorOneToOneConfiguration[*WordCollectState, string, string, string, string]{
 		Name:             "flows-word-collect",
-		InputTopic:       topic.String("word"),
-		OutputTopic:      topic.String("word-collect"),
+		InputTopic:       flow.String("word"),
+		OutputTopic:      flow.String("word-collect"),
 		Aggregator:       WordCollectAggregator,
 		Collector:        WordCollectCollector,
 		InputBroker:      "localhost:9092",

@@ -1,19 +1,19 @@
 package flows
 
 import (
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateless"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/runtime"
 )
 
 type StatelessOneToOneExplodeConfiguration[IK any, IV any, OK any, OV any] struct {
 	Name                       string
-	InputTopic                 topic.Topic[IK, IV]
-	OutputTopic                topic.Topic[OK, OV]
+	InputTopic                 flow.Topic[IK, IV]
+	OutputTopic                flow.Topic[OK, OV]
 	Function                   stateless.OneToOneExplodeFunction[IK, IV, OK, OV]
 	InputBroker                string
 	OutputBroker               string
@@ -27,7 +27,7 @@ type StatelessOneToOneExplodeConfiguration[IK any, IV any, OK any, OV any] struc
 func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) Register() {
 	RegisterConsumerConfig(
 		runtime_sarama.WithConsumerBroker(c.InputBroker),
-		runtime_sarama.WithConsumerTopic(c.InputTopic.Topic()),
+		runtime_sarama.WithConsumerTopic(c.InputTopic.Name()),
 		runtime_sarama.WithConsumerGroupName(c.Name),
 	)
 	RegisterProducerConfig(

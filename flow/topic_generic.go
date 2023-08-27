@@ -1,4 +1,4 @@
-package topic
+package flow
 
 import "github.com/hjwalt/runway/format"
 
@@ -8,7 +8,7 @@ type GenericTopic[K any, V any] struct {
 	valueFormat format.Format[V]
 }
 
-func (t GenericTopic[K, V]) Topic() string {
+func (t GenericTopic[K, V]) Name() string {
 	return t.topic
 }
 

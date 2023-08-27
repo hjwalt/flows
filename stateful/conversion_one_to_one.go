@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/structure"
 )
@@ -56,8 +55,8 @@ func ConvertOneToOne[S any, IK any, IV any, OK any, OV any](
 func ConvertTopicOneToOne[S any, IK any, IV any, OK any, OV any](
 	source OneToOneFunction[S, IK, IV, OK, OV],
 	s format.Format[S],
-	inputTopic topic.Topic[IK, IV],
-	outputTopic topic.Topic[OK, OV],
+	inputTopic flow.Topic[IK, IV],
+	outputTopic flow.Topic[OK, OV],
 ) SingleFunction {
 	return func(ctx context.Context, m flow.Message[structure.Bytes, structure.Bytes], ss State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], State[structure.Bytes], error) {
 
@@ -83,7 +82,7 @@ func ConvertTopicOneToOne[S any, IK any, IV any, OK any, OV any](
 			if marshalError != nil {
 				return flow.EmptySlice(), ss, marshalError
 			}
-			bytesResMessage.Topic = outputTopic.Topic()
+			bytesResMessage.Topic = outputTopic.Name()
 			byteResultMessages = append(byteResultMessages, bytesResMessage)
 		}
 

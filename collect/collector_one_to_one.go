@@ -5,7 +5,6 @@ import (
 
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateful"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/structure"
 )
@@ -45,7 +44,7 @@ func ConvertOneToOneCollector[S any, OK any, OV any](
 func ConvertTopicOneToOneCollector[S any, OK any, OV any](
 	source OneToOneCollector[S, OK, OV],
 	s format.Format[S],
-	outputTopic topic.Topic[OK, OV],
+	outputTopic flow.Topic[OK, OV],
 ) Collector {
 	return func(ctx context.Context, persistenceId string, ss stateful.State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 
@@ -66,7 +65,7 @@ func ConvertTopicOneToOneCollector[S any, OK any, OV any](
 			if marshalError != nil {
 				return flow.EmptySlice(), marshalError
 			}
-			bytesResMessage.Topic = outputTopic.Topic()
+			bytesResMessage.Topic = outputTopic.Name()
 			byteResultMessages = append(byteResultMessages, bytesResMessage)
 		}
 

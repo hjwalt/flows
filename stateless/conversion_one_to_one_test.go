@@ -9,7 +9,6 @@ import (
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/flows/test_helper"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/stretchr/testify/assert"
 )
@@ -180,8 +179,8 @@ func TestConvertTopicOneToOne(t *testing.T) {
 		},
 	}
 
-	inputTopic := topic.Generic("input", format.Gengar(), format.Gengar())
-	outputTopic := topic.Generic("output", format.Gengar(), format.Gengar())
+	inputTopic := flow.Generic("input", format.Gengar(), format.Gengar())
+	outputTopic := flow.Generic("output", format.Gengar(), format.Gengar())
 
 	oneToOne := func(ctx context.Context, m flow.Message[string, string]) (*flow.Message[string, string], error) {
 		if strings.ToLower(m.Key) == "stupid error" {

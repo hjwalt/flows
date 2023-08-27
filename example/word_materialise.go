@@ -5,7 +5,6 @@ import (
 
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/uptrace/bun"
 )
@@ -41,7 +40,7 @@ func FlowsMaterialisedMap(c context.Context, m flow.Message[string, string]) ([]
 func WordMaterialise() runtime.Runtime {
 	materialiseConfiguration := flows.MaterialisePostgresqlOneToOneFunctionConfiguration[FlowsMaterialised, string, string]{
 		Name:                     "flows-word-materialise",
-		InputTopic:               topic.String("word-count"),
+		InputTopic:               flow.String("word-count"),
 		Function:                 FlowsMaterialisedMap,
 		InputBroker:              "localhost:9092",
 		OutputBroker:             "localhost:9092",

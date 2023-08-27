@@ -5,7 +5,6 @@ import (
 
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
 	"go.uber.org/zap"
@@ -24,8 +23,8 @@ func WordRemapStatelessFunction(c context.Context, m flow.Message[string, string
 func WordRemap() runtime.Runtime {
 	statelessFunctionConfiguration := flows.StatelessOneToOneConfiguration[string, string, string, string]{
 		Name:         "flows-word-remap",
-		InputTopic:   topic.String("word"),
-		OutputTopic:  topic.String("word-updated"),
+		InputTopic:   flow.String("word"),
+		OutputTopic:  flow.String("word-updated"),
 		Function:     WordRemapStatelessFunction,
 		InputBroker:  "localhost:9092",
 		OutputBroker: "localhost:9092",

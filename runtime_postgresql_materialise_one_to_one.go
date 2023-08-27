@@ -1,20 +1,20 @@
 package flows
 
 import (
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/materialise"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/runtime"
 )
 
 // Wiring configuration
 type MaterialisePostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any] struct {
 	Name                       string
-	InputTopic                 topic.Topic[IK, IV]
+	InputTopic                 flow.Topic[IK, IV]
 	Function                   materialise.MapFunction[IK, IV, S]
 	InputBroker                string
 	OutputBroker               string
@@ -34,7 +34,7 @@ func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Register(
 	)
 	RegisterConsumerConfig(
 		runtime_sarama.WithConsumerBroker(c.InputBroker),
-		runtime_sarama.WithConsumerTopic(c.InputTopic.Topic()),
+		runtime_sarama.WithConsumerTopic(c.InputTopic.Name()),
 		runtime_sarama.WithConsumerGroupName(c.Name),
 	)
 	RegisterProducerConfig(

@@ -5,7 +5,6 @@ import (
 
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateful"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/structure"
 )
@@ -44,7 +43,7 @@ func ConvertAggregator[S any, IK any, IV any](
 func ConvertTopicAggregator[S any, IK any, IV any](
 	source Aggregator[S, IK, IV],
 	s format.Format[S],
-	inputTopic topic.Topic[IK, IV],
+	inputTopic flow.Topic[IK, IV],
 ) Aggregator[structure.Bytes, structure.Bytes, structure.Bytes] {
 	return func(ctx context.Context, m flow.Message[[]byte, []byte], ss stateful.State[[]byte]) (stateful.State[[]byte], error) {
 		formattedMessage, unmarshalError := flow.Convert(m, format.Bytes(), format.Bytes(), inputTopic.KeyFormat(), inputTopic.ValueFormat())

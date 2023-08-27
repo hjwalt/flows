@@ -1,13 +1,13 @@
 package flows
 
 import (
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/runtime"
 )
@@ -15,9 +15,9 @@ import (
 // Wiring configuration
 type StatefulPostgresqlOneToTwoFunctionConfiguration[S any, IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 any] struct {
 	Name                       string
-	InputTopic                 topic.Topic[IK, IV]
-	OutputTopicOne             topic.Topic[OK1, OV1]
-	OutputTopicTwo             topic.Topic[OK2, OV2]
+	InputTopic                 flow.Topic[IK, IV]
+	OutputTopicOne             flow.Topic[OK1, OV1]
+	OutputTopicTwo             flow.Topic[OK2, OV2]
 	Function                   stateful.OneToTwoFunction[S, IK, IV, OK1, OV1, OK2, OV2]
 	InputBroker                string
 	OutputBroker               string
@@ -40,7 +40,7 @@ func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2
 	)
 	RegisterConsumerConfig(
 		runtime_sarama.WithConsumerBroker(c.InputBroker),
-		runtime_sarama.WithConsumerTopic(c.InputTopic.Topic()),
+		runtime_sarama.WithConsumerTopic(c.InputTopic.Name()),
 		runtime_sarama.WithConsumerGroupName(c.Name),
 	)
 	RegisterProducerConfig(

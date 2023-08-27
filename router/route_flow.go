@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hjwalt/flows/topic"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/runtime"
 )
@@ -37,8 +37,8 @@ func WithFlowStatelessOneToOne[
 	OK any,
 	OV any,
 ](
-	input topic.Topic[IK, IV],
-	output topic.Topic[OK, OV],
+	input flow.Topic[IK, IV],
+	output flow.Topic[OK, OV],
 ) runtime.Configuration[*RouteFlow] {
 	return func(psf *RouteFlow) *RouteFlow {
 		psf.entries.Entries = append(psf.entries.Entries, FlowEntry{
@@ -57,9 +57,9 @@ func WithFlowStatelessOneToTwo[
 	OK2 any,
 	OV2 any,
 ](
-	input topic.Topic[IK, IV],
-	output1 topic.Topic[OK1, OV1],
-	output2 topic.Topic[OK2, OV2],
+	input flow.Topic[IK, IV],
+	output1 flow.Topic[OK1, OV1],
+	output2 flow.Topic[OK2, OV2],
 ) runtime.Configuration[*RouteFlow] {
 	return func(psf *RouteFlow) *RouteFlow {
 		psf.entries.Entries = append(psf.entries.Entries, FlowEntry{
@@ -79,8 +79,8 @@ func WithFlowStatefulOneToOne[
 	OK any,
 	OV any,
 ](
-	input topic.Topic[IK, IV],
-	output topic.Topic[OK, OV],
+	input flow.Topic[IK, IV],
+	output flow.Topic[OK, OV],
 	stateTable string,
 ) runtime.Configuration[*RouteFlow] {
 	return func(psf *RouteFlow) *RouteFlow {
@@ -101,9 +101,9 @@ func WithFlowStatefulOneToTwo[
 	OK2 any,
 	OV2 any,
 ](
-	input topic.Topic[IK, IV],
-	output1 topic.Topic[OK1, OV1],
-	output2 topic.Topic[OK2, OV2],
+	input flow.Topic[IK, IV],
+	output1 flow.Topic[OK1, OV1],
+	output2 flow.Topic[OK2, OV2],
 	stateTable string,
 ) runtime.Configuration[*RouteFlow] {
 	return func(psf *RouteFlow) *RouteFlow {
@@ -123,7 +123,7 @@ func WithFlowMaterialiseOneToOne[
 	IK any,
 	IV any,
 ](
-	input topic.Topic[IK, IV],
+	input flow.Topic[IK, IV],
 ) runtime.Configuration[*RouteFlow] {
 	return func(psf *RouteFlow) *RouteFlow {
 		psf.entries.Entries = append(psf.entries.Entries, FlowEntry{
@@ -134,9 +134,9 @@ func WithFlowMaterialiseOneToOne[
 	}
 }
 
-func FlowEntryFromTopic[IK any, IV any](topic topic.Topic[IK, IV]) FlowEntryTopic {
+func FlowEntryFromTopic[IK any, IV any](topic flow.Topic[IK, IV]) FlowEntryTopic {
 	return FlowEntryTopic{
-		Topic:     topic.Topic(),
+		Topic:     topic.Name(),
 		KeyType:   fmt.Sprintf("%T", topic.KeyFormat().Default()),
 		ValueType: fmt.Sprintf("%T", topic.ValueFormat().Default()),
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/structure"
 )
@@ -43,8 +42,8 @@ func ConvertOneToOneExplode[IK any, IV any, OK any, OV any](
 
 func ConvertTopicOneToOneExplode[IK any, IV any, OK any, OV any](
 	source OneToOneExplodeFunction[IK, IV, OK, OV],
-	inputTopic topic.Topic[IK, IV],
-	outputTopic topic.Topic[OK, OV],
+	inputTopic flow.Topic[IK, IV],
+	outputTopic flow.Topic[OK, OV],
 ) SingleFunction {
 	return func(ctx context.Context, m flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 		formattedMessage, unmarshalError := flow.Convert(m, format.Bytes(), format.Bytes(), inputTopic.KeyFormat(), inputTopic.ValueFormat())
@@ -64,7 +63,7 @@ func ConvertTopicOneToOneExplode[IK any, IV any, OK any, OV any](
 			if marshalError != nil {
 				return make([]flow.Message[[]byte, []byte], 0), marshalError
 			}
-			bytesResMessage.Topic = outputTopic.Topic()
+			bytesResMessage.Topic = outputTopic.Name()
 			byteResultMessages = append(byteResultMessages, bytesResMessage)
 		}
 

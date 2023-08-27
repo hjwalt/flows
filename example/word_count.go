@@ -12,7 +12,6 @@ import (
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/stateful"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/reflect"
@@ -50,8 +49,8 @@ func WordCountStatefulFunction(c context.Context, m flow.Message[string, string]
 func WordCount() runtime.Runtime {
 	statefulFunctionConfiguration := flows.StatefulPostgresqlOneToOneFunctionConfiguration[*WordCountState, string, string, string, string]{
 		Name:                     "flows-word-count",
-		InputTopic:               topic.String("word"),
-		OutputTopic:              topic.String("word-count"),
+		InputTopic:               flow.String("word"),
+		OutputTopic:              flow.String("word-count"),
 		Function:                 WordCountStatefulFunction,
 		InputBroker:              "localhost:9092",
 		OutputBroker:             "localhost:9092",

@@ -1,20 +1,20 @@
 package flows
 
 import (
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateless"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/runtime"
 )
 
 type StatelessOneToTwoConfiguration[IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 any] struct {
 	Name                       string
-	InputTopic                 topic.Topic[IK, IV]
-	OutputTopicOne             topic.Topic[OK1, OV1]
-	OutputTopicTwo             topic.Topic[OK2, OV2]
+	InputTopic                 flow.Topic[IK, IV]
+	OutputTopicOne             flow.Topic[OK1, OV1]
+	OutputTopicTwo             flow.Topic[OK2, OV2]
 	Function                   stateless.OneToTwoFunction[IK, IV, OK1, OV1, OK2, OV2]
 	InputBroker                string
 	OutputBroker               string
@@ -28,7 +28,7 @@ type StatelessOneToTwoConfiguration[IK any, IV any, OK1 any, OV1 any, OK2 any, O
 func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Register() {
 	RegisterConsumerConfig(
 		runtime_sarama.WithConsumerBroker(c.InputBroker),
-		runtime_sarama.WithConsumerTopic(c.InputTopic.Topic()),
+		runtime_sarama.WithConsumerTopic(c.InputTopic.Name()),
 		runtime_sarama.WithConsumerGroupName(c.Name),
 	)
 	RegisterProducerConfig(

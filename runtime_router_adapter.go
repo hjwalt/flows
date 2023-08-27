@@ -1,11 +1,11 @@
 package flows
 
 import (
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateless"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/runway/structure"
@@ -14,7 +14,7 @@ import (
 // Wiring configuration
 type RouterAdapterConfiguration[Request any, InputKey any, InputValue any] struct {
 	Name                       string
-	ProduceTopic               topic.Topic[InputKey, InputValue]
+	ProduceTopic               flow.Topic[InputKey, InputValue]
 	ProduceBroker              string
 	RequestBodyFormat          format.Format[Request]
 	RequestMapFunction         stateless.OneToOneFunction[structure.Bytes, Request, InputKey, InputValue]

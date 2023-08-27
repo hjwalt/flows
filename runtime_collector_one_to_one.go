@@ -2,12 +2,12 @@ package flows
 
 import (
 	"github.com/hjwalt/flows/collect"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
-	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/runtime"
 )
@@ -15,8 +15,8 @@ import (
 // Wiring configuration
 type CollectorOneToOneConfiguration[S any, IK any, IV any, OK any, OV any] struct {
 	Name                       string
-	InputTopic                 topic.Topic[IK, IV]
-	OutputTopic                topic.Topic[OK, OV]
+	InputTopic                 flow.Topic[IK, IV]
+	OutputTopic                flow.Topic[OK, OV]
 	Aggregator                 collect.Aggregator[S, IK, IV]
 	Collector                  collect.OneToOneCollector[S, OK, OV]
 	InputBroker                string
@@ -33,7 +33,7 @@ type CollectorOneToOneConfiguration[S any, IK any, IV any, OK any, OV any] struc
 func (c CollectorOneToOneConfiguration[S, IK, IV, OK, OV]) Register() {
 	RegisterConsumerConfig(
 		runtime_sarama.WithConsumerBroker(c.InputBroker),
-		runtime_sarama.WithConsumerTopic(c.InputTopic.Topic()),
+		runtime_sarama.WithConsumerTopic(c.InputTopic.Name()),
 		runtime_sarama.WithConsumerGroupName(c.Name),
 	)
 	RegisterProducerConfig(
