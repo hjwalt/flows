@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows/materialise"
-	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
 type MaterialisePostgresqlFunctionConfiguration[T any] struct {
@@ -18,7 +18,7 @@ type MaterialisePostgresqlFunctionConfiguration[T any] struct {
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
 	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
-	MaterialiseMapFunction     materialise.MapFunction[message.Bytes, message.Bytes, T]
+	MaterialiseMapFunction     materialise.MapFunction[structure.Bytes, structure.Bytes, T]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 

@@ -5,12 +5,13 @@ import (
 	"errors"
 
 	"github.com/Shopify/sarama"
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
-func NewProducer(configurations ...runtime.Configuration[*Producer]) message.Producer {
+func NewProducer(configurations ...runtime.Configuration[*Producer]) flow.Producer {
 	producer := &Producer{
 		SaramaConfiguration: DefaultConfiguration(),
 	}
@@ -29,7 +30,7 @@ type Producer struct {
 	Producer sarama.SyncProducer
 }
 
-func (p *Producer) Produce(c context.Context, sources []message.Message[message.Bytes, message.Bytes]) error {
+func (p *Producer) Produce(c context.Context, sources []flow.Message[structure.Bytes, structure.Bytes]) error {
 	if len(sources) == 0 {
 		return nil
 	}

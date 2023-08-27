@@ -7,10 +7,11 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/golang/mock/gomock"
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/test_helper"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/structure"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,13 +49,13 @@ func TestKeyedHandlerShouldTriggerOnMaxBuffered(t *testing.T) {
 		runtime_sarama.WithKeyedHandlerMaxBufferred(2),
 		runtime_sarama.WithKeyedHandlerMaxDelay(100*time.Millisecond),
 		runtime_sarama.WithKeyedHandlerFunction(
-			func(c context.Context, m []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+			func(c context.Context, m []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 				executionCount += 1
 				assert.Equal(2, len(m))
 				return nil, nil
 			},
 		),
-		runtime_sarama.WithKeyedHandlerKeyFunction(func(ctx context.Context, m message.Message[[]byte, []byte]) (string, error) {
+		runtime_sarama.WithKeyedHandlerKeyFunction(func(ctx context.Context, m flow.Message[[]byte, []byte]) (string, error) {
 			return string(m.Key), nil
 		}),
 	)
@@ -108,7 +109,7 @@ func TestKeyedHandlerShouldTriggerOnSameKey(t *testing.T) {
 		runtime_sarama.WithKeyedHandlerMaxBufferred(100),
 		runtime_sarama.WithKeyedHandlerMaxDelay(10*time.Millisecond),
 		runtime_sarama.WithKeyedHandlerFunction(
-			func(c context.Context, m []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+			func(c context.Context, m []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 				executionCount += 1
 				if executionCount == 1 {
 					assert.Equal(3, len(m))
@@ -116,7 +117,7 @@ func TestKeyedHandlerShouldTriggerOnSameKey(t *testing.T) {
 				return nil, nil
 			},
 		),
-		runtime_sarama.WithKeyedHandlerKeyFunction(func(ctx context.Context, m message.Message[[]byte, []byte]) (string, error) {
+		runtime_sarama.WithKeyedHandlerKeyFunction(func(ctx context.Context, m flow.Message[[]byte, []byte]) (string, error) {
 			return string(m.Key), nil
 		}),
 	)
@@ -173,13 +174,13 @@ func TestKeyedHandlerWhenNoErrorShouldTriggerOnTimer(t *testing.T) {
 		runtime_sarama.WithKeyedHandlerMaxBufferred(2),
 		runtime_sarama.WithKeyedHandlerMaxDelay(10*time.Millisecond),
 		runtime_sarama.WithKeyedHandlerFunction(
-			func(c context.Context, m []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+			func(c context.Context, m []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 				executionCount += 1
 				assert.Equal(1, len(m))
 				return nil, nil
 			},
 		),
-		runtime_sarama.WithKeyedHandlerKeyFunction(func(ctx context.Context, m message.Message[[]byte, []byte]) (string, error) {
+		runtime_sarama.WithKeyedHandlerKeyFunction(func(ctx context.Context, m flow.Message[[]byte, []byte]) (string, error) {
 			return string(m.Key), nil
 		}),
 	)

@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/reflect"
+	"github.com/hjwalt/runway/structure"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,17 +28,17 @@ func TestSingleRetry(t *testing.T) {
 
 	retryFn := stateless.NewSingleRetry(
 		stateless.WithSingleRetryRuntime(retryRuntime),
-		stateless.WithSingleRetryNextFunction(func(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+		stateless.WithSingleRetryNextFunction(func(ctx context.Context, m flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 			countStr := string(m.Value)
 			countInt := reflect.GetInt64(countStr)
 
 			count := runtime_retry.GetTryCount(ctx)
 
 			if countInt > count {
-				return make([]message.Message[message.Bytes, message.Bytes], 0), errors.New("count not done")
+				return make([]flow.Message[structure.Bytes, structure.Bytes], 0), errors.New("count not done")
 			}
 
-			return []message.Message[message.Bytes, message.Bytes]{
+			return []flow.Message[structure.Bytes, structure.Bytes]{
 				{
 					Key:   m.Key,
 					Value: []byte(reflect.GetString(count)),
@@ -48,13 +49,13 @@ func TestSingleRetry(t *testing.T) {
 
 	cases := []struct {
 		name         string
-		inputMessage message.Message[message.Bytes, message.Bytes]
+		inputMessage flow.Message[structure.Bytes, structure.Bytes]
 		countExpect  string
 		err          error
 	}{
 		{
 			name: "try once",
-			inputMessage: message.Message[[]byte, []byte]{
+			inputMessage: flow.Message[[]byte, []byte]{
 				Key:   []byte("1"),
 				Value: []byte("1"),
 			},
@@ -62,7 +63,7 @@ func TestSingleRetry(t *testing.T) {
 		},
 		{
 			name: "try twice",
-			inputMessage: message.Message[[]byte, []byte]{
+			inputMessage: flow.Message[[]byte, []byte]{
 				Key:   []byte("2"),
 				Value: []byte("2"),
 			},
@@ -70,7 +71,7 @@ func TestSingleRetry(t *testing.T) {
 		},
 		{
 			name: "try four times",
-			inputMessage: message.Message[[]byte, []byte]{
+			inputMessage: flow.Message[[]byte, []byte]{
 				Key:   []byte("4"),
 				Value: []byte("4"),
 			},

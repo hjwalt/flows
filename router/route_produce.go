@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
 const (
@@ -34,14 +35,14 @@ func NewRouteProducer(configurations ...runtime.Configuration[*RouteProducer]) *
 }
 
 // configurations
-func WithRouteProducerRuntime(producer message.Producer) runtime.Configuration[*RouteProducer] {
+func WithRouteProducerRuntime(producer flow.Producer) runtime.Configuration[*RouteProducer] {
 	return func(psf *RouteProducer) *RouteProducer {
 		psf.producer = producer
 		return psf
 	}
 }
 
-func WithRouteBodyMap(bodyMap stateless.OneToOneFunction[message.Bytes, message.Bytes, message.Bytes, message.Bytes]) runtime.Configuration[*RouteProducer] {
+func WithRouteBodyMap(bodyMap stateless.OneToOneFunction[structure.Bytes, structure.Bytes, structure.Bytes, structure.Bytes]) runtime.Configuration[*RouteProducer] {
 	return func(psf *RouteProducer) *RouteProducer {
 		psf.bodyMap = bodyMap
 		return psf
@@ -50,8 +51,8 @@ func WithRouteBodyMap(bodyMap stateless.OneToOneFunction[message.Bytes, message.
 
 // implementation
 type RouteProducer struct {
-	producer message.Producer
-	bodyMap  stateless.OneToOneFunction[message.Bytes, message.Bytes, message.Bytes, message.Bytes]
+	producer flow.Producer
+	bodyMap  stateless.OneToOneFunction[structure.Bytes, structure.Bytes, structure.Bytes, structure.Bytes]
 }
 
 func (rp *RouteProducer) Handle(w http.ResponseWriter, req *http.Request) {
@@ -63,11 +64,11 @@ func (rp *RouteProducer) Handle(w http.ResponseWriter, req *http.Request) {
 }
 
 func (rp *RouteProducer) Produce(w http.ResponseWriter, req *http.Request) error {
-	requestHeaders := map[string][]message.Bytes{}
+	requestHeaders := map[string][]structure.Bytes{}
 
 	// request headers
 	for hKey, hValues := range req.Header {
-		msgHeaderValues := make([]message.Bytes, len(hValues))
+		msgHeaderValues := make([]structure.Bytes, len(hValues))
 		for hIndex, hValue := range hValues {
 			msgHeaderValues[hIndex] = []byte(hValue)
 		}
@@ -78,7 +79,7 @@ func (rp *RouteProducer) Produce(w http.ResponseWriter, req *http.Request) error
 
 	// request params
 	for hKey, hValues := range req.URL.Query() {
-		msgHeaderValues := make([]message.Bytes, len(hValues))
+		msgHeaderValues := make([]structure.Bytes, len(hValues))
 		for hIndex, hValue := range hValues {
 			msgHeaderValues[hIndex] = []byte(hValue)
 		}
@@ -107,7 +108,7 @@ func (rp *RouteProducer) Produce(w http.ResponseWriter, req *http.Request) error
 		requestBody = make([]byte, 0)
 	}
 
-	requestMessage := message.Message[message.Bytes, message.Bytes]{
+	requestMessage := flow.Message[structure.Bytes, structure.Bytes]{
 		Key:     []byte(requestKey),
 		Value:   requestBody,
 		Headers: requestHeaders,
@@ -121,7 +122,7 @@ func (rp *RouteProducer) Produce(w http.ResponseWriter, req *http.Request) error
 
 	// producing message
 	if messageMessage != nil {
-		produceErr := rp.producer.Produce(req.Context(), []message.Message[message.Bytes, message.Bytes]{*messageMessage})
+		produceErr := rp.producer.Produce(req.Context(), []flow.Message[structure.Bytes, structure.Bytes]{*messageMessage})
 		if produceErr != nil {
 			return errors.Join(ErrorRouteProducingMessage, produceErr)
 		}

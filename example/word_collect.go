@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/hjwalt/flows"
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/topic"
@@ -17,11 +17,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func WordCollectPersistenceId(ctx context.Context, m message.Message[string, string]) (string, error) {
+func WordCollectPersistenceId(ctx context.Context, m flow.Message[string, string]) (string, error) {
 	return m.Key, nil
 }
 
-func WordCollectAggregator(c context.Context, m message.Message[string, string], s stateful.State[*WordCollectState]) (stateful.State[*WordCollectState], error) {
+func WordCollectAggregator(c context.Context, m flow.Message[string, string], s stateful.State[*WordCollectState]) (stateful.State[*WordCollectState], error) {
 	logger.Info("applying")
 
 	// setting defaults
@@ -38,10 +38,10 @@ func WordCollectAggregator(c context.Context, m message.Message[string, string],
 	return s, nil
 }
 
-func WordCollectCollector(c context.Context, persistenceId string, s stateful.State[*WordCollectState]) (*message.Message[string, string], error) {
+func WordCollectCollector(c context.Context, persistenceId string, s stateful.State[*WordCollectState]) (*flow.Message[string, string], error) {
 
 	// create output message
-	outMessage := message.Message[string, string]{
+	outMessage := flow.Message[string, string]{
 		Topic: "word-count",
 		Key:   s.Content.Word,
 		Value: reflect.GetString(s.Content.Count),

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
@@ -15,20 +15,20 @@ import (
 func TestConvertOneToOne(t *testing.T) {
 	testcases := []struct {
 		name        string
-		input       message.Message[[]byte, []byte]
+		input       flow.Message[[]byte, []byte]
 		inputState  []byte
-		output      message.Message[[]byte, []byte]
+		output      flow.Message[[]byte, []byte]
 		outputState []byte
 		empty       bool
 		err         string
 	}{
 		{
 			name: "basic conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("k"),
 				Value: []byte("v"),
 			},
-			output: message.Message[[]byte, []byte]{
+			output: flow.Message[[]byte, []byte]{
 				Key:   []byte("k-updated"),
 				Value: []byte("v-updated"),
 			},
@@ -39,7 +39,7 @@ func TestConvertOneToOne(t *testing.T) {
 		},
 		{
 			name: "empty result",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("empty"),
 				Value: []byte("v"),
 			},
@@ -50,7 +50,7 @@ func TestConvertOneToOne(t *testing.T) {
 		},
 		{
 			name: "error input conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("error"),
 				Value: []byte("error"),
 			},
@@ -61,7 +61,7 @@ func TestConvertOneToOne(t *testing.T) {
 		},
 		{
 			name: "error input state conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("k"),
 				Value: []byte("v"),
 			},
@@ -72,7 +72,7 @@ func TestConvertOneToOne(t *testing.T) {
 		},
 		{
 			name: "error execute",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("stupid error"),
 				Value: []byte("v"),
 			},
@@ -83,7 +83,7 @@ func TestConvertOneToOne(t *testing.T) {
 		},
 		{
 			name: "error output conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("output error"),
 				Value: []byte("v"),
 			},
@@ -94,7 +94,7 @@ func TestConvertOneToOne(t *testing.T) {
 		},
 		{
 			name: "error output state conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("k"),
 				Value: []byte("r"),
 			},
@@ -106,16 +106,16 @@ func TestConvertOneToOne(t *testing.T) {
 	}
 
 	crappyStringFormat := test_helper.CrappyStringFormat()
-	oneToOne := func(ctx context.Context, m message.Message[string, string], ss stateful.State[string]) (*message.Message[string, string], stateful.State[string], error) {
+	oneToOne := func(ctx context.Context, m flow.Message[string, string], ss stateful.State[string]) (*flow.Message[string, string], stateful.State[string], error) {
 
 		if strings.ToLower(m.Key) == "stupid error" {
-			return &message.Message[string, string]{},
+			return &flow.Message[string, string]{},
 				ss,
 				errors.New(m.Key)
 		}
 
 		if strings.ToLower(m.Key) == "output error" {
-			return &message.Message[string, string]{
+			return &flow.Message[string, string]{
 					Key:   "error",
 					Value: "error",
 				},
@@ -131,7 +131,7 @@ func TestConvertOneToOne(t *testing.T) {
 
 		ss.Content += m.Value
 
-		return &message.Message[string, string]{
+		return &flow.Message[string, string]{
 				Key:   m.Key + "-updated",
 				Value: m.Value + "-updated",
 			},

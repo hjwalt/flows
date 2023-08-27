@@ -1,4 +1,4 @@
-package message
+package flow
 
 import (
 	"github.com/hjwalt/runway/format"

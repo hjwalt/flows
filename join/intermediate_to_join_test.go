@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/join"
-	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/flows/test_helper"
+	"github.com/hjwalt/runway/structure"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +16,7 @@ func TestIntermediateToJoinMap(t *testing.T) {
 	topics := make(chan string, 10)
 
 	fn := join.NewIntermediateToJoinMap(
-		join.WithIntermediateToJoinMapTransactionWrappedFunction(func(ctx context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+		join.WithIntermediateToJoinMapTransactionWrappedFunction(func(ctx context.Context, ms []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 			for _, m := range ms {
 				topics <- m.Topic
 			}
@@ -29,18 +30,18 @@ func TestIntermediateToJoinMap(t *testing.T) {
 		key    []byte
 		value  []byte
 		err    error
-		output message.Message[message.Bytes, message.Bytes]
+		output flow.Message[structure.Bytes, structure.Bytes]
 	}{
 		{
 			name:  "normal message",
 			topic: "test-topic",
 			key:   test_helper.MarshalNoError(t, join.IntermediateKeyFormat, &protobuf.JoinKey{PersistenceId: "key"}),
-			value: test_helper.MarshalNoError(t, join.IntermediateValueFormat, message.Message[message.Bytes, message.Bytes]{
+			value: test_helper.MarshalNoError(t, join.IntermediateValueFormat, flow.Message[structure.Bytes, structure.Bytes]{
 				Topic: "test-topic",
 				Key:   []byte("key"),
 				Value: []byte("value"),
 			}),
-			output: message.Message[message.Bytes, message.Bytes]{
+			output: flow.Message[structure.Bytes, structure.Bytes]{
 				Topic:   "test-topic",
 				Key:     []byte("key"),
 				Value:   []byte("value"),
@@ -60,7 +61,7 @@ func TestIntermediateToJoinMap(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			res, err := fn(context.Background(), []message.Message[message.Bytes, message.Bytes]{
+			res, err := fn(context.Background(), []flow.Message[structure.Bytes, structure.Bytes]{
 				{
 					Topic: "intermediate-topic",
 					Key:   c.key,

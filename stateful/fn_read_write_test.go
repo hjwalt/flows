@@ -4,16 +4,17 @@ import (
 	"context"
 	"testing"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateful"
+	"github.com/hjwalt/runway/structure"
 	"github.com/stretchr/testify/assert"
 )
 
 type InMemoryRepository struct {
-	State map[string]stateful.State[message.Bytes]
+	State map[string]stateful.State[structure.Bytes]
 }
 
-func (r *InMemoryRepository) Get(ctx context.Context, persistenceId string) (stateful.State[message.Bytes], error) {
+func (r *InMemoryRepository) Get(ctx context.Context, persistenceId string) (stateful.State[structure.Bytes], error) {
 	if state, statePresent := r.State[persistenceId]; statePresent {
 		return state, nil
 	} else {
@@ -21,8 +22,8 @@ func (r *InMemoryRepository) Get(ctx context.Context, persistenceId string) (sta
 	}
 }
 
-func (r *InMemoryRepository) GetAll(ctx context.Context, persistenceIds []string) (map[string]stateful.State[message.Bytes], error) {
-	stateMap := map[string]stateful.State[message.Bytes]{}
+func (r *InMemoryRepository) GetAll(ctx context.Context, persistenceIds []string) (map[string]stateful.State[structure.Bytes], error) {
+	stateMap := map[string]stateful.State[structure.Bytes]{}
 	for _, persistenceId := range persistenceIds {
 		if state, statePresent := r.State[persistenceId]; statePresent {
 			stateMap[persistenceId] = state
@@ -33,12 +34,12 @@ func (r *InMemoryRepository) GetAll(ctx context.Context, persistenceIds []string
 	return stateMap, nil
 }
 
-func (r *InMemoryRepository) Upsert(ctx context.Context, persistenceId string, dbState stateful.State[message.Bytes]) error {
+func (r *InMemoryRepository) Upsert(ctx context.Context, persistenceId string, dbState stateful.State[structure.Bytes]) error {
 	r.State[persistenceId] = dbState
 	return nil
 }
 
-func (r *InMemoryRepository) UpsertAll(ctx context.Context, stateMap map[string]stateful.State[message.Bytes]) error {
+func (r *InMemoryRepository) UpsertAll(ctx context.Context, stateMap map[string]stateful.State[structure.Bytes]) error {
 	for k, v := range stateMap {
 		r.State[k] = v
 	}
@@ -55,14 +56,14 @@ func TestBatchSimpleApplySuccessful(t *testing.T) {
 	}
 
 	txFn := stateful.NewReadWrite(
-		stateful.WithReadWritePersistenceIdFunc(func(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
+		stateful.WithReadWritePersistenceIdFunc(func(ctx context.Context, m flow.Message[structure.Bytes, structure.Bytes]) (string, error) {
 			return string(m.Key), nil
 		}),
 		stateful.WithReadWriteRepository(repo),
-		stateful.WithReadWriteFunction(func(c context.Context, m message.Message[message.Bytes, message.Bytes], inState stateful.State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], stateful.State[message.Bytes], error) {
+		stateful.WithReadWriteFunction(func(c context.Context, m flow.Message[structure.Bytes, structure.Bytes], inState stateful.State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], stateful.State[structure.Bytes], error) {
 			applyCount += 1
 			inState.Content = []byte(string(inState.Content) + string(m.Value))
-			return []message.Message[message.Bytes, message.Bytes]{
+			return []flow.Message[structure.Bytes, structure.Bytes]{
 					{
 						Key:   m.Key,
 						Value: inState.Content,
@@ -73,7 +74,7 @@ func TestBatchSimpleApplySuccessful(t *testing.T) {
 		}),
 	)
 
-	txFn(context.Background(), []message.Message[[]byte, []byte]{
+	txFn(context.Background(), []flow.Message[[]byte, []byte]{
 		{
 			Key:   []byte("test"),
 			Value: []byte("test"),
@@ -94,7 +95,7 @@ func TestBatchSimpleApplySuccessful(t *testing.T) {
 	assert.NoError(stateErr)
 	assert.Equal("test", string(test2State.Content))
 
-	txFn(context.Background(), []message.Message[[]byte, []byte]{
+	txFn(context.Background(), []flow.Message[[]byte, []byte]{
 		{
 			Key:   []byte("test"),
 			Value: []byte("2"),
@@ -115,7 +116,7 @@ func TestBatchSimpleApplySuccessful(t *testing.T) {
 	assert.NoError(stateErr)
 	assert.Equal("test2", string(test2State.Content))
 
-	txFn(context.Background(), []message.Message[[]byte, []byte]{
+	txFn(context.Background(), []flow.Message[[]byte, []byte]{
 		{
 			Key:   []byte("test"),
 			Value: []byte("3"),
@@ -132,7 +133,7 @@ func TestBatchSimpleApplySuccessful(t *testing.T) {
 	assert.NoError(stateErr)
 	assert.Equal("test2", string(test2State.Content))
 
-	txFn(context.Background(), []message.Message[[]byte, []byte]{
+	txFn(context.Background(), []flow.Message[[]byte, []byte]{
 		{
 			Key:   []byte("test-2"),
 			Value: []byte("3"),

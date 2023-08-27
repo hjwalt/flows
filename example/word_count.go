@@ -6,7 +6,7 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/hjwalt/flows"
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
@@ -17,15 +17,16 @@ import (
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/reflect"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 	"github.com/uptrace/bunrouter"
 	"go.uber.org/zap"
 )
 
-func WordCountPersistenceId(ctx context.Context, m message.Message[string, string]) (string, error) {
+func WordCountPersistenceId(ctx context.Context, m flow.Message[string, string]) (string, error) {
 	return m.Key, nil
 }
 
-func WordCountStatefulFunction(c context.Context, m message.Message[string, string], s stateful.State[*WordCountState]) (*message.Message[string, string], stateful.State[*WordCountState], error) {
+func WordCountStatefulFunction(c context.Context, m flow.Message[string, string], s stateful.State[*WordCountState]) (*flow.Message[string, string], stateful.State[*WordCountState], error) {
 	// setting defaults
 	if s.Content == nil {
 		s.Content = &WordCountState{Count: 0}
@@ -37,7 +38,7 @@ func WordCountStatefulFunction(c context.Context, m message.Message[string, stri
 	logger.Info("count", zap.Int64("count", s.Content.Count), zap.String("key", m.Key))
 
 	// create output message
-	outMessage := message.Message[string, string]{
+	outMessage := flow.Message[string, string]{
 		Topic: "word-count",
 		Key:   m.Key,
 		Value: reflect.GetString(s.Content.Count),
@@ -88,8 +89,8 @@ func WordCount() runtime.Runtime {
 				}
 				return router.WriteJson(w, 200, state, format.Json[TestResponse]())
 			}),
-			runtime_bunrouter.WithRouterProducerHandler(runtime_bunrouter.POST, "/produce", func(ctx context.Context, req message.Message[message.Bytes, message.Bytes]) (*message.Message[message.Bytes, message.Bytes], error) {
-				return &message.Message[[]byte, []byte]{
+			runtime_bunrouter.WithRouterProducerHandler(runtime_bunrouter.POST, "/produce", func(ctx context.Context, req flow.Message[structure.Bytes, structure.Bytes]) (*flow.Message[structure.Bytes, structure.Bytes], error) {
+				return &flow.Message[[]byte, []byte]{
 						Topic:   "produce-topic",
 						Key:     req.Key,
 						Value:   req.Value,

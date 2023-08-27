@@ -4,24 +4,25 @@ import (
 	"context"
 	"testing"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/runway/format"
+	"github.com/hjwalt/runway/structure"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSingleDeduplicate(t *testing.T) {
 
 	// common data config
-	inputMessage := message.Message[string, string]{
+	inputMessage := flow.Message[string, string]{
 		Offset:    100,
 		Partition: 1,
 		Key:       "input",
 		Value:     "input",
 		Headers:   map[string][][]byte{},
 	}
-	byteInputMessage, _ := message.Convert(
+	byteInputMessage, _ := flow.Convert(
 		inputMessage,
 		format.String(),
 		format.String(),
@@ -30,18 +31,18 @@ func TestSingleDeduplicate(t *testing.T) {
 	)
 	inputBytes, _ := format.Convert(
 		byteInputMessage,
-		message.Format(),
+		flow.Format(),
 		format.Bytes(),
 	)
 
-	outputMessage := message.Message[string, string]{
+	outputMessage := flow.Message[string, string]{
 		Offset:    100,
 		Partition: 1,
 		Key:       "test",
 		Value:     "test",
 		Headers:   map[string][][]byte{},
 	}
-	byteOutputMessage, _ := message.Convert(
+	byteOutputMessage, _ := flow.Convert(
 		outputMessage,
 		format.String(),
 		format.String(),
@@ -50,32 +51,32 @@ func TestSingleDeduplicate(t *testing.T) {
 	)
 	outputBytes, _ := format.Convert(
 		byteOutputMessage,
-		message.Format(),
+		flow.Format(),
 		format.Bytes(),
 	)
 
 	cases := []struct {
 		name         string
-		inputMessage message.Message[message.Bytes, message.Bytes]
-		inputState   stateful.State[message.Bytes]
+		inputMessage flow.Message[structure.Bytes, structure.Bytes]
+		inputState   stateful.State[structure.Bytes]
 		assertions   func(
 			assert *assert.Assertions,
-			inputMessage message.Message[message.Bytes, message.Bytes],
-			inputState stateful.State[message.Bytes],
-			resultMessages []message.Message[message.Bytes, message.Bytes],
-			resultState stateful.State[message.Bytes],
+			inputMessage flow.Message[structure.Bytes, structure.Bytes],
+			inputState stateful.State[structure.Bytes],
+			resultMessages []flow.Message[structure.Bytes, structure.Bytes],
+			resultState stateful.State[structure.Bytes],
 			resultError error)
 	}{
 		{
 			name:         "TestSingleStatefulDeduplicateNilInternalStateShouldApply",
 			inputMessage: byteInputMessage,
-			inputState:   stateful.State[message.Bytes]{},
+			inputState:   stateful.State[structure.Bytes]{},
 			assertions: func(
 				assert *assert.Assertions,
-				inputMessage message.Message[message.Bytes, message.Bytes],
-				inputState stateful.State[message.Bytes],
-				resultMessages []message.Message[message.Bytes, message.Bytes],
-				resultState stateful.State[message.Bytes],
+				inputMessage flow.Message[structure.Bytes, structure.Bytes],
+				inputState stateful.State[structure.Bytes],
+				resultMessages []flow.Message[structure.Bytes, structure.Bytes],
+				resultState stateful.State[structure.Bytes],
 				resultError error,
 			) {
 				assert.NotNil(resultMessages)
@@ -96,7 +97,7 @@ func TestSingleDeduplicate(t *testing.T) {
 		{
 			name:         "TestSingleStatefulDeduplicateSkippingWithoutOutput",
 			inputMessage: byteInputMessage,
-			inputState: stateful.State[message.Bytes]{
+			inputState: stateful.State[structure.Bytes]{
 				Internal: &protobuf.State{
 					State: &protobuf.State_V1{
 						V1: &protobuf.StateV1{
@@ -116,10 +117,10 @@ func TestSingleDeduplicate(t *testing.T) {
 			},
 			assertions: func(
 				assert *assert.Assertions,
-				inputMessage message.Message[message.Bytes, message.Bytes],
-				inputState stateful.State[message.Bytes],
-				resultMessages []message.Message[message.Bytes, message.Bytes],
-				resultState stateful.State[message.Bytes],
+				inputMessage flow.Message[structure.Bytes, structure.Bytes],
+				inputState stateful.State[structure.Bytes],
+				resultMessages []flow.Message[structure.Bytes, structure.Bytes],
+				resultState stateful.State[structure.Bytes],
 				resultError error,
 			) {
 				assert.NotNil(resultMessages)
@@ -132,7 +133,7 @@ func TestSingleDeduplicate(t *testing.T) {
 		{
 			name:         "TestSingleStatefulDeduplicateSkippingWithOutput",
 			inputMessage: byteInputMessage,
-			inputState: stateful.State[message.Bytes]{
+			inputState: stateful.State[structure.Bytes]{
 				Internal: &protobuf.State{
 					State: &protobuf.State_V1{
 						V1: &protobuf.StateV1{
@@ -145,17 +146,17 @@ func TestSingleDeduplicate(t *testing.T) {
 				Results: &protobuf.Results{
 					Result: &protobuf.Results_V1{
 						V1: &protobuf.ResultV1{
-							Messages: []message.Bytes{outputBytes},
+							Messages: []structure.Bytes{outputBytes},
 						},
 					},
 				},
 			},
 			assertions: func(
 				assert *assert.Assertions,
-				inputMessage message.Message[message.Bytes, message.Bytes],
-				inputState stateful.State[message.Bytes],
-				resultMessages []message.Message[message.Bytes, message.Bytes],
-				resultState stateful.State[message.Bytes],
+				inputMessage flow.Message[structure.Bytes, structure.Bytes],
+				inputState stateful.State[structure.Bytes],
+				resultMessages []flow.Message[structure.Bytes, structure.Bytes],
+				resultState stateful.State[structure.Bytes],
 				resultError error,
 			) {
 				assert.NotNil(resultMessages)
@@ -169,7 +170,7 @@ func TestSingleDeduplicate(t *testing.T) {
 		{
 			name:         "TestSingleStatefulDeduplicateActingWithoutResultAppend",
 			inputMessage: byteInputMessage,
-			inputState: stateful.State[message.Bytes]{
+			inputState: stateful.State[structure.Bytes]{
 				Internal: &protobuf.State{
 					State: &protobuf.State_V1{
 						V1: &protobuf.StateV1{
@@ -182,17 +183,17 @@ func TestSingleDeduplicate(t *testing.T) {
 				Results: &protobuf.Results{
 					Result: &protobuf.Results_V1{
 						V1: &protobuf.ResultV1{
-							Messages: []message.Bytes{outputBytes},
+							Messages: []structure.Bytes{outputBytes},
 						},
 					},
 				},
 			},
 			assertions: func(
 				assert *assert.Assertions,
-				inputMessage message.Message[message.Bytes, message.Bytes],
-				inputState stateful.State[message.Bytes],
-				resultMessages []message.Message[message.Bytes, message.Bytes],
-				resultState stateful.State[message.Bytes],
+				inputMessage flow.Message[structure.Bytes, structure.Bytes],
+				inputState stateful.State[structure.Bytes],
+				resultMessages []flow.Message[structure.Bytes, structure.Bytes],
+				resultState stateful.State[structure.Bytes],
 				resultError error,
 			) {
 
@@ -212,7 +213,7 @@ func TestSingleDeduplicate(t *testing.T) {
 		{
 			name:         "TestSingleStatefulDeduplicateActingWithResultAppend",
 			inputMessage: byteInputMessage,
-			inputState: stateful.State[message.Bytes]{
+			inputState: stateful.State[structure.Bytes]{
 				Internal: &protobuf.State{
 					State: &protobuf.State_V1{
 						V1: &protobuf.StateV1{
@@ -223,17 +224,17 @@ func TestSingleDeduplicate(t *testing.T) {
 				Results: &protobuf.Results{
 					Result: &protobuf.Results_V1{
 						V1: &protobuf.ResultV1{
-							Messages: []message.Bytes{outputBytes},
+							Messages: []structure.Bytes{outputBytes},
 						},
 					},
 				},
 			},
 			assertions: func(
 				assert *assert.Assertions,
-				inputMessage message.Message[message.Bytes, message.Bytes],
-				inputState stateful.State[message.Bytes],
-				resultMessages []message.Message[message.Bytes, message.Bytes],
-				resultState stateful.State[message.Bytes],
+				inputMessage flow.Message[structure.Bytes, structure.Bytes],
+				inputState stateful.State[structure.Bytes],
+				resultMessages []flow.Message[structure.Bytes, structure.Bytes],
+				resultState stateful.State[structure.Bytes],
 				resultError error,
 			) {
 
@@ -260,8 +261,8 @@ func TestSingleDeduplicate(t *testing.T) {
 
 			fn := stateful.NewDeduplicate(
 				stateful.WithDeduplicateNextFunction(
-					func(c context.Context, m message.Message[message.Bytes, message.Bytes], inState stateful.State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], stateful.State[message.Bytes], error) {
-						return []message.Message[message.Bytes, message.Bytes]{m}, inState, nil
+					func(c context.Context, m flow.Message[structure.Bytes, structure.Bytes], inState stateful.State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], stateful.State[structure.Bytes], error) {
+						return []flow.Message[structure.Bytes, structure.Bytes]{m}, inState, nil
 					},
 				),
 			)

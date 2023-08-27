@@ -8,9 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/test_helper"
+	"github.com/hjwalt/runway/structure"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +20,7 @@ func TestRouteProducer(t *testing.T) {
 
 	routerProducer := router.NewRouteProducer(
 		router.WithRouteProducerRuntime(producer),
-		router.WithRouteBodyMap(func(ctx context.Context, req message.Message[message.Bytes, message.Bytes]) (*message.Message[message.Bytes, message.Bytes], error) {
+		router.WithRouteBodyMap(func(ctx context.Context, req flow.Message[structure.Bytes, structure.Bytes]) (*flow.Message[structure.Bytes, structure.Bytes], error) {
 			return &req, nil
 		}),
 	)

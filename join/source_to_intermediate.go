@@ -3,13 +3,14 @@ package join
 import (
 	"context"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 	"go.uber.org/zap"
 )
 
@@ -42,14 +43,14 @@ type SourceToIntermediateMap struct {
 	intermediateTopic string
 }
 
-func (r *SourceToIntermediateMap) Apply(c context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
-	resultMessages := make([]message.Message[message.Bytes, message.Bytes], len(ms))
+func (r *SourceToIntermediateMap) Apply(c context.Context, ms []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
+	resultMessages := make([]flow.Message[structure.Bytes, structure.Bytes], len(ms))
 	for i, m := range ms {
 		logger.Info("source to intermediate", zap.String("topic", m.Topic))
 		persistenceId, persistenceIdError := r.persistenceId(c, m)
 		if persistenceIdError != nil {
 			logger.ErrorErr("error getting persistence id", persistenceIdError)
-			return make([]message.Message[[]byte, []byte], 0), persistenceIdError
+			return make([]flow.Message[[]byte, []byte], 0), persistenceIdError
 		}
 
 		// To ensure changes are sequenced
@@ -59,17 +60,17 @@ func (r *SourceToIntermediateMap) Apply(c context.Context, ms []message.Message[
 		joinKeyBytes, joinKeySerialisationErr := IntermediateKeyFormat.Marshal(joinKey)
 		if joinKeySerialisationErr != nil {
 			logger.ErrorErr("error serialising join key", joinKeySerialisationErr)
-			return make([]message.Message[[]byte, []byte], 0), joinKeySerialisationErr
+			return make([]flow.Message[[]byte, []byte], 0), joinKeySerialisationErr
 		}
 
 		// To keep all information about the source message
 		joinValueBytes, joinValueSerialisationErr := IntermediateValueFormat.Marshal(m)
 		if joinValueSerialisationErr != nil {
 			logger.ErrorErr("error serialising join value", joinValueSerialisationErr)
-			return make([]message.Message[[]byte, []byte], 0), joinValueSerialisationErr
+			return make([]flow.Message[[]byte, []byte], 0), joinValueSerialisationErr
 		}
 
-		remappedMessage := message.Message[[]byte, []byte]{
+		remappedMessage := flow.Message[[]byte, []byte]{
 			Topic: r.intermediateTopic,
 			Key:   joinKeyBytes,
 			Value: joinValueBytes,
@@ -81,10 +82,10 @@ func (r *SourceToIntermediateMap) Apply(c context.Context, ms []message.Message[
 	return resultMessages, nil
 }
 
-var IntermediateValueFormat = message.Format()
+var IntermediateValueFormat = flow.Format()
 var IntermediateKeyFormat = format.Protobuf[*protobuf.JoinKey]()
 
-func IntermediateTopicKeyFunction(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
+func IntermediateTopicKeyFunction(ctx context.Context, m flow.Message[structure.Bytes, structure.Bytes]) (string, error) {
 	keyValue, keyError := IntermediateKeyFormat.Unmarshal(m.Key)
 	if keyError != nil {
 		return "", keyError

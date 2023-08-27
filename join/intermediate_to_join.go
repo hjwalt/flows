@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 	"go.uber.org/zap"
 )
 
@@ -35,14 +36,14 @@ type IntermediateToJoinMap struct {
 	transactionWrapped stateless.BatchFunction
 }
 
-func (r *IntermediateToJoinMap) Apply(c context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
-	messagesToMap := make([]message.Message[message.Bytes, message.Bytes], len(ms))
+func (r *IntermediateToJoinMap) Apply(c context.Context, ms []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
+	messagesToMap := make([]flow.Message[structure.Bytes, structure.Bytes], len(ms))
 
 	for i, m := range ms {
 		logger.Info("intermediate to join", zap.String("topic", m.Topic))
 		messageDeserialized, messageDeserialisationError := IntermediateValueFormat.Unmarshal(m.Value)
 		if messageDeserialisationError != nil {
-			return make([]message.Message[[]byte, []byte], 0), errors.Join(ErrorIntermediateToJoinDeserialiseMessage, messageDeserialisationError)
+			return make([]flow.Message[[]byte, []byte], 0), errors.Join(ErrorIntermediateToJoinDeserialiseMessage, messageDeserialisationError)
 		}
 
 		messageDeserialized.Partition = m.Partition

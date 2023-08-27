@@ -3,9 +3,10 @@ package stateless
 import (
 	"context"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/metric"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
 // constructor
@@ -18,7 +19,7 @@ func NewProducerBatchFunction(configurations ...runtime.Configuration[*BatchProd
 }
 
 // configuration
-func WithBatchProducerRuntime(producer message.Producer) runtime.Configuration[*BatchProducer] {
+func WithBatchProducerRuntime(producer flow.Producer) runtime.Configuration[*BatchProducer] {
 	return func(pbf *BatchProducer) *BatchProducer {
 		pbf.producer = producer
 		return pbf
@@ -41,21 +42,21 @@ func WithBatchProducerPrometheus() runtime.Configuration[*BatchProducer] {
 
 // implementation
 type BatchProducer struct {
-	producer message.Producer
+	producer flow.Producer
 	next     BatchFunction
 	metric   metric.Produce
 }
 
-func (r BatchProducer) Apply(c context.Context, m []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+func (r BatchProducer) Apply(c context.Context, m []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 	n, err := r.next(c, m)
 	if err != nil {
-		return make([]message.Message[message.Bytes, message.Bytes], 0), err
+		return make([]flow.Message[structure.Bytes, structure.Bytes], 0), err
 	}
 	if err := r.producer.Produce(c, n); err != nil {
-		return make([]message.Message[message.Bytes, message.Bytes], 0), err
+		return make([]flow.Message[structure.Bytes, structure.Bytes], 0), err
 	}
 	if r.metric != nil {
 		r.metric.MessagesProducedIncrement(m[0].Topic, m[0].Partition, int64(len(n)))
 	}
-	return make([]message.Message[message.Bytes, message.Bytes], 0), nil
+	return make([]flow.Message[structure.Bytes, structure.Bytes], 0), nil
 }

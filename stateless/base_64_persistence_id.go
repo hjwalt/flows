@@ -3,8 +3,9 @@ package stateless
 import (
 	"context"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/runway/format"
+	"github.com/hjwalt/runway/structure"
 )
 
 var (
@@ -12,8 +13,8 @@ var (
 	bytesFormat  = format.Bytes()
 )
 
-func Base64PersistenceId(ctx context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
-	base64Message, conversionErr := message.Convert(
+func Base64PersistenceId(ctx context.Context, m flow.Message[structure.Bytes, structure.Bytes]) (string, error) {
+	base64Message, conversionErr := flow.Convert(
 		m,
 		bytesFormat,
 		bytesFormat,

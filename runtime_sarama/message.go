@@ -2,13 +2,14 @@ package runtime_sarama
 
 import (
 	"github.com/Shopify/sarama"
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/structure"
 )
 
 // mapping sarama consumer message to internal representation
-func FromConsumerMessage(source *sarama.ConsumerMessage) (message.Message[message.Bytes, message.Bytes], error) {
+func FromConsumerMessage(source *sarama.ConsumerMessage) (flow.Message[structure.Bytes, structure.Bytes], error) {
 
 	byteFormat := format.Bytes()
 
@@ -16,27 +17,27 @@ func FromConsumerMessage(source *sarama.ConsumerMessage) (message.Message[messag
 	key, err := byteFormat.Unmarshal(source.Key)
 	if err != nil {
 		logger.ErrorErr("consumer message map key deserialisation failure", err)
-		return message.Message[message.Bytes, message.Bytes]{}, err
+		return flow.Message[structure.Bytes, structure.Bytes]{}, err
 	}
 
 	// deserialise value
 	value, err := byteFormat.Unmarshal(source.Value)
 	if err != nil {
 		logger.ErrorErr("consumer message map value deserialisation failure", err)
-		return message.Message[message.Bytes, message.Bytes]{}, err
+		return flow.Message[structure.Bytes, structure.Bytes]{}, err
 	}
 
 	// map headers
-	headers := make(map[string][]message.Bytes)
+	headers := make(map[string][]structure.Bytes)
 	for _, header := range source.Headers {
 		keyString := string(header.Key)
 		if _, exists := headers[keyString]; !exists {
-			headers[keyString] = make([]message.Bytes, 0)
+			headers[keyString] = make([]structure.Bytes, 0)
 		}
 		headers[keyString] = append(headers[keyString], header.Value)
 	}
 
-	return message.Message[message.Bytes, message.Bytes]{
+	return flow.Message[structure.Bytes, structure.Bytes]{
 		Topic:     source.Topic,
 		Partition: source.Partition,
 		Offset:    source.Offset,
@@ -47,14 +48,14 @@ func FromConsumerMessage(source *sarama.ConsumerMessage) (message.Message[messag
 	}, nil
 }
 
-func FromConsumerMessages(sources []*sarama.ConsumerMessage) ([]message.Message[message.Bytes, message.Bytes], error) {
+func FromConsumerMessages(sources []*sarama.ConsumerMessage) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 
-	mappedMessages := make([]message.Message[message.Bytes, message.Bytes], 0)
+	mappedMessages := make([]flow.Message[structure.Bytes, structure.Bytes], 0)
 	for _, source := range sources {
 		mapped, err := FromConsumerMessage(source)
 		if err != nil {
 			logger.ErrorErr("consumer messages map deserialisation failure", err)
-			return make([]message.Message[message.Bytes, message.Bytes], 0), err
+			return make([]flow.Message[structure.Bytes, structure.Bytes], 0), err
 		}
 		mappedMessages = append(mappedMessages, mapped)
 	}
@@ -62,7 +63,7 @@ func FromConsumerMessages(sources []*sarama.ConsumerMessage) ([]message.Message[
 }
 
 // mapping internal representation into sarama producer message
-func ToProducerMessage(source message.Message[message.Bytes, message.Bytes]) (*sarama.ProducerMessage, error) {
+func ToProducerMessage(source flow.Message[structure.Bytes, structure.Bytes]) (*sarama.ProducerMessage, error) {
 	// map headers
 	headers := make([]sarama.RecordHeader, 0)
 	for k, vs := range source.Headers {
@@ -82,7 +83,7 @@ func ToProducerMessage(source message.Message[message.Bytes, message.Bytes]) (*s
 	}, nil
 }
 
-func ToProducerMessages(sources []message.Message[message.Bytes, message.Bytes]) ([]*sarama.ProducerMessage, error) {
+func ToProducerMessages(sources []flow.Message[structure.Bytes, structure.Bytes]) ([]*sarama.ProducerMessage, error) {
 
 	mappedMessages := make([]*sarama.ProducerMessage, 0)
 	for _, source := range sources {

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/metric"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateless"
@@ -58,7 +58,7 @@ func WithKeyedHandlerFunction(loopFunction stateless.BatchFunction) runtime.Conf
 	}
 }
 
-func WithKeyedHandlerKeyFunction(keyFunction stateful.PersistenceIdFunction[message.Bytes, message.Bytes]) runtime.Configuration[*KeyedHandler] {
+func WithKeyedHandlerKeyFunction(keyFunction stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes]) runtime.Configuration[*KeyedHandler] {
 	return func(cbl *KeyedHandler) *KeyedHandler {
 		cbl.K = keyFunction
 		return cbl
@@ -79,7 +79,7 @@ type KeyedHandler struct {
 	MaxDelay     time.Duration
 	MaxPerKey    int64
 	F            stateless.BatchFunction
-	K            stateful.PersistenceIdFunction[message.Bytes, message.Bytes]
+	K            stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes]
 
 	// metrics
 	metric metric.Consume
@@ -172,7 +172,7 @@ type keyedHandlerState struct {
 
 	// batched data
 	messageToCommit *sarama.ConsumerMessage
-	messages        []message.Message[[]byte, []byte]
+	messages        []flow.Message[[]byte, []byte]
 	keyCount        structure.CountMap[string]
 
 	// batching mechanic
@@ -187,7 +187,7 @@ type keyedHandlerState struct {
 
 func (khs *keyedHandlerState) reset(maxDelay time.Duration) {
 	khs.messageToCommit = nil
-	khs.messages = make([]message.Message[[]byte, []byte], 0)
+	khs.messages = make([]flow.Message[[]byte, []byte], 0)
 	khs.timerReached = time.After(maxDelay)
 	khs.keyCount.Clear()
 }

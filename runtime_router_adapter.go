@@ -1,7 +1,6 @@
 package flows
 
 import (
-	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_sarama"
@@ -9,6 +8,7 @@ import (
 	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
 // Wiring configuration
@@ -17,7 +17,7 @@ type RouterAdapterConfiguration[Request any, InputKey any, InputValue any] struc
 	ProduceTopic               topic.Topic[InputKey, InputValue]
 	ProduceBroker              string
 	RequestBodyFormat          format.Format[Request]
-	RequestMapFunction         stateless.OneToOneFunction[message.Bytes, Request, InputKey, InputValue]
+	RequestMapFunction         stateless.OneToOneFunction[structure.Bytes, Request, InputKey, InputValue]
 	HttpPort                   int
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]

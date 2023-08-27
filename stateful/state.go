@@ -3,8 +3,8 @@ package stateful
 import (
 	"context"
 
-	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/protobuf"
+	"github.com/hjwalt/runway/structure"
 )
 
 func NewState[S any](id string, content S) State[S] {
@@ -65,8 +65,8 @@ func SetDefault[S any](s State[S]) State[S] {
 }
 
 type Repository interface {
-	Get(ctx context.Context, persistenceId string) (State[message.Bytes], error)
-	GetAll(ctx context.Context, persistenceId []string) (map[string]State[message.Bytes], error)
-	Upsert(ctx context.Context, persistenceId string, dbState State[message.Bytes]) error
-	UpsertAll(ctx context.Context, stateMap map[string]State[message.Bytes]) error
+	Get(ctx context.Context, persistenceId string) (State[structure.Bytes], error)
+	GetAll(ctx context.Context, persistenceId []string) (map[string]State[structure.Bytes], error)
+	Upsert(ctx context.Context, persistenceId string, dbState State[structure.Bytes]) error
+	UpsertAll(ctx context.Context, stateMap map[string]State[structure.Bytes]) error
 }

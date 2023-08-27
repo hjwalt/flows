@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows/collect"
-	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
 // Wiring configuration
@@ -19,7 +19,7 @@ type CollectorConfiguration struct {
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
 	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
 	PersistenceIdFunction      stateful.PersistenceIdFunction[[]byte, []byte]
-	Aggregator                 collect.Aggregator[message.Bytes, message.Bytes, message.Bytes]
+	Aggregator                 collect.Aggregator[structure.Bytes, structure.Bytes, structure.Bytes]
 	Collector                  collect.Collector
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }

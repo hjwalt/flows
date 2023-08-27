@@ -3,8 +3,9 @@ package stateful
 import (
 	"context"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
 // constructor
@@ -31,7 +32,7 @@ type PersistenceIdSwitch struct {
 	functions map[string]PersistenceIdFunction[[]byte, []byte]
 }
 
-func (r *PersistenceIdSwitch) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes]) (string, error) {
+func (r *PersistenceIdSwitch) Apply(c context.Context, m flow.Message[structure.Bytes, structure.Bytes]) (string, error) {
 	fn, fnExists := r.functions[m.Topic]
 	if !fnExists {
 		return "", TopicMissingError(m.Topic)

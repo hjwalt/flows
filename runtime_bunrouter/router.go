@@ -4,11 +4,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/uptrace/bunrouter"
 	"go.uber.org/zap"
@@ -125,7 +126,7 @@ func WithRouterHttpHandler(method string, path string, handler http.HandlerFunc)
 	}
 }
 
-func WithRouterProducerHandler(method string, path string, bodyMap stateless.OneToOneFunction[message.Bytes, message.Bytes, message.Bytes, message.Bytes]) runtime.Configuration[*Router] {
+func WithRouterProducerHandler(method string, path string, bodyMap stateless.OneToOneFunction[structure.Bytes, structure.Bytes, structure.Bytes, structure.Bytes]) runtime.Configuration[*Router] {
 	return func(r *Router) *Router {
 		handlerFunction := router.NewRouteProducer(
 			router.WithRouteProducerRuntime(r.producer),
@@ -187,7 +188,7 @@ func WithRouterPrometheus() runtime.Configuration[*Router] {
 	}
 }
 
-func WithRouterProducer(producer message.Producer) runtime.Configuration[*Router] {
+func WithRouterProducer(producer flow.Producer) runtime.Configuration[*Router] {
 	return func(r *Router) *Router {
 		r.producer = producer
 		return r
@@ -199,5 +200,5 @@ type Router struct {
 	runtimeConfiguration []runtime.Configuration[*runtime.HttpRunnable]
 	router               *bunrouter.Router
 	group                *bunrouter.Group
-	producer             message.Producer
+	producer             flow.Producer
 }

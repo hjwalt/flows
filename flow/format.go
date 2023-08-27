@@ -1,23 +1,24 @@
-package message
+package flow
 
 import (
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/runway/format"
+	"github.com/hjwalt/runway/structure"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // for byte based storage of a message
 type MessageFormat struct{}
 
-func (helper MessageFormat) Default() Message[[]byte, []byte] {
-	return Message[[]byte, []byte]{}
+func (helper MessageFormat) Default() Message[structure.Bytes, structure.Bytes] {
+	return Message[structure.Bytes, structure.Bytes]{}
 }
 
-func (helper MessageFormat) Marshal(value Message[[]byte, []byte]) ([]byte, error) {
+func (helper MessageFormat) Marshal(value Message[structure.Bytes, structure.Bytes]) (structure.Bytes, error) {
 	headers := make(map[string]*protobuf.Header)
 	for k, vs := range value.Headers {
 		headers[k] = &protobuf.Header{
-			Headers: append(make([][]byte, 0), vs...),
+			Headers: append(make([]structure.Bytes, 0), vs...),
 		}
 	}
 
@@ -33,24 +34,24 @@ func (helper MessageFormat) Marshal(value Message[[]byte, []byte]) ([]byte, erro
 
 	protoBytes, convertErr := format.Convert(protoMessage, format.Protobuf[*protobuf.Message](), format.Bytes())
 	if convertErr != nil {
-		return make([]byte, 0), convertErr
+		return make(structure.Bytes, 0), convertErr
 	}
 
 	return protoBytes, nil
 }
 
-func (helper MessageFormat) Unmarshal(value []byte) (Message[[]byte, []byte], error) {
+func (helper MessageFormat) Unmarshal(value structure.Bytes) (Message[structure.Bytes, structure.Bytes], error) {
 	protoMessage, convertErr := format.Convert(value, format.Bytes(), format.Protobuf[*protobuf.Message]())
 	if convertErr != nil {
 		return helper.Default(), convertErr
 	}
 
-	headers := make(map[string][][]byte)
+	headers := make(map[string][]structure.Bytes)
 	for k, vs := range protoMessage.Headers {
-		headers[k] = append(make([][]byte, 0), vs.Headers...)
+		headers[k] = append(make([]structure.Bytes, 0), vs.Headers...)
 	}
 
-	return Message[[]byte, []byte]{
+	return Message[structure.Bytes, structure.Bytes]{
 		Topic:     protoMessage.Topic,
 		Partition: protoMessage.Partition,
 		Offset:    protoMessage.Offset,
@@ -61,6 +62,6 @@ func (helper MessageFormat) Unmarshal(value []byte) (Message[[]byte, []byte], er
 	}, nil
 }
 
-func Format() format.Format[Message[[]byte, []byte]] {
+func Format() format.Format[Message[structure.Bytes, structure.Bytes]] {
 	return MessageFormat{}
 }

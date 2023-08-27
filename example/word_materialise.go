@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows"
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/uptrace/bun"
@@ -27,7 +27,7 @@ type FlowsMaterialised struct {
 	TimestampMs   int64
 }
 
-func FlowsMaterialisedMap(c context.Context, m message.Message[string, string]) ([]FlowsMaterialised, error) {
+func FlowsMaterialisedMap(c context.Context, m flow.Message[string, string]) ([]FlowsMaterialised, error) {
 	return []FlowsMaterialised{
 		{
 			Id:           m.Key,

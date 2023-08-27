@@ -3,9 +3,10 @@ package stateless
 import (
 	"context"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/metric"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
 // constructor
@@ -26,7 +27,7 @@ func NewProducerBatchIterateFunction(configurations ...runtime.Configuration[*Pr
 
 // configuration
 
-func WithBatchIterateFunctionProducer(producer message.Producer) runtime.Configuration[*ProducerBatchIterateFunction] {
+func WithBatchIterateFunctionProducer(producer flow.Producer) runtime.Configuration[*ProducerBatchIterateFunction] {
 	return func(pbif *ProducerBatchIterateFunction) *ProducerBatchIterateFunction {
 		pbif.producer = producer
 		return pbif
@@ -49,17 +50,17 @@ func WithBatchIterateProducerPrometheus() runtime.Configuration[*ProducerBatchIt
 
 // implementation
 type ProducerBatchIterateFunction struct {
-	producer message.Producer
+	producer flow.Producer
 	next     SingleFunction
 	metric   metric.Produce
 }
 
-func (r *ProducerBatchIterateFunction) Apply(c context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
-	res := make([]message.Message[message.Bytes, message.Bytes], 0)
+func (r *ProducerBatchIterateFunction) Apply(c context.Context, ms []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
+	res := make([]flow.Message[structure.Bytes, structure.Bytes], 0)
 
 	for _, m := range ms {
 		if mres, err := r.next(c, m); err != nil {
-			return make([]message.Message[message.Bytes, message.Bytes], 0), err
+			return make([]flow.Message[structure.Bytes, structure.Bytes], 0), err
 		} else {
 			res = append(res, mres...)
 		}

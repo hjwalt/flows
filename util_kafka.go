@@ -3,12 +3,13 @@ package flows
 import (
 	"context"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
 const (
@@ -37,8 +38,8 @@ func RegisterProducer() {
 	inverse.Register(QualifierRuntime, InjectorRuntime(QualifierKafkaProducer))
 }
 
-func GetKafkaProducer(ctx context.Context) (message.Producer, error) {
-	return inverse.GetLast[message.Producer](ctx, QualifierKafkaProducer)
+func GetKafkaProducer(ctx context.Context) (flow.Producer, error) {
+	return inverse.GetLast[flow.Producer](ctx, QualifierKafkaProducer)
 }
 
 func RegisterConsumerConfig(config ...runtime.Configuration[*runtime_sarama.Consumer]) {
@@ -85,15 +86,15 @@ func InjectorConsumerKeyedHandlerBatchFunctionConfiguration(ctx context.Context)
 }
 
 func InjectorConsumerKeyedHandlerKeyFunctionConfiguration(ctx context.Context) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
-	keyFunction, getKeyFunctionError := inverse.GetLast[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](ctx, QualifierKafkaConsumerKeyFunction)
+	keyFunction, getKeyFunctionError := inverse.GetLast[stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes]](ctx, QualifierKafkaConsumerKeyFunction)
 	if getKeyFunctionError != nil {
 		return nil, getKeyFunctionError
 	}
 	return runtime_sarama.WithKeyedHandlerKeyFunction(keyFunction), nil
 }
 
-func RegisterConsumerKeyedKeyFunction(persistenceIdFunction stateful.PersistenceIdFunction[message.Bytes, message.Bytes]) {
-	inverse.RegisterInstance[stateful.PersistenceIdFunction[message.Bytes, message.Bytes]](QualifierKafkaConsumerKeyFunction, persistenceIdFunction)
+func RegisterConsumerKeyedKeyFunction(persistenceIdFunction stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes]) {
+	inverse.RegisterInstance[stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes]](QualifierKafkaConsumerKeyFunction, persistenceIdFunction)
 }
 
 func RegisterConsumerKeyedFunction(batchFunctionInjector func(ctx context.Context) (stateless.BatchFunction, error)) {

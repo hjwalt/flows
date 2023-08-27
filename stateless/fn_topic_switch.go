@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/runway/structure"
@@ -35,25 +35,25 @@ type TopicSwitch struct {
 	functions map[string]BatchFunction
 }
 
-func (r *TopicSwitch) Apply(c context.Context, m []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+func (r *TopicSwitch) Apply(c context.Context, m []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 
-	messageMultiMap := structure.NewMultiMap[string, message.Message[message.Bytes, message.Bytes]]()
+	messageMultiMap := structure.NewMultiMap[string, flow.Message[structure.Bytes, structure.Bytes]]()
 	for _, mi := range m {
 		messageMultiMap.Add(mi.Topic, mi)
 	}
 
-	resultMessages := []message.Message[message.Bytes, message.Bytes]{}
+	resultMessages := []flow.Message[structure.Bytes, structure.Bytes]{}
 	for k, v := range messageMultiMap.GetAll() {
 		logger.Info("join switch", zap.String("topic", k))
 
 		fn, fnExists := r.functions[k]
 		if !fnExists {
-			return make([]message.Message[[]byte, []byte], 0), errors.Join(errors.New(k), ErrSwitchMissingTopic)
+			return make([]flow.Message[[]byte, []byte], 0), errors.Join(errors.New(k), ErrSwitchMissingTopic)
 		}
 
 		currGroupMessages, currGroupHandlerErr := fn(c, v)
 		if currGroupHandlerErr != nil {
-			return make([]message.Message[[]byte, []byte], 0), currGroupHandlerErr
+			return make([]flow.Message[[]byte, []byte], 0), currGroupHandlerErr
 		}
 		resultMessages = append(resultMessages, currGroupMessages...)
 	}

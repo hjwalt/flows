@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
@@ -15,18 +15,18 @@ import (
 func TestRouteProducerBodyMapConversion(t *testing.T) {
 	testcases := []struct {
 		name   string
-		input  message.Message[[]byte, []byte]
-		output message.Message[[]byte, []byte]
+		input  flow.Message[[]byte, []byte]
+		output flow.Message[[]byte, []byte]
 		empty  bool
 		err    string
 	}{
 		{
 			name: "basic conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("k"),
 				Value: []byte("v"),
 			},
-			output: message.Message[[]byte, []byte]{
+			output: flow.Message[[]byte, []byte]{
 				Key:   []byte("k-updated"),
 				Value: []byte("v-updated"),
 			},
@@ -35,7 +35,7 @@ func TestRouteProducerBodyMapConversion(t *testing.T) {
 		},
 		{
 			name: "empty result",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("empty"),
 				Value: []byte("v"),
 			},
@@ -44,7 +44,7 @@ func TestRouteProducerBodyMapConversion(t *testing.T) {
 		},
 		{
 			name: "error input conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("error"),
 				Value: []byte("error"),
 			},
@@ -53,7 +53,7 @@ func TestRouteProducerBodyMapConversion(t *testing.T) {
 		},
 		{
 			name: "error execute",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("stupid error"),
 				Value: []byte("v"),
 			},
@@ -62,7 +62,7 @@ func TestRouteProducerBodyMapConversion(t *testing.T) {
 		},
 		{
 			name: "error output conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("output error"),
 				Value: []byte("v"),
 			},
@@ -71,13 +71,13 @@ func TestRouteProducerBodyMapConversion(t *testing.T) {
 		},
 	}
 	crappyStringFormat := test_helper.CrappyStringFormat()
-	source := func(ctx context.Context, m message.Message[[]byte, string]) (*message.Message[string, string], error) {
+	source := func(ctx context.Context, m flow.Message[[]byte, string]) (*flow.Message[string, string], error) {
 		if strings.ToLower(string(m.Key)) == "stupid error" {
-			return &message.Message[string, string]{}, errors.New(string(m.Key))
+			return &flow.Message[string, string]{}, errors.New(string(m.Key))
 		}
 
 		if strings.ToLower(string(m.Key)) == "output error" {
-			return &message.Message[string, string]{
+			return &flow.Message[string, string]{
 				Key:   "error",
 				Value: "error",
 			}, nil
@@ -87,7 +87,7 @@ func TestRouteProducerBodyMapConversion(t *testing.T) {
 			return nil, nil
 		}
 
-		return &message.Message[string, string]{
+		return &flow.Message[string, string]{
 			Key:   string(m.Key) + "-updated",
 			Value: m.Value + "-updated",
 		}, nil

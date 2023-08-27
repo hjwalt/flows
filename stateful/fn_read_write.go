@@ -5,10 +5,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
 // constructor
@@ -21,7 +22,7 @@ func NewReadWrite(configurations ...runtime.Configuration[*ReadWrite]) stateless
 }
 
 // configuration
-func WithReadWritePersistenceIdFunc(persistenceIdFunc func(context.Context, message.Message[message.Bytes, message.Bytes]) (string, error)) runtime.Configuration[*ReadWrite] {
+func WithReadWritePersistenceIdFunc(persistenceIdFunc func(context.Context, flow.Message[structure.Bytes, structure.Bytes]) (string, error)) runtime.Configuration[*ReadWrite] {
 	return func(st *ReadWrite) *ReadWrite {
 		st.persistenceIdFunc = persistenceIdFunc
 		return st
@@ -45,19 +46,19 @@ func WithReadWriteFunction(next SingleFunction) runtime.Configuration[*ReadWrite
 // implementation
 type ReadWrite struct {
 	next              SingleFunction
-	persistenceIdFunc PersistenceIdFunction[message.Bytes, message.Bytes]
+	persistenceIdFunc PersistenceIdFunction[structure.Bytes, structure.Bytes]
 	repository        Repository
 }
 
-func (r *ReadWrite) Apply(c context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+func (r *ReadWrite) Apply(c context.Context, ms []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 
 	// prepare persistence id and message map
 	persistenceIds := make([]string, len(ms))
-	idMessageMap := map[string]message.Message[message.Bytes, message.Bytes]{}
+	idMessageMap := map[string]flow.Message[structure.Bytes, structure.Bytes]{}
 	for i, m := range ms {
 		persistenceId, persistenceIdErr := r.persistenceIdFunc(c, m)
 		if persistenceIdErr != nil {
-			return message.EmptySlice(), errors.Join(persistenceIdErr, ErrBatchReadWrite, ErrPersistenceId)
+			return flow.EmptySlice(), errors.Join(persistenceIdErr, ErrBatchReadWrite, ErrPersistenceId)
 		}
 		persistenceIds[i] = persistenceId
 
@@ -67,12 +68,12 @@ func (r *ReadWrite) Apply(c context.Context, ms []message.Message[message.Bytes,
 	// read states
 	currentStates, readErr := r.repository.GetAll(c, persistenceIds)
 	if readErr != nil {
-		return message.EmptySlice(), errors.Join(readErr, ErrBatchReadWrite, ErrStateGet)
+		return flow.EmptySlice(), errors.Join(readErr, ErrBatchReadWrite, ErrStateGet)
 	}
 
 	// prepare result holder
 	nextStateMap := map[string]State[[]byte]{}
-	resultMessages := []message.Message[message.Bytes, message.Bytes]{}
+	resultMessages := []flow.Message[structure.Bytes, structure.Bytes]{}
 
 	// execute next function, create next state map
 	for persistenceId, currentState := range currentStates {
@@ -87,7 +88,7 @@ func (r *ReadWrite) Apply(c context.Context, ms []message.Message[message.Bytes,
 		nextMessages, nextState, nextApplyErr := r.next(c, m, currentState)
 		if nextApplyErr != nil {
 			logger.ErrorErr("bun state last result mapping error", nextApplyErr)
-			return message.EmptySlice(), nextApplyErr
+			return flow.EmptySlice(), nextApplyErr
 		}
 
 		// set next updated value
@@ -103,7 +104,7 @@ func (r *ReadWrite) Apply(c context.Context, ms []message.Message[message.Bytes,
 	upsertErr := r.repository.UpsertAll(c, nextStateMap)
 	if upsertErr != nil {
 		logger.ErrorErr("bun state upsert error", upsertErr)
-		return message.EmptySlice(), upsertErr
+		return flow.EmptySlice(), upsertErr
 	}
 
 	return resultMessages, nil

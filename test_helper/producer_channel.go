@@ -3,20 +3,21 @@ package test_helper
 import (
 	"context"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
+	"github.com/hjwalt/runway/structure"
 )
 
 func NewChannelProducer() *ChannelProducer {
 	return &ChannelProducer{
-		Messages: make(chan message.Message[[]byte, []byte], 100),
+		Messages: make(chan flow.Message[[]byte, []byte], 100),
 	}
 }
 
 type ChannelProducer struct {
-	Messages chan message.Message[message.Bytes, message.Bytes]
+	Messages chan flow.Message[structure.Bytes, structure.Bytes]
 }
 
-func (c *ChannelProducer) Produce(ctx context.Context, messages []message.Message[message.Bytes, message.Bytes]) error {
+func (c *ChannelProducer) Produce(ctx context.Context, messages []flow.Message[structure.Bytes, structure.Bytes]) error {
 	for _, m := range messages {
 		c.Messages <- m
 	}

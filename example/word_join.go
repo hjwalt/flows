@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows"
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_sarama"
@@ -16,11 +16,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func WordJoinPersistenceId(ctx context.Context, m message.Message[string, string]) (string, error) {
+func WordJoinPersistenceId(ctx context.Context, m flow.Message[string, string]) (string, error) {
 	return m.Key, nil
 }
 
-func WordJoinCountFunction(c context.Context, m message.Message[string, string], s stateful.State[*WordJoinState]) (*message.Message[string, string], stateful.State[*WordJoinState], error) {
+func WordJoinCountFunction(c context.Context, m flow.Message[string, string], s stateful.State[*WordJoinState]) (*flow.Message[string, string], stateful.State[*WordJoinState], error) {
 	logger.Info("applying")
 
 	// setting defaults
@@ -34,7 +34,7 @@ func WordJoinCountFunction(c context.Context, m message.Message[string, string],
 	logger.Info("info", zap.Int64("count", s.Content.Count), zap.String("word", s.Content.Word))
 
 	// create output message
-	outMessage := message.Message[string, string]{
+	outMessage := flow.Message[string, string]{
 		Topic: "word-join",
 		Key:   m.Key,
 		Value: reflect.GetString(s.Content.Count) + " " + s.Content.Word,
@@ -43,7 +43,7 @@ func WordJoinCountFunction(c context.Context, m message.Message[string, string],
 	return &outMessage, s, nil
 }
 
-func WordJoinWordFunction(c context.Context, m message.Message[string, string], s stateful.State[*WordJoinState]) (*message.Message[string, string], stateful.State[*WordJoinState], error) {
+func WordJoinWordFunction(c context.Context, m flow.Message[string, string], s stateful.State[*WordJoinState]) (*flow.Message[string, string], stateful.State[*WordJoinState], error) {
 	logger.Info("applying")
 
 	// setting defaults
@@ -57,7 +57,7 @@ func WordJoinWordFunction(c context.Context, m message.Message[string, string], 
 	logger.Info("info", zap.Int64("count", s.Content.Count), zap.String("word", s.Content.Word))
 
 	// create output message
-	outMessage := message.Message[string, string]{
+	outMessage := flow.Message[string, string]{
 		Topic: "word-join",
 		Key:   m.Key,
 		Value: reflect.GetString(s.Content.Count) + " " + s.Content.Word,

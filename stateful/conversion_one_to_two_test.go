@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
@@ -15,10 +15,10 @@ import (
 func TestConvertOneToTwo(t *testing.T) {
 	testcases := []struct {
 		name        string
-		input       message.Message[[]byte, []byte]
+		input       flow.Message[[]byte, []byte]
 		inputState  []byte
-		output1     message.Message[[]byte, []byte]
-		output2     message.Message[[]byte, []byte]
+		output1     flow.Message[[]byte, []byte]
+		output2     flow.Message[[]byte, []byte]
 		outputState []byte
 		oneNil      bool
 		twoNil      bool
@@ -26,15 +26,15 @@ func TestConvertOneToTwo(t *testing.T) {
 	}{
 		{
 			name: "basic conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("k"),
 				Value: []byte("v"),
 			},
-			output1: message.Message[[]byte, []byte]{
+			output1: flow.Message[[]byte, []byte]{
 				Key:   []byte("k-1"),
 				Value: []byte("v-1"),
 			},
-			output2: message.Message[[]byte, []byte]{
+			output2: flow.Message[[]byte, []byte]{
 				Key:   []byte("k-2"),
 				Value: []byte("v-2"),
 			},
@@ -46,11 +46,11 @@ func TestConvertOneToTwo(t *testing.T) {
 		},
 		{
 			name: "one nil",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("empty-1"),
 				Value: []byte("v"),
 			},
-			output2: message.Message[[]byte, []byte]{
+			output2: flow.Message[[]byte, []byte]{
 				Key:   []byte("empty-1-2"),
 				Value: []byte("v-2"),
 			},
@@ -62,11 +62,11 @@ func TestConvertOneToTwo(t *testing.T) {
 		},
 		{
 			name: "two nil",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("empty-2"),
 				Value: []byte("v"),
 			},
-			output1: message.Message[[]byte, []byte]{
+			output1: flow.Message[[]byte, []byte]{
 				Key:   []byte("empty-2-1"),
 				Value: []byte("v-1"),
 			},
@@ -78,7 +78,7 @@ func TestConvertOneToTwo(t *testing.T) {
 		},
 		{
 			name: "both nil",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("empty"),
 				Value: []byte("v"),
 			},
@@ -90,7 +90,7 @@ func TestConvertOneToTwo(t *testing.T) {
 		},
 		{
 			name: "error input conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("error"),
 				Value: []byte("error"),
 			},
@@ -102,7 +102,7 @@ func TestConvertOneToTwo(t *testing.T) {
 		},
 		{
 			name: "error input state conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("k"),
 				Value: []byte("v"),
 			},
@@ -114,7 +114,7 @@ func TestConvertOneToTwo(t *testing.T) {
 		},
 		{
 			name: "error execute",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("stupid error"),
 				Value: []byte("v"),
 			},
@@ -126,7 +126,7 @@ func TestConvertOneToTwo(t *testing.T) {
 		},
 		{
 			name: "error output 1 conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("output-1 error"),
 				Value: []byte("v"),
 			},
@@ -136,7 +136,7 @@ func TestConvertOneToTwo(t *testing.T) {
 		},
 		{
 			name: "error output 2 conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("output-2 error"),
 				Value: []byte("v"),
 			},
@@ -146,7 +146,7 @@ func TestConvertOneToTwo(t *testing.T) {
 		},
 		{
 			name: "error output state conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("k"),
 				Value: []byte("r"),
 			},
@@ -159,21 +159,21 @@ func TestConvertOneToTwo(t *testing.T) {
 	}
 
 	crappyStringFormat := test_helper.CrappyStringFormat()
-	oneToTwo := func(ctx context.Context, m message.Message[string, string], ss stateful.State[string]) (*message.Message[string, string], *message.Message[string, string], stateful.State[string], error) {
+	oneToTwo := func(ctx context.Context, m flow.Message[string, string], ss stateful.State[string]) (*flow.Message[string, string], *flow.Message[string, string], stateful.State[string], error) {
 
 		if strings.ToLower(m.Key) == "stupid error" {
-			return &message.Message[string, string]{},
-				&message.Message[string, string]{},
+			return &flow.Message[string, string]{},
+				&flow.Message[string, string]{},
 				ss,
 				errors.New(m.Key)
 		}
 
 		if strings.ToLower(m.Key) == "output-1 error" {
-			return &message.Message[string, string]{
+			return &flow.Message[string, string]{
 					Key:   "error",
 					Value: "error",
 				},
-				&message.Message[string, string]{
+				&flow.Message[string, string]{
 					Key:   m.Key + "-2",
 					Value: m.Value + "-2",
 				},
@@ -182,11 +182,11 @@ func TestConvertOneToTwo(t *testing.T) {
 		}
 
 		if strings.ToLower(m.Key) == "output-2 error" {
-			return &message.Message[string, string]{
+			return &flow.Message[string, string]{
 					Key:   m.Key + "-1",
 					Value: m.Value + "-1",
 				},
-				&message.Message[string, string]{
+				&flow.Message[string, string]{
 					Key:   "error",
 					Value: "error",
 				},
@@ -198,7 +198,7 @@ func TestConvertOneToTwo(t *testing.T) {
 			ss.Content += "-2"
 
 			return nil,
-				&message.Message[string, string]{
+				&flow.Message[string, string]{
 					Key:   m.Key + "-2",
 					Value: m.Value + "-2",
 				},
@@ -209,7 +209,7 @@ func TestConvertOneToTwo(t *testing.T) {
 		if strings.ToLower(m.Key) == "empty-2" {
 			ss.Content += "-1"
 
-			return &message.Message[string, string]{
+			return &flow.Message[string, string]{
 					Key:   m.Key + "-1",
 					Value: m.Value + "-1",
 				},
@@ -228,11 +228,11 @@ func TestConvertOneToTwo(t *testing.T) {
 			ss.Content += "-1-2"
 		}
 
-		return &message.Message[string, string]{
+		return &flow.Message[string, string]{
 				Key:   m.Key + "-1",
 				Value: m.Value + "-1",
 			},
-			&message.Message[string, string]{
+			&flow.Message[string, string]{
 				Key:   m.Key + "-2",
 				Value: m.Value + "-2",
 			},
@@ -258,7 +258,7 @@ func TestConvertOneToTwo(t *testing.T) {
 			}
 
 			expectedCount := 2
-			expectedMessages := make([]message.Message[[]byte, []byte], 0)
+			expectedMessages := make([]flow.Message[[]byte, []byte], 0)
 
 			if testcase.oneNil {
 				expectedCount -= 1

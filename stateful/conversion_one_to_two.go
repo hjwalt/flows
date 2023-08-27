@@ -3,9 +3,10 @@ package stateful
 import (
 	"context"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/topic"
 	"github.com/hjwalt/runway/format"
+	"github.com/hjwalt/runway/structure"
 )
 
 func ConvertOneToTwo[S any, IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 any](
@@ -18,44 +19,44 @@ func ConvertOneToTwo[S any, IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 any](
 	ok2 format.Format[OK2],
 	ov2 format.Format[OV2],
 ) SingleFunction {
-	return func(ctx context.Context, m message.Message[message.Bytes, message.Bytes], ss State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], State[message.Bytes], error) {
+	return func(ctx context.Context, m flow.Message[structure.Bytes, structure.Bytes], ss State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], State[structure.Bytes], error) {
 
-		formattedMessage, unmarshalError := message.Convert(m, format.Bytes(), format.Bytes(), ik, iv)
+		formattedMessage, unmarshalError := flow.Convert(m, format.Bytes(), format.Bytes(), ik, iv)
 		if unmarshalError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, unmarshalError
+			return make([]flow.Message[[]byte, []byte], 0), ss, unmarshalError
 		}
 
 		formattedState, stateUnmarshalError := ConvertSingleState(ss, format.Bytes(), s)
 		if stateUnmarshalError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, stateUnmarshalError
+			return make([]flow.Message[[]byte, []byte], 0), ss, stateUnmarshalError
 		}
 
 		res1, res2, nextState, fnError := source(ctx, formattedMessage, formattedState)
 		if fnError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, fnError
+			return make([]flow.Message[[]byte, []byte], 0), ss, fnError
 		}
 
-		byteResultMessages := make([]message.Message[[]byte, []byte], 0)
+		byteResultMessages := make([]flow.Message[[]byte, []byte], 0)
 
 		if res1 != nil {
-			bytesResMessage, marshalError := message.Convert(*res1, ok1, ov1, format.Bytes(), format.Bytes())
+			bytesResMessage, marshalError := flow.Convert(*res1, ok1, ov1, format.Bytes(), format.Bytes())
 			if marshalError != nil {
-				return make([]message.Message[[]byte, []byte], 0), ss, marshalError
+				return make([]flow.Message[[]byte, []byte], 0), ss, marshalError
 			}
 			byteResultMessages = append(byteResultMessages, bytesResMessage)
 		}
 
 		if res2 != nil {
-			bytesResMessage, marshalError := message.Convert(*res2, ok2, ov2, format.Bytes(), format.Bytes())
+			bytesResMessage, marshalError := flow.Convert(*res2, ok2, ov2, format.Bytes(), format.Bytes())
 			if marshalError != nil {
-				return make([]message.Message[[]byte, []byte], 0), ss, marshalError
+				return make([]flow.Message[[]byte, []byte], 0), ss, marshalError
 			}
 			byteResultMessages = append(byteResultMessages, bytesResMessage)
 		}
 
 		bytesNextState, stateMarshalError := ConvertSingleState(nextState, s, format.Bytes())
 		if stateMarshalError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, stateMarshalError
+			return make([]flow.Message[[]byte, []byte], 0), ss, stateMarshalError
 		}
 
 		return byteResultMessages, bytesNextState, nil
@@ -69,38 +70,38 @@ func ConvertTopicOneToTwo[S any, IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 
 	outputTopic1 topic.Topic[OK1, OV1],
 	outputTopic2 topic.Topic[OK2, OV2],
 ) SingleFunction {
-	return func(ctx context.Context, m message.Message[message.Bytes, message.Bytes], ss State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], State[message.Bytes], error) {
+	return func(ctx context.Context, m flow.Message[structure.Bytes, structure.Bytes], ss State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], State[structure.Bytes], error) {
 
-		formattedMessage, unmarshalError := message.Convert(m, format.Bytes(), format.Bytes(), inputTopic.KeyFormat(), inputTopic.ValueFormat())
+		formattedMessage, unmarshalError := flow.Convert(m, format.Bytes(), format.Bytes(), inputTopic.KeyFormat(), inputTopic.ValueFormat())
 		if unmarshalError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, unmarshalError
+			return make([]flow.Message[[]byte, []byte], 0), ss, unmarshalError
 		}
 
 		formattedState, stateUnmarshalError := ConvertSingleState(ss, format.Bytes(), s)
 		if stateUnmarshalError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, stateUnmarshalError
+			return make([]flow.Message[[]byte, []byte], 0), ss, stateUnmarshalError
 		}
 
 		res1, res2, nextState, fnError := source(ctx, formattedMessage, formattedState)
 		if fnError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, fnError
+			return make([]flow.Message[[]byte, []byte], 0), ss, fnError
 		}
 
-		byteResultMessages := make([]message.Message[[]byte, []byte], 0)
+		byteResultMessages := make([]flow.Message[[]byte, []byte], 0)
 
 		if res1 != nil {
-			bytesResMessage, marshalError := message.Convert(*res1, outputTopic1.KeyFormat(), outputTopic1.ValueFormat(), format.Bytes(), format.Bytes())
+			bytesResMessage, marshalError := flow.Convert(*res1, outputTopic1.KeyFormat(), outputTopic1.ValueFormat(), format.Bytes(), format.Bytes())
 			if marshalError != nil {
-				return make([]message.Message[[]byte, []byte], 0), ss, marshalError
+				return make([]flow.Message[[]byte, []byte], 0), ss, marshalError
 			}
 			bytesResMessage.Topic = outputTopic1.Topic()
 			byteResultMessages = append(byteResultMessages, bytesResMessage)
 		}
 
 		if res2 != nil {
-			bytesResMessage, marshalError := message.Convert(*res2, outputTopic2.KeyFormat(), outputTopic2.ValueFormat(), format.Bytes(), format.Bytes())
+			bytesResMessage, marshalError := flow.Convert(*res2, outputTopic2.KeyFormat(), outputTopic2.ValueFormat(), format.Bytes(), format.Bytes())
 			if marshalError != nil {
-				return make([]message.Message[[]byte, []byte], 0), ss, marshalError
+				return make([]flow.Message[[]byte, []byte], 0), ss, marshalError
 			}
 			bytesResMessage.Topic = outputTopic2.Topic()
 			byteResultMessages = append(byteResultMessages, bytesResMessage)
@@ -108,7 +109,7 @@ func ConvertTopicOneToTwo[S any, IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 
 
 		bytesNextState, stateMarshalError := ConvertSingleState(nextState, s, format.Bytes())
 		if stateMarshalError != nil {
-			return make([]message.Message[[]byte, []byte], 0), ss, stateMarshalError
+			return make([]flow.Message[[]byte, []byte], 0), ss, stateMarshalError
 		}
 
 		return byteResultMessages, bytesNextState, nil

@@ -1,11 +1,11 @@
 package stateful_bun
 
 import (
-	"github.com/hjwalt/flows/message"
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/structure"
 )
 
 type StateTable struct {
@@ -20,21 +20,21 @@ type StateTable struct {
 var InternalStateProtoFormat = format.Protobuf[*protobuf.State]()
 var ResultsStateProtoFormat = format.Protobuf[*protobuf.Results]()
 
-func TableToState(dbState *StateTable) (stateful.State[message.Bytes], error) {
+func TableToState(dbState *StateTable) (stateful.State[structure.Bytes], error) {
 
 	internalValue, internalMapErr := format.Convert(dbState.Internal, format.Bytes(), InternalStateProtoFormat)
 	if internalMapErr != nil {
 		logger.ErrorErr("single state mapping error", internalMapErr)
-		return stateful.State[message.Bytes]{}, internalMapErr
+		return stateful.State[structure.Bytes]{}, internalMapErr
 	}
 
 	resultValue, resultMapErr := format.Convert(dbState.Results, format.Bytes(), ResultsStateProtoFormat)
 	if resultMapErr != nil {
 		logger.ErrorErr("single state mapping error", resultMapErr)
-		return stateful.State[message.Bytes]{}, resultMapErr
+		return stateful.State[structure.Bytes]{}, resultMapErr
 	}
 
-	return stateful.State[message.Bytes]{
+	return stateful.State[structure.Bytes]{
 		Id:                 dbState.Id,
 		Internal:           internalValue,
 		Results:            resultValue,
@@ -44,7 +44,7 @@ func TableToState(dbState *StateTable) (stateful.State[message.Bytes], error) {
 	}, nil
 }
 
-func StateToTable(nextState stateful.State[message.Bytes]) (*StateTable, error) {
+func StateToTable(nextState stateful.State[structure.Bytes]) (*StateTable, error) {
 	internalBytes, internalMapErr := format.Convert(nextState.Internal, InternalStateProtoFormat, format.Bytes())
 	if internalMapErr != nil {
 		logger.ErrorErr("single state mapping error", internalMapErr)

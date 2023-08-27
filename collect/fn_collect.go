@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
 // constructor
@@ -20,7 +21,7 @@ func NewCollect(configurations ...runtime.Configuration[*Collect]) stateless.Bat
 }
 
 // configuration
-func WithCollectPersistenceIdFunc(persistenceIdFunc func(context.Context, message.Message[message.Bytes, message.Bytes]) (string, error)) runtime.Configuration[*Collect] {
+func WithCollectPersistenceIdFunc(persistenceIdFunc func(context.Context, flow.Message[structure.Bytes, structure.Bytes]) (string, error)) runtime.Configuration[*Collect] {
 	return func(st *Collect) *Collect {
 		st.persistenceIdFunc = persistenceIdFunc
 		return st
@@ -34,7 +35,7 @@ func WithCollectCollector(collect Collector) runtime.Configuration[*Collect] {
 	}
 }
 
-func WithCollectAggregator(next Aggregator[message.Bytes, message.Bytes, message.Bytes]) runtime.Configuration[*Collect] {
+func WithCollectAggregator(next Aggregator[structure.Bytes, structure.Bytes, structure.Bytes]) runtime.Configuration[*Collect] {
 	return func(st *Collect) *Collect {
 		st.next = next
 		return st
@@ -42,39 +43,39 @@ func WithCollectAggregator(next Aggregator[message.Bytes, message.Bytes, message
 }
 
 type Collect struct {
-	next              Aggregator[message.Bytes, message.Bytes, message.Bytes]
-	persistenceIdFunc stateful.PersistenceIdFunction[message.Bytes, message.Bytes]
+	next              Aggregator[structure.Bytes, structure.Bytes, structure.Bytes]
+	persistenceIdFunc stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes]
 	collect           Collector
 }
 
-func (r *Collect) Apply(c context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+func (r *Collect) Apply(c context.Context, ms []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 	stateMap := make(map[string]stateful.State[[]byte])
 	for _, m := range ms {
 		persistenceId, persistenceIdErr := r.persistenceIdFunc(c, m)
 		if persistenceIdErr != nil {
-			return message.EmptySlice(), errors.Join(persistenceIdErr, ErrBatchCollect, stateful.ErrPersistenceId)
+			return flow.EmptySlice(), errors.Join(persistenceIdErr, ErrBatchCollect, stateful.ErrPersistenceId)
 		}
 
 		if state, stateExist := stateMap[persistenceId]; stateExist {
 			nextState, nextApplyErr := r.next(c, m, state)
 			if nextApplyErr != nil {
-				return message.EmptySlice(), errors.Join(nextApplyErr, ErrBatchCollect, ErrCollectStateCreate)
+				return flow.EmptySlice(), errors.Join(nextApplyErr, ErrBatchCollect, ErrCollectStateCreate)
 			}
 			stateMap[persistenceId] = nextState
 		} else {
 			nextState, nextApplyErr := r.next(c, m, stateful.NewState[[]byte](persistenceId, []byte{}))
 			if nextApplyErr != nil {
-				return message.EmptySlice(), errors.Join(nextApplyErr, ErrBatchCollect, ErrCollectStateCreate)
+				return flow.EmptySlice(), errors.Join(nextApplyErr, ErrBatchCollect, ErrCollectStateCreate)
 			}
 			stateMap[persistenceId] = nextState
 		}
 	}
 
-	resultMessages := message.EmptySlice()
+	resultMessages := flow.EmptySlice()
 	for k, s := range stateMap {
 		nextMessages, nextMessageErr := r.collect(c, k, s)
 		if nextMessageErr != nil {
-			return message.EmptySlice(), errors.Join(nextMessageErr, ErrBatchCollect, ErrCollectStateMap)
+			return flow.EmptySlice(), errors.Join(nextMessageErr, ErrBatchCollect, ErrCollectStateMap)
 		}
 		resultMessages = append(resultMessages, nextMessages...)
 	}

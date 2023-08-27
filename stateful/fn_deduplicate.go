@@ -3,10 +3,11 @@ package stateful
 import (
 	"context"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 	"go.uber.org/zap"
 )
 
@@ -32,7 +33,7 @@ type Deduplicate struct {
 	next SingleFunction
 }
 
-func (r Deduplicate) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes], inState State[message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], State[message.Bytes], error) {
+func (r Deduplicate) Apply(c context.Context, m flow.Message[structure.Bytes, structure.Bytes], inState State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], State[structure.Bytes], error) {
 
 	s := SetDefault(inState)
 
@@ -43,11 +44,11 @@ func (r Deduplicate) Apply(c context.Context, m message.Message[message.Bytes, m
 	}
 
 	// extract messages
-	storedMessages := make([]message.Message[message.Bytes, message.Bytes], 0)
+	storedMessages := make([]flow.Message[structure.Bytes, structure.Bytes], 0)
 	for _, lastResultBytes := range s.Results.GetV1().Messages {
-		messageConverted, convertErr := format.Convert(lastResultBytes, format.Bytes(), message.Format())
+		messageConverted, convertErr := format.Convert(lastResultBytes, format.Bytes(), flow.Format())
 		if convertErr != nil {
-			return make([]message.Message[message.Bytes, message.Bytes], 0), s, convertErr
+			return make([]flow.Message[structure.Bytes, structure.Bytes], 0), s, convertErr
 		}
 		storedMessages = append(storedMessages, messageConverted)
 	}
@@ -56,7 +57,7 @@ func (r Deduplicate) Apply(c context.Context, m message.Message[message.Bytes, m
 
 	if storedOffset > inputOffset {
 		logger.Debug("skipping without output", zap.Int32("partition", m.Partition), zap.Int64("offset", m.Offset))
-		return make([]message.Message[message.Bytes, message.Bytes], 0), s, nil
+		return make([]flow.Message[structure.Bytes, structure.Bytes], 0), s, nil
 	}
 
 	if storedOffset == inputOffset {
@@ -68,16 +69,16 @@ func (r Deduplicate) Apply(c context.Context, m message.Message[message.Bytes, m
 	nm, ns, applyErr := r.next(c, m, s)
 
 	if applyErr != nil {
-		return make([]message.Message[message.Bytes, message.Bytes], 0), s, applyErr
+		return make([]flow.Message[structure.Bytes, structure.Bytes], 0), s, applyErr
 	}
 
 	ns.Internal.GetV1().OffsetProgress[m.Partition] = inputOffset
 	ns.Results.GetV1().Messages = make([][]byte, 0)
 
 	for _, msgs := range nm {
-		messageConverted, convertErr := format.Convert(msgs, message.Format(), format.Bytes())
+		messageConverted, convertErr := format.Convert(msgs, flow.Format(), format.Bytes())
 		if convertErr != nil {
-			return make([]message.Message[message.Bytes, message.Bytes], 0), s, convertErr
+			return make([]flow.Message[structure.Bytes, structure.Bytes], 0), s, convertErr
 		}
 		ns.Results.GetV1().Messages = append(ns.Results.GetV1().Messages, messageConverted)
 	}

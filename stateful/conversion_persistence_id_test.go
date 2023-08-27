@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
@@ -14,13 +14,13 @@ import (
 func TestConvertPersistenceId(t *testing.T) {
 	testcases := []struct {
 		name          string
-		input         message.Message[[]byte, []byte]
+		input         flow.Message[[]byte, []byte]
 		err           string
 		persistenceId string
 	}{
 		{
 			name: "basic conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("k"),
 				Value: []byte("v"),
 			},
@@ -29,7 +29,7 @@ func TestConvertPersistenceId(t *testing.T) {
 		},
 		{
 			name: "invalid conversion",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("error"),
 				Value: []byte("v"),
 			},
@@ -38,7 +38,7 @@ func TestConvertPersistenceId(t *testing.T) {
 		},
 		{
 			name: "failed execution",
-			input: message.Message[[]byte, []byte]{
+			input: flow.Message[[]byte, []byte]{
 				Key:   []byte("failed"),
 				Value: []byte("v"),
 			},
@@ -48,7 +48,7 @@ func TestConvertPersistenceId(t *testing.T) {
 	}
 
 	crappyStringFormat := test_helper.CrappyStringFormat()
-	persistenceIdFunction := func(ctx context.Context, m message.Message[string, string]) (string, error) {
+	persistenceIdFunction := func(ctx context.Context, m flow.Message[string, string]) (string, error) {
 		if m.Key == "failed" {
 			return "", errors.New("failed")
 		}

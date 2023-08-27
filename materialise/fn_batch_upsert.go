@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
 // constructor
@@ -27,7 +28,7 @@ func WithBatchUpsertRepository[T any](repository UpsertRepository[T]) runtime.Co
 	}
 }
 
-func WithBatchUpsertMapFunction[T any](mapper MapFunction[message.Bytes, message.Bytes, T]) runtime.Configuration[*BatchUpsert[T]] {
+func WithBatchUpsertMapFunction[T any](mapper MapFunction[structure.Bytes, structure.Bytes, T]) runtime.Configuration[*BatchUpsert[T]] {
 	return func(c *BatchUpsert[T]) *BatchUpsert[T] {
 		c.mapper = mapper
 		return c
@@ -36,11 +37,11 @@ func WithBatchUpsertMapFunction[T any](mapper MapFunction[message.Bytes, message
 
 type BatchUpsert[T any] struct {
 	repository UpsertRepository[T]
-	mapper     MapFunction[message.Bytes, message.Bytes, T]
+	mapper     MapFunction[structure.Bytes, structure.Bytes, T]
 }
 
-func (r *BatchUpsert[T]) Apply(c context.Context, ms []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
-	emptyResult := make([]message.Message[[]byte, []byte], 0)
+func (r *BatchUpsert[T]) Apply(c context.Context, ms []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
+	emptyResult := make([]flow.Message[[]byte, []byte], 0)
 
 	entities := make([]T, 0)
 

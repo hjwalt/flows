@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
@@ -44,14 +44,14 @@ type JoinSwitch struct {
 	intermediateTopicHandlerFunction stateless.BatchFunction
 }
 
-func (r *JoinSwitch) Apply(c context.Context, m []message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
+func (r *JoinSwitch) Apply(c context.Context, m []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 
-	messageMultiMap := structure.NewMultiMap[string, message.Message[message.Bytes, message.Bytes]]()
+	messageMultiMap := structure.NewMultiMap[string, flow.Message[structure.Bytes, structure.Bytes]]()
 	for _, mi := range m {
 		messageMultiMap.Add(mi.Topic, mi)
 	}
 
-	resultMessages := []message.Message[message.Bytes, message.Bytes]{}
+	resultMessages := []flow.Message[structure.Bytes, structure.Bytes]{}
 	for k, v := range messageMultiMap.GetAll() {
 		logger.Info("join switch", zap.String("topic", k))
 
@@ -61,7 +61,7 @@ func (r *JoinSwitch) Apply(c context.Context, m []message.Message[message.Bytes,
 		}
 		currGroupMessages, currGroupHandlerErr := currGroupHandler(c, v)
 		if currGroupHandlerErr != nil {
-			return make([]message.Message[[]byte, []byte], 0), currGroupHandlerErr
+			return make([]flow.Message[[]byte, []byte], 0), currGroupHandlerErr
 		}
 		resultMessages = append(resultMessages, currGroupMessages...)
 	}

@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hjwalt/flows/message"
+	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/metric"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 	"go.uber.org/zap"
 )
 
@@ -50,8 +51,8 @@ type SingleRetry struct {
 	metric metric.Retry
 }
 
-func (r *SingleRetry) Apply(c context.Context, m message.Message[message.Bytes, message.Bytes]) ([]message.Message[message.Bytes, message.Bytes], error) {
-	msgs := make([]message.Message[message.Bytes, message.Bytes], 0)
+func (r *SingleRetry) Apply(c context.Context, m flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
+	msgs := make([]flow.Message[structure.Bytes, structure.Bytes], 0)
 	retryErr := r.retry.Do(func(tryCount int64) error {
 		if r.metric != nil {
 			r.metric.RetryCount(m.Topic, m.Partition, tryCount)
