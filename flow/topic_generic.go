@@ -21,7 +21,7 @@ func (t genericTopic[K, V]) ValueFormat() format.Format[V] {
 }
 
 func GenericTopic[K any, V any](topic string, keyFormat format.Format[K], valueFormat format.Format[V]) Topic[K, V] {
-	return &genericTopic[K, V]{
+	return genericTopic[K, V]{
 		topic:       topic,
 		keyFormat:   keyFormat,
 		valueFormat: valueFormat,
