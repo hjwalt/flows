@@ -41,7 +41,7 @@ func RegisterPostgresqlSingleState(tableName string) {
 }
 
 func InjectorPostgresqlSingleStateRepository(ctx context.Context) (stateful.Repository, error) {
-	bunConnection, getBunConnectionError := inverse.GetLast[runtime_bun.BunConnection](ctx, QualifierPostgresqlConnection)
+	bunConnection, getBunConnectionError := GetPostgresqlConnection(ctx)
 	if getBunConnectionError != nil {
 		return nil, getBunConnectionError
 	}
@@ -59,6 +59,10 @@ func InjectorPostgresqlSingleStateRepository(ctx context.Context) (stateful.Repo
 
 func GetPostgresqlSingleStateRepository(ctx context.Context) (stateful.Repository, error) {
 	return inverse.GetLast[stateful.Repository](ctx, QualifierPostgresqlSingleStateRepository)
+}
+
+func GetPostgresqlConnection(ctx context.Context) (runtime_bun.BunConnection, error) {
+	return inverse.GetLast[runtime_bun.BunConnection](ctx, QualifierPostgresqlConnection)
 }
 
 // Upsert materialiser
