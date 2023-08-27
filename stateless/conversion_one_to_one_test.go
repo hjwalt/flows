@@ -179,8 +179,8 @@ func TestConvertTopicOneToOne(t *testing.T) {
 		},
 	}
 
-	inputTopic := flow.Generic("input", format.Gengar(), format.Gengar())
-	outputTopic := flow.Generic("output", format.Gengar(), format.Gengar())
+	inputTopic := flow.GenericTopic("input", format.Gengar(), format.Gengar())
+	outputTopic := flow.GenericTopic("output", format.Gengar(), format.Gengar())
 
 	oneToOne := func(ctx context.Context, m flow.Message[string, string]) (*flow.Message[string, string], error) {
 		if strings.ToLower(m.Key) == "stupid error" {

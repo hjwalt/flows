@@ -56,8 +56,8 @@ func WordCollect() runtime.Runtime {
 
 	runtimeConfig := flows.CollectorOneToOneConfiguration[*WordCollectState, string, string, string, string]{
 		Name:             "flows-word-collect",
-		InputTopic:       flow.String("word"),
-		OutputTopic:      flow.String("word-collect"),
+		InputTopic:       flow.StringTopic("word"),
+		OutputTopic:      flow.StringTopic("word-collect"),
 		Aggregator:       WordCollectAggregator,
 		Collector:        WordCollectCollector,
 		InputBroker:      "localhost:9092",

@@ -23,8 +23,8 @@ func WordRemapStatelessFunction(c context.Context, m flow.Message[string, string
 func WordRemap() runtime.Runtime {
 	statelessFunctionConfiguration := flows.StatelessOneToOneConfiguration[string, string, string, string]{
 		Name:         "flows-word-remap",
-		InputTopic:   flow.String("word"),
-		OutputTopic:  flow.String("word-updated"),
+		InputTopic:   flow.StringTopic("word"),
+		OutputTopic:  flow.StringTopic("word-updated"),
 		Function:     WordRemapStatelessFunction,
 		InputBroker:  "localhost:9092",
 		OutputBroker: "localhost:9092",

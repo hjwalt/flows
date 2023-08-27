@@ -40,7 +40,7 @@ func FlowsMaterialisedMap(c context.Context, m flow.Message[string, string]) ([]
 func WordMaterialise() runtime.Runtime {
 	materialiseConfiguration := flows.MaterialisePostgresqlOneToOneFunctionConfiguration[FlowsMaterialised, string, string]{
 		Name:                     "flows-word-materialise",
-		InputTopic:               flow.String("word-count"),
+		InputTopic:               flow.StringTopic("word-count"),
 		Function:                 FlowsMaterialisedMap,
 		InputBroker:              "localhost:9092",
 		OutputBroker:             "localhost:9092",

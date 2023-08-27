@@ -49,8 +49,8 @@ func WordCountStatefulFunction(c context.Context, m flow.Message[string, string]
 func WordCount() runtime.Runtime {
 	statefulFunctionConfiguration := flows.StatefulPostgresqlOneToOneFunctionConfiguration[*WordCountState, string, string, string, string]{
 		Name:                     "flows-word-count",
-		InputTopic:               flow.String("word"),
-		OutputTopic:              flow.String("word-count"),
+		InputTopic:               flow.StringTopic("word"),
+		OutputTopic:              flow.StringTopic("word-count"),
 		Function:                 WordCountStatefulFunction,
 		InputBroker:              "localhost:9092",
 		OutputBroker:             "localhost:9092",

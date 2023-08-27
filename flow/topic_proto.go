@@ -5,6 +5,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Protobuf[K proto.Message, V proto.Message](topic string) Topic[K, V] {
-	return Generic[K, V](topic, format.Protobuf[K](), format.Protobuf[V]())
+func ProtobufTopic[K proto.Message, V proto.Message](topic string) Topic[K, V] {
+	return GenericTopic[K, V](topic, format.Protobuf[K](), format.Protobuf[V]())
 }
