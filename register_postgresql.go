@@ -1,14 +1,24 @@
 package flows
 
 import (
+	"context"
+
 	"github.com/hjwalt/flows/runtime_bun"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 )
 
-func RegisterPostgresqlStateful(
+const (
+	QualifierPostgresqlConnectionConfiguration        = "QualifierPostgresqlConnectionConfiguration"
+	QualifierPostgresqlConnection                     = "QualifierPostgresqlConnection"
+	QualifierPostgresqlSingleStateRepository          = "QualifierPostgresqlSingleStateRepository"
+	QualifierPostgresqlSingleStateRepositoryTableName = "QualifierPostgresqlSingleStateRepositoryTableName"
+	QualifierPostgresqlUpsertRepository               = "QualifierPostgresqlUpsertRepository"
+)
+
+func RegisterPostgresql2(
 	name string,
 	connectionString string,
-	tableName string,
 	config []runtime.Configuration[*runtime_bun.PostgresqlConnection],
 ) {
 	RegisterPostgresqlConfig(
@@ -16,20 +26,19 @@ func RegisterPostgresqlStateful(
 		runtime_bun.WithConnectionString(connectionString),
 	)
 	RegisterPostgresqlConfig(config...)
-	RegisterPostgresql()
-	RegisterPostgresqlSingleState(tableName)
+	inverse.RegisterWithConfigurationRequired[*runtime_bun.PostgresqlConnection](
+		QualifierPostgresqlConnection,
+		QualifierPostgresqlConnectionConfiguration,
+		runtime_bun.NewPostgresqlConnection,
+	)
+	inverse.Register(QualifierRuntime, InjectorRuntime(QualifierPostgresqlConnection))
 }
 
-func RegisterPostgresqlMaterialise[S any](
-	name string,
-	connectionString string,
-	config []runtime.Configuration[*runtime_bun.PostgresqlConnection],
-) {
-	RegisterPostgresqlConfig(
-		runtime_bun.WithApplicationName(name),
-		runtime_bun.WithConnectionString(connectionString),
-	)
-	RegisterPostgresqlConfig(config...)
-	RegisterPostgresql()
-	RegisterPostgresqlUpsert[S]()
+// Postgresql connection
+func RegisterPostgresqlConfig(config ...runtime.Configuration[*runtime_bun.PostgresqlConnection]) {
+	inverse.RegisterInstances(QualifierPostgresqlConnectionConfiguration, config)
+}
+
+func GetPostgresqlConnection(ctx context.Context) (runtime_bun.BunConnection, error) {
+	return inverse.GetLast[runtime_bun.BunConnection](ctx, QualifierPostgresqlConnection)
 }

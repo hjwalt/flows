@@ -1,12 +1,16 @@
-package example
+package example_word_materialise
 
 import (
 	"context"
 
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/logger"
 	"github.com/uptrace/bun"
+)
+
+const (
+	Instance = "flows-word-materialise"
 )
 
 // CREATE TABLE IF NOT EXISTS public.flows_materialised
@@ -27,6 +31,7 @@ type FlowsMaterialised struct {
 }
 
 func FlowsMaterialisedMap(c context.Context, m flow.Message[string, string]) ([]FlowsMaterialised, error) {
+	logger.Info("materialising")
 	return []FlowsMaterialised{
 		{
 			Id:           m.Key,
@@ -37,9 +42,9 @@ func FlowsMaterialisedMap(c context.Context, m flow.Message[string, string]) ([]
 	}, nil
 }
 
-func WordMaterialise() runtime.Runtime {
-	materialiseConfiguration := flows.MaterialisePostgresqlOneToOneFunctionConfiguration[FlowsMaterialised, string, string]{
-		Name:                     "flows-word-materialise",
+func Registrar() flows.RuntimeRegistrar {
+	return flows.MaterialisePostgresqlOneToOneFunctionConfiguration[FlowsMaterialised, string, string]{
+		Name:                     Instance,
 		InputTopic:               flow.StringTopic("word-count"),
 		Function:                 FlowsMaterialisedMap,
 		InputBroker:              "localhost:9092",
@@ -47,6 +52,8 @@ func WordMaterialise() runtime.Runtime {
 		HttpPort:                 8081,
 		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
 	}
+}
 
-	return materialiseConfiguration.Runtime()
+func Register(m flows.Main) {
+	flows.Register(m, Instance, Registrar)
 }

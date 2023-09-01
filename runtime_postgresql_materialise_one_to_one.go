@@ -28,7 +28,19 @@ type MaterialisePostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any] s
 }
 
 func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Register() {
-	RegisterPostgresqlMaterialise[S](
+	RegisterMaterialiseFunction(
+		c.InputTopic.Name(),
+		materialise.ConvertOneToOne(c.Function, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
+	)
+	RegisterRouteConfig(
+		runtime_bunrouter.WithRouterFlow(
+			router.WithFlowMaterialiseOneToOne(c.InputTopic),
+		),
+	)
+}
+
+func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) RegisterRuntime() {
+	RegisterPostgresql2(
 		c.Name,
 		c.PostgresConnectionString,
 		c.PostgresqlConfiguration,
@@ -45,15 +57,6 @@ func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Register(
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
-	RegisterMaterialiseFunction(
-		c.InputTopic.Name(),
-		materialise.ConvertOneToOne(c.Function, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
-	)
-	RegisterRouteConfig(
-		runtime_bunrouter.WithRouterFlow(
-			router.WithFlowMaterialiseOneToOne(c.InputTopic),
-		),
-	)
 	RegisterRoute2(
 		c.HttpPort,
 		c.RouteConfiguration,
@@ -61,6 +64,7 @@ func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Register(
 }
 
 func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Runtime() runtime.Runtime {
+	c.RegisterRuntime()
 	c.Register()
 
 	return &RuntimeFacade{

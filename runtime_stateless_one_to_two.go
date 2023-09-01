@@ -26,6 +26,18 @@ type StatelessOneToTwoConfiguration[IK any, IV any, OK1 any, OV1 any, OK2 any, O
 }
 
 func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Register() {
+	RegisterStatelessSingleFunction(
+		c.InputTopic.Name(),
+		stateless.ConvertTopicOneToTwo(c.Function, c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo),
+	)
+	RegisterRouteConfig(
+		runtime_bunrouter.WithRouterFlow(
+			router.WithFlowStatelessOneToTwo(c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo),
+		),
+	)
+}
+
+func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) RegisterRuntime() {
 	RegisterRetry(
 		c.RetryConfiguration,
 	)
@@ -38,15 +50,6 @@ func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Register() {
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
-	RegisterStatelessSingleFunction(
-		c.InputTopic.Name(),
-		stateless.ConvertTopicOneToTwo(c.Function, c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo),
-	)
-	RegisterRouteConfig(
-		runtime_bunrouter.WithRouterFlow(
-			router.WithFlowStatelessOneToTwo(c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo),
-		),
-	)
 	RegisterRoute2(
 		c.HttpPort,
 		c.RouteConfiguration,
@@ -54,6 +57,7 @@ func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Register() {
 }
 
 func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Runtime() runtime.Runtime {
+	c.RegisterRuntime()
 	c.Register()
 
 	return &RuntimeFacade{

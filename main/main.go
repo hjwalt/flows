@@ -2,20 +2,26 @@ package main
 
 import (
 	"github.com/hjwalt/flows"
-	"github.com/hjwalt/flows/example"
+	"github.com/hjwalt/flows/example/example_word_collect"
+	"github.com/hjwalt/flows/example/example_word_count"
+	"github.com/hjwalt/flows/example/example_word_join"
+	"github.com/hjwalt/flows/example/example_word_materialise"
+	"github.com/hjwalt/flows/example/example_word_multi"
+	"github.com/hjwalt/flows/example/example_word_remap"
 	"github.com/hjwalt/runway/environment"
 )
 
 func main() {
 	m := flows.NewMain()
 
-	m.Register("word-count", example.WordCount)
-	m.Register("word-collect", example.WordCollect)
-	m.Register("word-remap", example.WordRemap)
-	m.Register("word-join", example.WordJoin)
-	m.Register("word-materialise", example.WordMaterialise)
+	example_word_collect.Register(m)
+	example_word_count.Register(m)
+	example_word_join.Register(m)
+	example_word_materialise.Register(m)
+	example_word_multi.Register(m)
+	example_word_remap.Register(m)
 
-	err := m.Start(environment.GetString("INSTANCE", "word-remap"))
+	err := m.Start(environment.GetString("INSTANCE", example_word_count.Instance))
 
 	if err != nil {
 		panic(err)

@@ -1,28 +1,32 @@
-package example
+package example_word_join
 
 import (
 	"context"
 
 	"github.com/hjwalt/flows"
+	"github.com/hjwalt/flows/example"
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/reflect"
-	"github.com/hjwalt/runway/runtime"
 	"go.uber.org/zap"
 )
 
-func WordJoinPersistenceId(ctx context.Context, m flow.Message[string, string]) (string, error) {
+const (
+	Instance = "flows-word-join"
+)
+
+func key(ctx context.Context, m flow.Message[string, string]) (string, error) {
 	return m.Key, nil
 }
 
-func WordJoinCountFunction(c context.Context, m flow.Message[string, string], s stateful.State[*WordJoinState]) (*flow.Message[string, string], stateful.State[*WordJoinState], error) {
-	logger.Info("applying")
+func joinCount(c context.Context, m flow.Message[string, string], s stateful.State[*example.WordJoinState]) (*flow.Message[string, string], stateful.State[*example.WordJoinState], error) {
+	logger.Info("join count")
 
 	// setting defaults
 	if s.Content == nil {
-		s.Content = &WordJoinState{Count: 0, Word: ""}
+		s.Content = &example.WordJoinState{Count: 0, Word: ""}
 	}
 
 	// update state
@@ -40,12 +44,12 @@ func WordJoinCountFunction(c context.Context, m flow.Message[string, string], s 
 	return &outMessage, s, nil
 }
 
-func WordJoinWordFunction(c context.Context, m flow.Message[string, string], s stateful.State[*WordJoinState]) (*flow.Message[string, string], stateful.State[*WordJoinState], error) {
-	logger.Info("applying")
+func joinWord(c context.Context, m flow.Message[string, string], s stateful.State[*example.WordJoinState]) (*flow.Message[string, string], stateful.State[*example.WordJoinState], error) {
+	logger.Info("join word")
 
 	// setting defaults
 	if s.Content == nil {
-		s.Content = &WordJoinState{Count: 0, Word: ""}
+		s.Content = &example.WordJoinState{Count: 0, Word: ""}
 	}
 
 	// update state
@@ -63,20 +67,20 @@ func WordJoinWordFunction(c context.Context, m flow.Message[string, string], s s
 	return &outMessage, s, nil
 }
 
-func WordJoin() runtime.Runtime {
-	joinFunctionConfiguration := flows.JoinPostgresqlFunctionConfiguration{
+func Registrar() flows.RuntimeRegistrar {
+	return flows.JoinPostgresqlFunctionConfiguration{
 		StatefulFunctions: map[string]stateful.SingleFunction{
 			"word": stateful.ConvertOneToOne(
-				WordJoinCountFunction,
-				format.Protobuf[*WordJoinState](),
+				joinCount,
+				format.Protobuf[*example.WordJoinState](),
 				format.String(),
 				format.String(),
 				format.String(),
 				format.String(),
 			),
 			"word-type": stateful.ConvertOneToOne(
-				WordJoinWordFunction,
-				format.Protobuf[*WordJoinState](),
+				joinWord,
+				format.Protobuf[*example.WordJoinState](),
 				format.String(),
 				format.String(),
 				format.String(),
@@ -85,17 +89,17 @@ func WordJoin() runtime.Runtime {
 		},
 		PersistenceIdFunctions: map[string]stateful.PersistenceIdFunction[[]byte, []byte]{
 			"word": stateful.ConvertPersistenceId(
-				WordJoinPersistenceId,
+				key,
 				format.String(),
 				format.String(),
 			),
 			"word-type": stateful.ConvertPersistenceId(
-				WordJoinPersistenceId,
+				key,
 				format.String(),
 				format.String(),
 			),
 		},
-		Name:                     "flows-word-join",
+		Name:                     Instance,
 		InputBroker:              "localhost:9092",
 		OutputBroker:             "localhost:9092",
 		IntermediateTopicName:    "word-join-intermediate",
@@ -103,6 +107,8 @@ func WordJoin() runtime.Runtime {
 		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
 		HttpPort:                 8081,
 	}
+}
 
-	return joinFunctionConfiguration.Runtime()
+func Register(m flows.Main) {
+	flows.Register(m, Instance, Registrar)
 }

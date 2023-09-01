@@ -5,7 +5,9 @@ import (
 
 	"github.com/hjwalt/flows/collect"
 	"github.com/hjwalt/flows/materialise"
+	"github.com/hjwalt/flows/materialise_bun"
 	"github.com/hjwalt/flows/stateful"
+	"github.com/hjwalt/flows/stateful_bun"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/structure"
 )
@@ -68,13 +70,23 @@ func RegisterStatelessSingleFunctionWithKey(topic string, fn stateless.SingleFun
 	)
 }
 
-func RegisterStatefulFunction(topic string, fn stateful.SingleFunction, key stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes]) {
+func RegisterStatefulFunction(
+	topic string,
+	tableName string,
+	fn stateful.SingleFunction,
+	key stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes],
+) {
 	RegisterConsumerFunctionInjector(
 		func(ctx context.Context) (ConsumerFunction, error) {
-			repository, err := GetPostgresqlSingleStateRepository(ctx)
-			if err != nil {
-				return ConsumerFunction{}, err
+			bunConnection, getBunConnectionError := GetPostgresqlConnection(ctx)
+			if getBunConnectionError != nil {
+				return ConsumerFunction{}, getBunConnectionError
 			}
+
+			repository := stateful_bun.NewRepository(
+				stateful_bun.WithConnection(bunConnection),
+				stateful_bun.WithStateTableName(tableName),
+			)
 
 			wrappedStatefulFunction := fn
 			wrappedStatefulFunction = stateful.NewDeduplicate(
@@ -100,14 +112,18 @@ func RegisterStatefulFunction(topic string, fn stateful.SingleFunction, key stat
 func RegisterMaterialiseFunction[T any](topic string, fn materialise.MapFunction[structure.Bytes, structure.Bytes, T]) {
 	RegisterConsumerFunctionInjector(
 		func(ctx context.Context) (ConsumerFunction, error) {
-			repository, err := GetPostgresqlUpsertRepository[T](ctx)
-			if err != nil {
-				return ConsumerFunction{}, err
+			bunConnection, getBunConnectionError := GetPostgresqlConnection(ctx)
+			if getBunConnectionError != nil {
+				return ConsumerFunction{}, getBunConnectionError
 			}
+
+			repository := materialise_bun.NewBunUpsertRepository(
+				materialise_bun.WithBunUpsertRepositoryConnection[T](bunConnection),
+			)
 
 			wrappedBatch := materialise.NewBatchUpsert(
 				materialise.WithBatchUpsertMapFunction(fn),
-				materialise.WithBatchUpsertRepository(repository),
+				materialise.WithBatchUpsertRepository[T](repository),
 			)
 
 			return ConsumerFunction{

@@ -165,14 +165,14 @@ func WithRouterProducerHandler(method string, path string, bodyMap stateless.One
 
 func WithRouterFlow(configurations ...runtime.Configuration[*router.RouteFlow]) runtime.Configuration[*Router] {
 	return func(r *Router) *Router {
-		handlerFunction := router.NewRouteFlow(
-			configurations...,
-		)
-		if r.group == nil {
-			r.router.GET("/flow", bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
-		} else {
-			r.group.GET("/flow", bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
-		}
+		// handlerFunction := router.NewRouteFlow(
+		// 	configurations...,
+		// )
+		// if r.group == nil {
+		// 	r.router.GET("/flow", bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
+		// } else {
+		// 	r.group.GET("/flow", bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
+		// }
 		return r
 	}
 }

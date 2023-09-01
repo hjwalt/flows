@@ -34,10 +34,23 @@ type StatefulPostgresqlOneToTwoFunctionConfiguration[S any, IK any, IV any, OK1 
 }
 
 func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2, OV2]) Register() {
-	RegisterPostgresqlStateful(
+	RegisterStatefulFunction(
+		c.InputTopic.Name(),
+		c.PostgresTable,
+		stateful.ConvertTopicOneToTwo(c.Function, c.StateFormat, c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo),
+		stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
+	)
+	RegisterRouteConfig(
+		runtime_bunrouter.WithRouterFlow(
+			router.WithFlowStatefulOneToTwo(c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo, c.PostgresTable),
+		),
+	)
+}
+
+func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2, OV2]) RegisterRuntime() {
+	RegisterPostgresql2(
 		c.Name,
 		c.PostgresConnectionString,
-		c.PostgresTable,
 		c.PostgresqlConfiguration,
 	)
 	RegisterRetry(
@@ -52,16 +65,6 @@ func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
-	RegisterStatefulFunction(
-		c.InputTopic.Name(),
-		stateful.ConvertTopicOneToTwo(c.Function, c.StateFormat, c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo),
-		stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
-	)
-	RegisterRouteConfig(
-		runtime_bunrouter.WithRouterFlow(
-			router.WithFlowStatefulOneToTwo(c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo, c.PostgresTable),
-		),
-	)
 	RegisterRoute2(
 		c.HttpPort,
 		c.RouteConfiguration,
@@ -69,6 +72,7 @@ func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2
 }
 
 func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2, OV2]) Runtime() runtime.Runtime {
+	c.RegisterRuntime()
 	c.Register()
 
 	return &RuntimeFacade{

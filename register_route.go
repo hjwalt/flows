@@ -26,11 +26,6 @@ func RegisterRoute2(
 	RegisterRuntime(QualifierRoute)
 }
 
-func RegisterRouteConfigDefault() {
-	inverse.RegisterConfiguration[*runtime_bunrouter.Router](QualifierRouteConfiguration, runtime_bunrouter.WithRouterPrometheus())
-	inverse.Register[runtime.Configuration[*runtime_bunrouter.Router]](QualifierRouteConfiguration, ResolveRouteProducer)
-}
-
 func RegisterRouteConfig(config ...runtime.Configuration[*runtime_bunrouter.Router]) {
 	inverse.RegisterInstances(QualifierRouteConfiguration, config)
 }

@@ -20,3 +20,11 @@ func InjectorRuntime(qualifier string) inverse.Injector[runtime.Runtime] {
 		return inverse.GetLast[runtime.Runtime](ctx, qualifier)
 	}
 }
+
+func InjectedRuntimes() []runtime.Runtime {
+	allRuntimes, err := inverse.GetAll[runtime.Runtime](context.Background(), QualifierRuntime)
+	if err != nil {
+		panic(err)
+	}
+	return allRuntimes
+}

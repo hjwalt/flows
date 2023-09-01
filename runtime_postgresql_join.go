@@ -40,29 +40,6 @@ type JoinPostgresqlFunctionConfiguration struct {
 }
 
 func (c JoinPostgresqlFunctionConfiguration) Register() {
-	RegisterPostgresqlStateful(
-		c.Name,
-		c.PostgresConnectionString,
-		c.PostgresTable,
-		c.PostgresqlConfiguration,
-	)
-	RegisterRetry(
-		c.RetryConfiguration,
-	)
-	RegisterProducer2(
-		c.OutputBroker,
-		c.KafkaProducerConfiguration,
-	)
-	RegisterConsumer2(
-		c.Name,
-		c.InputBroker,
-		c.KafkaConsumerConfiguration,
-	)
-	RegisterRoute2(
-		c.HttpPort,
-		c.RouteConfiguration,
-	)
-
 	statefulTopicSwitchConfigurations := []runtime.Configuration[*stateful.TopicSwitch]{}
 	persistenceIdConfigurations := []runtime.Configuration[*stateful.PersistenceIdSwitch]{}
 
@@ -91,12 +68,38 @@ func (c JoinPostgresqlFunctionConfiguration) Register() {
 
 	RegisterStatefulFunction(
 		c.IntermediateTopicName,
+		c.PostgresTable,
 		stateful.NewTopicSwitch(statefulTopicSwitchConfigurations...),
 		stateful.NewPersistenceIdSwitch(persistenceIdConfigurations...),
 	)
 }
 
+func (c JoinPostgresqlFunctionConfiguration) RegisterRuntime() {
+	RegisterPostgresql2(
+		c.Name,
+		c.PostgresConnectionString,
+		c.PostgresqlConfiguration,
+	)
+	RegisterRetry(
+		c.RetryConfiguration,
+	)
+	RegisterProducer2(
+		c.OutputBroker,
+		c.KafkaProducerConfiguration,
+	)
+	RegisterConsumer2(
+		c.Name,
+		c.InputBroker,
+		c.KafkaConsumerConfiguration,
+	)
+	RegisterRoute2(
+		c.HttpPort,
+		c.RouteConfiguration,
+	)
+}
+
 func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
+	c.RegisterRuntime()
 	c.Register()
 
 	return &RuntimeFacade{

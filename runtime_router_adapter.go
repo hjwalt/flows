@@ -24,10 +24,6 @@ type RouterAdapterConfiguration[Request any, InputKey any, InputValue any] struc
 }
 
 func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register() {
-	RegisterProducer2(
-		c.ProduceBroker,
-		c.KafkaProducerConfiguration,
-	)
 	RegisterRouteConfig(
 		runtime_bunrouter.WithRouterProducerHandler(
 			runtime_bunrouter.POST,
@@ -39,6 +35,13 @@ func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register() {
 			),
 		),
 	)
+}
+
+func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) RegisterRuntime() {
+	RegisterProducer2(
+		c.ProduceBroker,
+		c.KafkaProducerConfiguration,
+	)
 	RegisterRoute2(
 		c.HttpPort,
 		c.RouteConfiguration,
@@ -46,6 +49,7 @@ func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register() {
 }
 
 func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Runtime() runtime.Runtime {
+	c.RegisterRuntime()
 	c.Register()
 
 	return &RuntimeFacade{

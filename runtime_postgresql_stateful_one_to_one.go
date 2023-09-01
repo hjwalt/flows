@@ -33,10 +33,23 @@ type StatefulPostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any, OK a
 }
 
 func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) Register() {
-	RegisterPostgresqlStateful(
+	RegisterStatefulFunction(
+		c.InputTopic.Name(),
+		c.PostgresTable,
+		stateful.ConvertTopicOneToOne(c.Function, c.StateFormat, c.InputTopic, c.OutputTopic),
+		stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
+	)
+	RegisterRouteConfig(
+		runtime_bunrouter.WithRouterFlow(
+			router.WithFlowStatefulOneToOne(c.InputTopic, c.OutputTopic, c.PostgresTable),
+		),
+	)
+}
+
+func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) RegisterRuntime() {
+	RegisterPostgresql2(
 		c.Name,
 		c.PostgresConnectionString,
-		c.PostgresTable,
 		c.PostgresqlConfiguration,
 	)
 	RegisterRetry(
@@ -51,16 +64,6 @@ func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) Regi
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
-	RegisterStatefulFunction(
-		c.InputTopic.Name(),
-		stateful.ConvertTopicOneToOne(c.Function, c.StateFormat, c.InputTopic, c.OutputTopic),
-		stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
-	)
-	RegisterRouteConfig(
-		runtime_bunrouter.WithRouterFlow(
-			router.WithFlowStatefulOneToOne(c.InputTopic, c.OutputTopic, c.PostgresTable),
-		),
-	)
 	RegisterRoute2(
 		c.HttpPort,
 		c.RouteConfiguration,
@@ -68,6 +71,7 @@ func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) Regi
 }
 
 func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) Runtime() runtime.Runtime {
+	c.RegisterRuntime()
 	c.Register()
 
 	return &RuntimeFacade{

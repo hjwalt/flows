@@ -1,4 +1,4 @@
-package example
+package example_word_remap
 
 import (
 	"context"
@@ -6,12 +6,15 @@ import (
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/runway/logger"
-	"github.com/hjwalt/runway/runtime"
 	"go.uber.org/zap"
 )
 
+const (
+	Instance = "flows-word-remap"
+)
+
 func WordRemapStatelessFunction(c context.Context, m flow.Message[string, string]) (*flow.Message[string, string], error) {
-	logger.Info("count", zap.String("remap", m.Value+" updated"), zap.String("key", m.Key))
+	logger.Info("remap", zap.String("remap", m.Value+" updated"), zap.String("key", m.Key))
 	return &flow.Message[string, string]{
 		Topic:   "word-updated",
 		Key:     m.Key,
@@ -20,9 +23,9 @@ func WordRemapStatelessFunction(c context.Context, m flow.Message[string, string
 	}, nil
 }
 
-func WordRemap() runtime.Runtime {
-	statelessFunctionConfiguration := flows.StatelessOneToOneConfiguration[string, string, string, string]{
-		Name:         "flows-word-remap",
+func Registrar() flows.RuntimeRegistrar {
+	return flows.StatelessOneToOneConfiguration[string, string, string, string]{
+		Name:         Instance,
 		InputTopic:   flow.StringTopic("word"),
 		OutputTopic:  flow.StringTopic("word-updated"),
 		Function:     WordRemapStatelessFunction,
@@ -30,6 +33,8 @@ func WordRemap() runtime.Runtime {
 		OutputBroker: "localhost:9092",
 		HttpPort:     8081,
 	}
+}
 
-	return statelessFunctionConfiguration.Runtime()
+func Register(m flows.Main) {
+	flows.Register(m, Instance, Registrar)
 }

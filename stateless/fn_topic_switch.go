@@ -44,7 +44,7 @@ func (r *TopicSwitch) Apply(c context.Context, m []flow.Message[structure.Bytes,
 
 	resultMessages := []flow.Message[structure.Bytes, structure.Bytes]{}
 	for k, v := range messageMultiMap.GetAll() {
-		logger.Info("join switch", zap.String("topic", k))
+		logger.Info("stateless switch", zap.String("topic", k), zap.Int("messages", len(v)))
 
 		fn, fnExists := r.functions[k]
 		if !fnExists {

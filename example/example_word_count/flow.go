@@ -1,4 +1,4 @@
-package example
+package example_word_count
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/hjwalt/flows"
+	"github.com/hjwalt/flows/example"
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/flows/router"
@@ -21,14 +22,18 @@ import (
 	"go.uber.org/zap"
 )
 
-func WordCountPersistenceId(ctx context.Context, m flow.Message[string, string]) (string, error) {
+const (
+	Instance = "flows-word-count"
+)
+
+func key(ctx context.Context, m flow.Message[string, string]) (string, error) {
 	return m.Key, nil
 }
 
-func WordCountStatefulFunction(c context.Context, m flow.Message[string, string], s stateful.State[*WordCountState]) (*flow.Message[string, string], stateful.State[*WordCountState], error) {
+func fn(c context.Context, m flow.Message[string, string], s stateful.State[*example.WordCountState]) (*flow.Message[string, string], stateful.State[*example.WordCountState], error) {
 	// setting defaults
 	if s.Content == nil {
-		s.Content = &WordCountState{Count: 0}
+		s.Content = &example.WordCountState{Count: 0}
 	}
 
 	// update state
@@ -46,17 +51,17 @@ func WordCountStatefulFunction(c context.Context, m flow.Message[string, string]
 	return &outMessage, s, nil
 }
 
-func WordCount() runtime.Runtime {
-	statefulFunctionConfiguration := flows.StatefulPostgresqlOneToOneFunctionConfiguration[*WordCountState, string, string, string, string]{
-		Name:                     "flows-word-count",
+func Registrar() flows.RuntimeRegistrar {
+	return flows.StatefulPostgresqlOneToOneFunctionConfiguration[*example.WordCountState, string, string, string, string]{
+		Name:                     Instance,
 		InputTopic:               flow.StringTopic("word"),
 		OutputTopic:              flow.StringTopic("word-count"),
-		Function:                 WordCountStatefulFunction,
+		Function:                 fn,
 		InputBroker:              "localhost:9092",
 		OutputBroker:             "localhost:9092",
 		HttpPort:                 8081,
-		StateFormat:              format.Protobuf[*WordCountState](),
-		StateKeyFunction:         WordCountPersistenceId,
+		StateFormat:              format.Protobuf[*example.WordCountState](),
+		StateKeyFunction:         key,
 		PostgresTable:            "public.flows_state",
 		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
 
@@ -99,10 +104,12 @@ func WordCount() runtime.Runtime {
 			}),
 		},
 	}
-
-	return statefulFunctionConfiguration.Runtime()
 }
 
 type TestResponse struct {
 	Message string
+}
+
+func Register(m flows.Main) {
+	flows.Register(m, Instance, Registrar)
 }

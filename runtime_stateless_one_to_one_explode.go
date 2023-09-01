@@ -25,6 +25,18 @@ type StatelessOneToOneExplodeConfiguration[IK any, IV any, OK any, OV any] struc
 }
 
 func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) Register() {
+	RegisterStatelessSingleFunction(
+		c.InputTopic.Name(),
+		stateless.ConvertTopicOneToOneExplode(c.Function, c.InputTopic, c.OutputTopic),
+	)
+	RegisterRouteConfig(
+		runtime_bunrouter.WithRouterFlow(
+			router.WithFlowStatelessOneToOne(c.InputTopic, c.OutputTopic),
+		),
+	)
+}
+
+func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) RegisterRuntime() {
 	RegisterRetry(
 		c.RetryConfiguration,
 	)
@@ -37,15 +49,6 @@ func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) Register() {
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
-	RegisterStatelessSingleFunction(
-		c.InputTopic.Name(),
-		stateless.ConvertTopicOneToOneExplode(c.Function, c.InputTopic, c.OutputTopic),
-	)
-	RegisterRouteConfig(
-		runtime_bunrouter.WithRouterFlow(
-			router.WithFlowStatelessOneToOne(c.InputTopic, c.OutputTopic),
-		),
-	)
 	RegisterRoute2(
 		c.HttpPort,
 		c.RouteConfiguration,
@@ -53,6 +56,7 @@ func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) Register() {
 }
 
 func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) Runtime() runtime.Runtime {
+	c.RegisterRuntime()
 	c.Register()
 
 	return &RuntimeFacade{

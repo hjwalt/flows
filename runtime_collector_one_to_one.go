@@ -31,6 +31,20 @@ type CollectorOneToOneConfiguration[S any, IK any, IV any, OK any, OV any] struc
 }
 
 func (c CollectorOneToOneConfiguration[S, IK, IV, OK, OV]) Register() {
+	RegisterCollectorFunction(
+		c.InputTopic.Name(),
+		stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
+		collect.ConvertTopicAggregator(c.Aggregator, c.StateFormat, c.InputTopic),
+		collect.ConvertTopicOneToOneCollector(c.Collector, c.StateFormat, c.OutputTopic),
+	)
+	RegisterRouteConfig(
+		runtime_bunrouter.WithRouterFlow(
+			router.WithFlowStatelessOneToOne(c.InputTopic, c.OutputTopic),
+		),
+	)
+}
+
+func (c CollectorOneToOneConfiguration[S, IK, IV, OK, OV]) RegisterRuntime() {
 	RegisterRetry(
 		c.RetryConfiguration,
 	)
@@ -43,17 +57,6 @@ func (c CollectorOneToOneConfiguration[S, IK, IV, OK, OV]) Register() {
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
-	RegisterCollectorFunction(
-		c.InputTopic.Name(),
-		stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
-		collect.ConvertTopicAggregator(c.Aggregator, c.StateFormat, c.InputTopic),
-		collect.ConvertTopicOneToOneCollector(c.Collector, c.StateFormat, c.OutputTopic),
-	)
-	RegisterRouteConfig(
-		runtime_bunrouter.WithRouterFlow(
-			router.WithFlowStatelessOneToOne(c.InputTopic, c.OutputTopic),
-		),
-	)
 	RegisterRoute2(
 		c.HttpPort,
 		c.RouteConfiguration,
@@ -61,6 +64,7 @@ func (c CollectorOneToOneConfiguration[S, IK, IV, OK, OV]) Register() {
 }
 
 func (c CollectorOneToOneConfiguration[S, IK, IV, OK, OV]) Runtime() runtime.Runtime {
+	c.RegisterRuntime()
 	c.Register()
 
 	return &RuntimeFacade{
