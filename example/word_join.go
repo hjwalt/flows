@@ -5,9 +5,6 @@ import (
 
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/runtime_bun"
-	"github.com/hjwalt/flows/runtime_bunrouter"
-	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
@@ -68,7 +65,6 @@ func WordJoinWordFunction(c context.Context, m flow.Message[string, string], s s
 
 func WordJoin() runtime.Runtime {
 	joinFunctionConfiguration := flows.JoinPostgresqlFunctionConfiguration{
-
 		StatefulFunctions: map[string]stateful.SingleFunction{
 			"word": stateful.ConvertOneToOne(
 				WordJoinCountFunction,
@@ -99,24 +95,13 @@ func WordJoin() runtime.Runtime {
 				format.String(),
 			),
 		},
-
-		IntermediateTopicName: "word-join-intermediate",
-		PersistenceTableName:  "public.flows_join_state",
-
-		PostgresqlConfiguration: []runtime.Configuration[*runtime_bun.PostgresqlConnection]{
-			runtime_bun.WithApplicationName("flows"),
-			runtime_bun.WithConnectionString("postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"),
-		},
-		KafkaProducerConfiguration: []runtime.Configuration[*runtime_sarama.Producer]{
-			runtime_sarama.WithProducerBroker("localhost:9092"),
-		},
-		KafkaConsumerConfiguration: []runtime.Configuration[*runtime_sarama.Consumer]{
-			runtime_sarama.WithConsumerBroker("localhost:9092"),
-			runtime_sarama.WithConsumerGroupName("flows-word-join"),
-		},
-		RouteConfiguration: []runtime.Configuration[*runtime_bunrouter.Router]{
-			runtime_bunrouter.WithRouterPort(8081),
-		},
+		Name:                     "flows-word-join",
+		InputBroker:              "localhost:9092",
+		OutputBroker:             "localhost:9092",
+		IntermediateTopicName:    "word-join-intermediate",
+		PostgresTable:            "public.flows_state",
+		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
+		HttpPort:                 8081,
 	}
 
 	return joinFunctionConfiguration.Runtime()

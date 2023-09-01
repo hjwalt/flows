@@ -50,9 +50,9 @@ func WordCollectCollector(c context.Context, persistenceId string, s stateful.St
 }
 
 func WordCollect() runtime.Runtime {
-	inverse.RegisterConfiguration[*runtime_sarama.KeyedHandler](flows.QualifierKafkaKeyedHandlerConfiguration, runtime_sarama.WithKeyedHandlerMaxPerKey(1000))
-	inverse.RegisterConfiguration[*runtime_sarama.KeyedHandler](flows.QualifierKafkaKeyedHandlerConfiguration, runtime_sarama.WithKeyedHandlerMaxBufferred(10000))
-	inverse.RegisterConfiguration[*runtime_sarama.KeyedHandler](flows.QualifierKafkaKeyedHandlerConfiguration, runtime_sarama.WithKeyedHandlerMaxDelay(1*time.Second))
+	inverse.RegisterConfiguration[*runtime_sarama.KeyedHandler](flows.QualifierKafkaConsumerKeyedHandlerConfiguration, runtime_sarama.WithKeyedHandlerMaxPerKey(1000))
+	inverse.RegisterConfiguration[*runtime_sarama.KeyedHandler](flows.QualifierKafkaConsumerKeyedHandlerConfiguration, runtime_sarama.WithKeyedHandlerMaxBufferred(10000))
+	inverse.RegisterConfiguration[*runtime_sarama.KeyedHandler](flows.QualifierKafkaConsumerKeyedHandlerConfiguration, runtime_sarama.WithKeyedHandlerMaxDelay(1*time.Second))
 
 	runtimeConfig := flows.CollectorOneToOneConfiguration[*WordCollectState, string, string, string, string]{
 		Name:             "flows-word-collect",

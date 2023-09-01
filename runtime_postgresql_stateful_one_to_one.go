@@ -33,37 +33,38 @@ type StatefulPostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any, OK a
 }
 
 func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) Register() {
-	RegisterPostgresqlConfig(
-		runtime_bun.WithApplicationName(c.Name),
-		runtime_bun.WithConnectionString(c.PostgresConnectionString),
+	RegisterPostgresqlStateful(
+		c.Name,
+		c.PostgresConnectionString,
+		c.PostgresTable,
+		c.PostgresqlConfiguration,
 	)
-	RegisterConsumerConfig(
-		runtime_sarama.WithConsumerBroker(c.InputBroker),
-		runtime_sarama.WithConsumerTopic(c.InputTopic.Name()),
-		runtime_sarama.WithConsumerGroupName(c.Name),
+	RegisterRetry(
+		c.RetryConfiguration,
 	)
-	RegisterProducerConfig(
-		runtime_sarama.WithProducerBroker(c.OutputBroker),
+	RegisterProducer2(
+		c.OutputBroker,
+		c.KafkaProducerConfiguration,
+	)
+	RegisterConsumer2(
+		c.Name,
+		c.InputBroker,
+		c.KafkaConsumerConfiguration,
+	)
+	RegisterStatefulFunction(
+		c.InputTopic.Name(),
+		stateful.ConvertTopicOneToOne(c.Function, c.StateFormat, c.InputTopic, c.OutputTopic),
+		stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
 	)
 	RegisterRouteConfig(
-		runtime_bunrouter.WithRouterPort(c.HttpPort),
 		runtime_bunrouter.WithRouterFlow(
 			router.WithFlowStatefulOneToOne(c.InputTopic, c.OutputTopic, c.PostgresTable),
 		),
 	)
-
-	statefulFunctionConfiguration := StatefulPostgresqlFunctionConfiguration{
-		PersistenceTableName:       c.PostgresTable,
-		PersistenceIdFunction:      stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
-		StatefulFunction:           stateful.ConvertTopicOneToOne(c.Function, c.StateFormat, c.InputTopic, c.OutputTopic),
-		PostgresqlConfiguration:    c.PostgresqlConfiguration,
-		KafkaProducerConfiguration: c.KafkaProducerConfiguration,
-		KafkaConsumerConfiguration: c.KafkaConsumerConfiguration,
-		RouteConfiguration:         c.RouteConfiguration,
-		RetryConfiguration:         c.RetryConfiguration,
-	}
-
-	statefulFunctionConfiguration.Register()
+	RegisterRoute2(
+		c.HttpPort,
+		c.RouteConfiguration,
+	)
 }
 
 func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) Runtime() runtime.Runtime {

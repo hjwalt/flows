@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewSourceToIntermediateMap(configurations ...runtime.Configuration[*SourceToIntermediateMap]) stateless.BatchFunction {
+func NewSourceToIntermediateMap(configurations ...runtime.Configuration[*SourceToIntermediateMap]) stateless.SingleFunction {
 	singleFunction := &SourceToIntermediateMap{}
 	for _, configuration := range configurations {
 		singleFunction = configuration(singleFunction)
@@ -43,43 +43,38 @@ type SourceToIntermediateMap struct {
 	intermediateTopic string
 }
 
-func (r *SourceToIntermediateMap) Apply(c context.Context, ms []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
-	resultMessages := make([]flow.Message[structure.Bytes, structure.Bytes], len(ms))
-	for i, m := range ms {
-		logger.Info("source to intermediate", zap.String("topic", m.Topic))
-		persistenceId, persistenceIdError := r.persistenceId(c, m)
-		if persistenceIdError != nil {
-			logger.ErrorErr("error getting persistence id", persistenceIdError)
-			return make([]flow.Message[[]byte, []byte], 0), persistenceIdError
-		}
-
-		// To ensure changes are sequenced
-		joinKey := &protobuf.JoinKey{
-			PersistenceId: persistenceId,
-		}
-		joinKeyBytes, joinKeySerialisationErr := IntermediateKeyFormat.Marshal(joinKey)
-		if joinKeySerialisationErr != nil {
-			logger.ErrorErr("error serialising join key", joinKeySerialisationErr)
-			return make([]flow.Message[[]byte, []byte], 0), joinKeySerialisationErr
-		}
-
-		// To keep all information about the source message
-		joinValueBytes, joinValueSerialisationErr := IntermediateValueFormat.Marshal(m)
-		if joinValueSerialisationErr != nil {
-			logger.ErrorErr("error serialising join value", joinValueSerialisationErr)
-			return make([]flow.Message[[]byte, []byte], 0), joinValueSerialisationErr
-		}
-
-		remappedMessage := flow.Message[[]byte, []byte]{
-			Topic: r.intermediateTopic,
-			Key:   joinKeyBytes,
-			Value: joinValueBytes,
-		}
-
-		resultMessages[i] = remappedMessage
+func (r *SourceToIntermediateMap) Apply(c context.Context, m flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
+	logger.Info("source to intermediate", zap.String("topic", m.Topic))
+	persistenceId, persistenceIdError := r.persistenceId(c, m)
+	if persistenceIdError != nil {
+		logger.ErrorErr("error getting persistence id", persistenceIdError)
+		return make([]flow.Message[[]byte, []byte], 0), persistenceIdError
 	}
 
-	return resultMessages, nil
+	// To ensure changes are sequenced
+	joinKey := &protobuf.JoinKey{
+		PersistenceId: persistenceId,
+	}
+	joinKeyBytes, joinKeySerialisationErr := IntermediateKeyFormat.Marshal(joinKey)
+	if joinKeySerialisationErr != nil {
+		logger.ErrorErr("error serialising join key", joinKeySerialisationErr)
+		return make([]flow.Message[[]byte, []byte], 0), joinKeySerialisationErr
+	}
+
+	// To keep all information about the source message
+	joinValueBytes, joinValueSerialisationErr := IntermediateValueFormat.Marshal(m)
+	if joinValueSerialisationErr != nil {
+		logger.ErrorErr("error serialising join value", joinValueSerialisationErr)
+		return make([]flow.Message[[]byte, []byte], 0), joinValueSerialisationErr
+	}
+
+	remappedMessage := flow.Message[[]byte, []byte]{
+		Topic: r.intermediateTopic,
+		Key:   joinKeyBytes,
+		Value: joinValueBytes,
+	}
+
+	return []flow.Message[structure.Bytes, structure.Bytes]{remappedMessage}, nil
 }
 
 var IntermediateValueFormat = flow.Format()

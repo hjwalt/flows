@@ -24,11 +24,11 @@ type RouterAdapterConfiguration[Request any, InputKey any, InputValue any] struc
 }
 
 func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register() {
-	RegisterProducerConfig(
-		runtime_sarama.WithProducerBroker(c.ProduceBroker),
+	RegisterProducer2(
+		c.ProduceBroker,
+		c.KafkaProducerConfiguration,
 	)
 	RegisterRouteConfig(
-		runtime_bunrouter.WithRouterPort(c.HttpPort),
 		runtime_bunrouter.WithRouterProducerHandler(
 			runtime_bunrouter.POST,
 			"/"+c.Name,
@@ -39,13 +39,10 @@ func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register() {
 			),
 		),
 	)
-
-	routerConfiguration := RouterConfiguration{
-		KafkaProducerConfiguration: c.KafkaProducerConfiguration,
-		RouteConfiguration:         c.RouteConfiguration,
-	}
-
-	routerConfiguration.Register()
+	RegisterRoute2(
+		c.HttpPort,
+		c.RouteConfiguration,
+	)
 }
 
 func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Runtime() runtime.Runtime {

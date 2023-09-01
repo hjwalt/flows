@@ -23,7 +23,7 @@ func NewTopicSwitch(configurations ...runtime.Configuration[*TopicSwitch]) Batch
 }
 
 // configuration
-func WithTopicSwitchStatelessSingleFunction(topic string, f BatchFunction) runtime.Configuration[*TopicSwitch] {
+func WithTopicSwitchFunction(topic string, f BatchFunction) runtime.Configuration[*TopicSwitch] {
 	return func(sts *TopicSwitch) *TopicSwitch {
 		sts.functions[topic] = f
 		return sts

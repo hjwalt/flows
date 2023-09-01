@@ -1,15 +1,12 @@
 package flows
 
 import (
-	"context"
-
 	"github.com/hjwalt/flows/join"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
-	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/runtime"
 )
 
@@ -26,19 +23,46 @@ import (
 // stateful switch -> stateful function(s) (for each source topic)
 
 type JoinPostgresqlFunctionConfiguration struct {
+	Name                       string
+	StatefulFunctions          map[string]stateful.SingleFunction
+	PersistenceIdFunctions     map[string]stateful.PersistenceIdFunction[[]byte, []byte]
+	IntermediateTopicName      string
+	InputBroker                string
+	OutputBroker               string
+	HttpPort                   int
+	PostgresConnectionString   string
+	PostgresTable              string
 	PostgresqlConfiguration    []runtime.Configuration[*runtime_bun.PostgresqlConnection]
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
 	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
-	StatefulFunctions          map[string]stateful.SingleFunction
-	PersistenceIdFunctions     map[string]stateful.PersistenceIdFunction[[]byte, []byte]
-	IntermediateTopicName      string
-	PersistenceTableName       string
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
 func (c JoinPostgresqlFunctionConfiguration) Register() {
-	topics := []string{}
+	RegisterPostgresqlStateful(
+		c.Name,
+		c.PostgresConnectionString,
+		c.PostgresTable,
+		c.PostgresqlConfiguration,
+	)
+	RegisterRetry(
+		c.RetryConfiguration,
+	)
+	RegisterProducer2(
+		c.OutputBroker,
+		c.KafkaProducerConfiguration,
+	)
+	RegisterConsumer2(
+		c.Name,
+		c.InputBroker,
+		c.KafkaConsumerConfiguration,
+	)
+	RegisterRoute2(
+		c.HttpPort,
+		c.RouteConfiguration,
+	)
+
 	statefulTopicSwitchConfigurations := []runtime.Configuration[*stateful.TopicSwitch]{}
 	persistenceIdConfigurations := []runtime.Configuration[*stateful.PersistenceIdSwitch]{}
 
@@ -50,89 +74,26 @@ func (c JoinPostgresqlFunctionConfiguration) Register() {
 			continue
 		}
 
-		topics = append(topics, topic)
+		sourceToIntermediateMap := join.NewSourceToIntermediateMap(
+			join.WithSourceToIntermediateMapIntermediateTopic(c.IntermediateTopicName),
+			join.WithSourceToIntermediateMapPersistenceIdFunction(persistenceIdFn),
+		)
+
+		RegisterStatelessSingleFunctionWithKey(
+			topic,
+			sourceToIntermediateMap,
+			persistenceIdFn,
+		)
+
 		statefulTopicSwitchConfigurations = append(statefulTopicSwitchConfigurations, stateful.WithTopicSwitchFunction(topic, statefulFn))
 		persistenceIdConfigurations = append(persistenceIdConfigurations, stateful.WithPersistenceIdSwitchPersistenceIdFunction(topic, persistenceIdFn))
 	}
-	keyedPersistenceIdConfigurations := append(persistenceIdConfigurations, stateful.WithPersistenceIdSwitchPersistenceIdFunction(c.IntermediateTopicName, join.IntermediateTopicKeyFunction))
-	keyedPersistenceId := stateful.NewPersistenceIdSwitch(keyedPersistenceIdConfigurations...)
 
-	// setting the topics for consumers
-	consumerTopics := append(topics, c.IntermediateTopicName)
-	RegisterConsumerConfig(runtime_sarama.WithConsumerTopic(consumerTopics...))
-
-	RegisterPostgresqlConfig(c.PostgresqlConfiguration...)
-	RegisterPostgresql()
-	RegisterPostgresqlSingleState(c.PersistenceTableName)
-	RegisterRetry(c.RetryConfiguration)
-	RegisterProducerConfig(c.KafkaProducerConfiguration...)
-	RegisterProducer()
-	RegisterConsumerConfig(c.KafkaConsumerConfiguration...)
-	RegisterConsumerKeyedConfig()
-	RegisterConsumer()
-	RegisterRouteConfigDefault()
-	RegisterRouteConfig(c.RouteConfiguration...)
-	RegisterRoute()
-	RegisterConsumerKeyedKeyFunction(keyedPersistenceId)
-	RegisterConsumerKeyedFunction(func(ctx context.Context) (stateless.BatchFunction, error) {
-		retry, err := GetRetry(ctx)
-		if err != nil {
-			return nil, err
-		}
-		producer, err := GetKafkaProducer(ctx)
-		if err != nil {
-			return nil, err
-		}
-		repository, err := GetPostgresqlSingleStateRepository(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		// Intermediate to join stateful switching function
-		statefulWrappedFunction := stateful.NewTopicSwitch(statefulTopicSwitchConfigurations...)
-		persistenceIdTopicSwitch := stateful.NewPersistenceIdSwitch(persistenceIdConfigurations...)
-
-		statefulWrappedFunction = stateful.NewDeduplicate(
-			stateful.WithDeduplicateNextFunction(statefulWrappedFunction),
-		)
-
-		stateTransaction := stateful.NewReadWrite(
-			stateful.WithReadWritePersistenceIdFunc(persistenceIdTopicSwitch),
-			stateful.WithReadWriteRepository(repository),
-			stateful.WithReadWriteFunction(statefulWrappedFunction),
-		)
-
-		intermediateToJoin := join.NewIntermediateToJoinMap(
-			join.WithIntermediateToJoinMapTransactionWrappedFunction(stateTransaction),
-		)
-
-		// Stateless topic switch
-
-		// generating source to intermediate join to be added into stateless topic switch
-		sourceToIntermediateMap := join.NewSourceToIntermediateMap(
-			join.WithSourceToIntermediateMapIntermediateTopic(c.IntermediateTopicName),
-			join.WithSourceToIntermediateMapPersistenceIdFunction(persistenceIdTopicSwitch),
-		)
-
-		topicSwitch := join.NewJoinSwitch(
-			join.WithJoinSwitchIntermediateTopicFunction(c.IntermediateTopicName, intermediateToJoin),
-			join.WithJoinSwitchSourceTopicFunction(sourceToIntermediateMap),
-		)
-
-		wrappedBatch := stateless.NewProducerBatchFunction(
-			stateless.WithBatchProducerNextFunction(topicSwitch),
-			stateless.WithBatchProducerRuntime(producer),
-			stateless.WithBatchProducerPrometheus(),
-		)
-
-		wrappedBatch = stateless.NewBatchRetry(
-			stateless.WithBatchRetryNextFunction(wrappedBatch),
-			stateless.WithBatchRetryRuntime(retry),
-			stateless.WithBatchRetryPrometheus(),
-		)
-
-		return wrappedBatch, nil
-	})
+	RegisterStatefulFunction(
+		c.IntermediateTopicName,
+		stateful.NewTopicSwitch(statefulTopicSwitchConfigurations...),
+		stateful.NewPersistenceIdSwitch(persistenceIdConfigurations...),
+	)
 }
 
 func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {

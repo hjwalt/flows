@@ -15,7 +15,7 @@ func main() {
 	m.Register("word-join", example.WordJoin)
 	m.Register("word-materialise", example.WordMaterialise)
 
-	err := m.Start(environment.GetString("INSTANCE", "word-count"))
+	err := m.Start(environment.GetString("INSTANCE", "word-remap"))
 
 	if err != nil {
 		panic(err)

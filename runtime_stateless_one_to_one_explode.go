@@ -25,30 +25,31 @@ type StatelessOneToOneExplodeConfiguration[IK any, IV any, OK any, OV any] struc
 }
 
 func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) Register() {
-	RegisterConsumerConfig(
-		runtime_sarama.WithConsumerBroker(c.InputBroker),
-		runtime_sarama.WithConsumerTopic(c.InputTopic.Name()),
-		runtime_sarama.WithConsumerGroupName(c.Name),
+	RegisterRetry(
+		c.RetryConfiguration,
 	)
-	RegisterProducerConfig(
-		runtime_sarama.WithProducerBroker(c.OutputBroker),
+	RegisterProducer2(
+		c.OutputBroker,
+		c.KafkaProducerConfiguration,
+	)
+	RegisterConsumer2(
+		c.Name,
+		c.InputBroker,
+		c.KafkaConsumerConfiguration,
+	)
+	RegisterStatelessSingleFunction(
+		c.InputTopic.Name(),
+		stateless.ConvertTopicOneToOneExplode(c.Function, c.InputTopic, c.OutputTopic),
 	)
 	RegisterRouteConfig(
-		runtime_bunrouter.WithRouterPort(c.HttpPort),
 		runtime_bunrouter.WithRouterFlow(
 			router.WithFlowStatelessOneToOne(c.InputTopic, c.OutputTopic),
 		),
 	)
-
-	statelessFunctionConfiguration := StatelessSingleFunctionConfiguration{
-		StatelessFunction:          stateless.ConvertTopicOneToOneExplode(c.Function, c.InputTopic, c.OutputTopic),
-		KafkaProducerConfiguration: c.KafkaProducerConfiguration,
-		KafkaConsumerConfiguration: c.KafkaConsumerConfiguration,
-		RouteConfiguration:         c.RouteConfiguration,
-		RetryConfiguration:         c.RetryConfiguration,
-	}
-
-	statelessFunctionConfiguration.Register()
+	RegisterRoute2(
+		c.HttpPort,
+		c.RouteConfiguration,
+	)
 }
 
 func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) Runtime() runtime.Runtime {

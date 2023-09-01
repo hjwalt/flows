@@ -31,32 +31,33 @@ type CollectorOneToOneConfiguration[S any, IK any, IV any, OK any, OV any] struc
 }
 
 func (c CollectorOneToOneConfiguration[S, IK, IV, OK, OV]) Register() {
-	RegisterConsumerConfig(
-		runtime_sarama.WithConsumerBroker(c.InputBroker),
-		runtime_sarama.WithConsumerTopic(c.InputTopic.Name()),
-		runtime_sarama.WithConsumerGroupName(c.Name),
+	RegisterRetry(
+		c.RetryConfiguration,
 	)
-	RegisterProducerConfig(
-		runtime_sarama.WithProducerBroker(c.OutputBroker),
+	RegisterProducer2(
+		c.OutputBroker,
+		c.KafkaProducerConfiguration,
+	)
+	RegisterConsumer2(
+		c.Name,
+		c.InputBroker,
+		c.KafkaConsumerConfiguration,
+	)
+	RegisterCollectorFunction(
+		c.InputTopic.Name(),
+		stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
+		collect.ConvertTopicAggregator(c.Aggregator, c.StateFormat, c.InputTopic),
+		collect.ConvertTopicOneToOneCollector(c.Collector, c.StateFormat, c.OutputTopic),
 	)
 	RegisterRouteConfig(
-		runtime_bunrouter.WithRouterPort(c.HttpPort),
 		runtime_bunrouter.WithRouterFlow(
 			router.WithFlowStatelessOneToOne(c.InputTopic, c.OutputTopic),
 		),
 	)
-
-	collectConfiguration := CollectorConfiguration{
-		PersistenceIdFunction:      stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
-		Aggregator:                 collect.ConvertTopicAggregator(c.Aggregator, c.StateFormat, c.InputTopic),
-		Collector:                  collect.ConvertTopicOneToOneCollector(c.Collector, c.StateFormat, c.OutputTopic),
-		KafkaProducerConfiguration: c.KafkaProducerConfiguration,
-		KafkaConsumerConfiguration: c.KafkaConsumerConfiguration,
-		RouteConfiguration:         c.RouteConfiguration,
-		RetryConfiguration:         c.RetryConfiguration,
-	}
-
-	collectConfiguration.Register()
+	RegisterRoute2(
+		c.HttpPort,
+		c.RouteConfiguration,
+	)
 }
 
 func (c CollectorOneToOneConfiguration[S, IK, IV, OK, OV]) Runtime() runtime.Runtime {

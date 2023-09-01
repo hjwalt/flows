@@ -28,35 +28,36 @@ type MaterialisePostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any] s
 }
 
 func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Register() {
-	RegisterPostgresqlConfig(
-		runtime_bun.WithApplicationName(c.Name),
-		runtime_bun.WithConnectionString(c.PostgresConnectionString),
+	RegisterPostgresqlMaterialise[S](
+		c.Name,
+		c.PostgresConnectionString,
+		c.PostgresqlConfiguration,
 	)
-	RegisterConsumerConfig(
-		runtime_sarama.WithConsumerBroker(c.InputBroker),
-		runtime_sarama.WithConsumerTopic(c.InputTopic.Name()),
-		runtime_sarama.WithConsumerGroupName(c.Name),
+	RegisterRetry(
+		c.RetryConfiguration,
 	)
-	RegisterProducerConfig(
-		runtime_sarama.WithProducerBroker(c.OutputBroker),
+	RegisterProducer2(
+		c.OutputBroker,
+		c.KafkaProducerConfiguration,
+	)
+	RegisterConsumer2(
+		c.Name,
+		c.InputBroker,
+		c.KafkaConsumerConfiguration,
+	)
+	RegisterMaterialiseFunction(
+		c.InputTopic.Name(),
+		materialise.ConvertOneToOne(c.Function, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
 	)
 	RegisterRouteConfig(
-		runtime_bunrouter.WithRouterPort(c.HttpPort),
 		runtime_bunrouter.WithRouterFlow(
 			router.WithFlowMaterialiseOneToOne(c.InputTopic),
 		),
 	)
-
-	statefulFunctionConfiguration := MaterialisePostgresqlFunctionConfiguration[S]{
-		MaterialiseMapFunction:     materialise.ConvertOneToOne(c.Function, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
-		PostgresqlConfiguration:    c.PostgresqlConfiguration,
-		KafkaProducerConfiguration: c.KafkaProducerConfiguration,
-		KafkaConsumerConfiguration: c.KafkaConsumerConfiguration,
-		RouteConfiguration:         c.RouteConfiguration,
-		RetryConfiguration:         c.RetryConfiguration,
-	}
-
-	statefulFunctionConfiguration.Register()
+	RegisterRoute2(
+		c.HttpPort,
+		c.RouteConfiguration,
+	)
 }
 
 func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Runtime() runtime.Runtime {
