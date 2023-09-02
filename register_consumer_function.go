@@ -41,6 +41,18 @@ func RegisterStatelessSingleFunction(topic string, fn stateless.SingleFunction) 
 	)
 }
 
+func RegisterStatelessBatchFunction(topic string, fn stateless.BatchFunction) {
+	RegisterConsumerFunctionInjector(
+		func(ctx context.Context) (ConsumerFunction, error) {
+			return ConsumerFunction{
+				Topic: topic,
+				Key:   stateless.Base64PersistenceId,
+				Fn:    fn,
+			}, nil
+		},
+	)
+}
+
 func RegisterStatelessSingleFunctionWithKey(topic string, fn stateless.SingleFunction, key stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes]) {
 	RegisterConsumerFunctionInjector(
 		func(ctx context.Context) (ConsumerFunction, error) {

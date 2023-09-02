@@ -14,7 +14,7 @@ var (
 	QualifierKafkaProducer              = "QualifierKafkaProducer"
 )
 
-func RegisterProducer2(
+func RegisterProducer(
 	broker string,
 	configs []runtime.Configuration[*runtime_sarama.Producer],
 ) {

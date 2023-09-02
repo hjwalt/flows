@@ -41,16 +41,16 @@ func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) RegisterRunt
 	RegisterRetry(
 		c.RetryConfiguration,
 	)
-	RegisterProducer2(
+	RegisterProducer(
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
-	RegisterConsumer2(
+	RegisterConsumer(
 		c.Name,
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
-	RegisterRoute2(
+	RegisterRoute(
 		c.HttpPort,
 		c.RouteConfiguration,
 	)

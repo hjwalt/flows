@@ -16,7 +16,7 @@ const (
 	QualifierPostgresqlUpsertRepository               = "QualifierPostgresqlUpsertRepository"
 )
 
-func RegisterPostgresql2(
+func RegisterPostgresql(
 	name string,
 	connectionString string,
 	config []runtime.Configuration[*runtime_bun.PostgresqlConnection],

@@ -48,7 +48,7 @@ func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2
 }
 
 func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2, OV2]) RegisterRuntime() {
-	RegisterPostgresql2(
+	RegisterPostgresql(
 		c.Name,
 		c.PostgresConnectionString,
 		c.PostgresqlConfiguration,
@@ -56,16 +56,16 @@ func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2
 	RegisterRetry(
 		c.RetryConfiguration,
 	)
-	RegisterProducer2(
+	RegisterProducer(
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
-	RegisterConsumer2(
+	RegisterConsumer(
 		c.Name,
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
-	RegisterRoute2(
+	RegisterRoute(
 		c.HttpPort,
 		c.RouteConfiguration,
 	)

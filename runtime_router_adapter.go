@@ -38,11 +38,11 @@ func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register() {
 }
 
 func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) RegisterRuntime() {
-	RegisterProducer2(
+	RegisterProducer(
 		c.ProduceBroker,
 		c.KafkaProducerConfiguration,
 	)
-	RegisterRoute2(
+	RegisterRoute(
 		c.HttpPort,
 		c.RouteConfiguration,
 	)

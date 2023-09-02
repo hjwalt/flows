@@ -13,7 +13,7 @@ const (
 	QualifierRoute              = "QualifierRoute"
 )
 
-func RegisterRoute2(
+func RegisterRoute(
 	port int,
 	configs []runtime.Configuration[*runtime_bunrouter.Router],
 ) {

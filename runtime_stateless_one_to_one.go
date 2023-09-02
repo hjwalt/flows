@@ -40,16 +40,16 @@ func (c StatelessOneToOneConfiguration[IK, IV, OK, OV]) RegisterRuntime() {
 	RegisterRetry(
 		c.RetryConfiguration,
 	)
-	RegisterProducer2(
+	RegisterProducer(
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
-	RegisterConsumer2(
+	RegisterConsumer(
 		c.Name,
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
-	RegisterRoute2(
+	RegisterRoute(
 		c.HttpPort,
 		c.RouteConfiguration,
 	)

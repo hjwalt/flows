@@ -75,7 +75,7 @@ func (c JoinPostgresqlFunctionConfiguration) Register() {
 }
 
 func (c JoinPostgresqlFunctionConfiguration) RegisterRuntime() {
-	RegisterPostgresql2(
+	RegisterPostgresql(
 		c.Name,
 		c.PostgresConnectionString,
 		c.PostgresqlConfiguration,
@@ -83,16 +83,16 @@ func (c JoinPostgresqlFunctionConfiguration) RegisterRuntime() {
 	RegisterRetry(
 		c.RetryConfiguration,
 	)
-	RegisterProducer2(
+	RegisterProducer(
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
-	RegisterConsumer2(
+	RegisterConsumer(
 		c.Name,
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
-	RegisterRoute2(
+	RegisterRoute(
 		c.HttpPort,
 		c.RouteConfiguration,
 	)

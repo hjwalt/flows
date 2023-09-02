@@ -23,7 +23,7 @@ const (
 	QualifierConsumerTopic                          = "QualifierConsumerTopic"
 )
 
-func RegisterConsumer2(
+func RegisterConsumer(
 	name string,
 	broker string,
 	configs []runtime.Configuration[*runtime_sarama.Consumer],

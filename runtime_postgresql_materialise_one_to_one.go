@@ -40,7 +40,7 @@ func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Register(
 }
 
 func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) RegisterRuntime() {
-	RegisterPostgresql2(
+	RegisterPostgresql(
 		c.Name,
 		c.PostgresConnectionString,
 		c.PostgresqlConfiguration,
@@ -48,16 +48,16 @@ func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) RegisterR
 	RegisterRetry(
 		c.RetryConfiguration,
 	)
-	RegisterProducer2(
+	RegisterProducer(
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
-	RegisterConsumer2(
+	RegisterConsumer(
 		c.Name,
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
-	RegisterRoute2(
+	RegisterRoute(
 		c.HttpPort,
 		c.RouteConfiguration,
 	)
