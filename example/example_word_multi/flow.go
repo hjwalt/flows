@@ -3,6 +3,7 @@ package example_word_multi
 import (
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/example/example_word_count"
+	"github.com/hjwalt/flows/example/example_word_join"
 	"github.com/hjwalt/flows/example/example_word_materialise"
 	"github.com/hjwalt/runway/runtime"
 )
@@ -16,6 +17,7 @@ func instance() runtime.Runtime {
 
 	allRuntimes = append(allRuntimes, flows.Runtimes(example_word_count.Registrar)...)
 	allRuntimes = append(allRuntimes, flows.Runtimes(example_word_materialise.Registrar)...)
+	allRuntimes = append(allRuntimes, flows.Runtimes(example_word_join.Registrar)...)
 
 	return &flows.RuntimeFacade{
 		Runtimes: allRuntimes,

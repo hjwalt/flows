@@ -64,7 +64,7 @@ func Registrar() flows.RuntimeRegistrar {
 		HttpPort:                 8081,
 		StateFormat:              format.Protobuf[*example.WordCountState](),
 		StateKeyFunction:         key,
-		PostgresTable:            "public.flows_state",
+		PostgresTable:            "public.flows_count_state",
 		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
 
 		// Optional configurations

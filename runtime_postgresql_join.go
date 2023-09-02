@@ -69,7 +69,7 @@ func (c JoinPostgresqlFunctionConfiguration) Register() {
 		persistenceIdConfigurations = append(persistenceIdConfigurations, stateful.WithPersistenceIdSwitchPersistenceIdFunction(topic, persistenceIdFn))
 	}
 
-	RegisterStatefulFunction(
+	RegisterJoinStatefulFunction(
 		c.Container,
 		c.IntermediateTopicName,
 		c.PostgresTable,

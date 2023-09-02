@@ -105,9 +105,9 @@ func Registrar() flows.RuntimeRegistrar {
 		InputBroker:              "localhost:9092",
 		OutputBroker:             "localhost:9092",
 		IntermediateTopicName:    "word-join-intermediate",
-		PostgresTable:            "public.flows_state",
+		PostgresTable:            "public.flows_join_state",
 		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
-		HttpPort:                 8081,
+		HttpPort:                 8083,
 	}
 }
 

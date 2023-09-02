@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS public.flows_state;
+DROP TABLE IF EXISTS public.flows_count_state;
 
-CREATE TABLE IF NOT EXISTS public.flows_state
+CREATE TABLE IF NOT EXISTS public.flows_count_state
 (
     id                    VARCHAR(255)  NOT NULL,
     content               BYTEA         NULL,

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows/collect"
+	"github.com/hjwalt/flows/join"
 	"github.com/hjwalt/flows/materialise"
 	"github.com/hjwalt/flows/materialise_bun"
 	"github.com/hjwalt/flows/stateful"
@@ -132,6 +133,51 @@ func RegisterStatefulFunction(
 			return ConsumerFunction{
 				Topic: topic,
 				Key:   key,
+				Fn:    wrappedBatch,
+			}, nil
+		},
+		ci,
+	)
+}
+
+func RegisterJoinStatefulFunction(
+	ci inverse.Container,
+	topic string,
+	tableName string,
+	fn stateful.SingleFunction,
+	key stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes],
+) {
+	RegisterConsumerFunctionInjector(
+		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
+			bunConnection, getBunConnectionError := GetPostgresqlConnection(ctx, ci)
+			if getBunConnectionError != nil {
+				return ConsumerFunction{}, getBunConnectionError
+			}
+
+			repository := stateful_bun.NewRepository(
+				stateful_bun.WithConnection(bunConnection),
+				stateful_bun.WithStateTableName(tableName),
+			)
+
+			wrappedStatefulFunction := fn
+
+			wrappedStatefulFunction = stateful.NewDeduplicate(
+				stateful.WithDeduplicateNextFunction(wrappedStatefulFunction),
+			)
+
+			wrappedBatch := stateful.NewReadWrite(
+				stateful.WithReadWriteFunction(wrappedStatefulFunction),
+				stateful.WithReadWritePersistenceIdFunc(key),
+				stateful.WithReadWriteRepository(repository),
+			)
+
+			wrappedBatch = join.NewIntermediateToJoinMap(
+				join.WithIntermediateToJoinMapTransactionWrappedFunction(wrappedBatch),
+			)
+
+			return ConsumerFunction{
+				Topic: topic,
+				Key:   join.IntermediateTopicKeyFunction,
 				Fn:    wrappedBatch,
 			}, nil
 		},
