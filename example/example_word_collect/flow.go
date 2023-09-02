@@ -56,11 +56,17 @@ func collector(c context.Context, persistenceId string, s stateful.State[*exampl
 }
 
 func Registrar() flows.RuntimeRegistrar {
-	inverse.RegisterConfiguration[*runtime_sarama.KeyedHandler](flows.QualifierKafkaConsumerKeyedHandlerConfiguration, runtime_sarama.WithKeyedHandlerMaxPerKey(1000))
-	inverse.RegisterConfiguration[*runtime_sarama.KeyedHandler](flows.QualifierKafkaConsumerKeyedHandlerConfiguration, runtime_sarama.WithKeyedHandlerMaxBufferred(10000))
-	inverse.RegisterConfiguration[*runtime_sarama.KeyedHandler](flows.QualifierKafkaConsumerKeyedHandlerConfiguration, runtime_sarama.WithKeyedHandlerMaxDelay(1*time.Second))
+	container := inverse.NewContainer()
+
+	flows.RegisterConsumerKeyedHandlerConfig(
+		container,
+		runtime_sarama.WithKeyedHandlerMaxPerKey(1000),
+		runtime_sarama.WithKeyedHandlerMaxBufferred(10000),
+		runtime_sarama.WithKeyedHandlerMaxDelay(1*time.Second),
+	)
 
 	return flows.CollectorOneToOneConfiguration[*example.WordCollectState, string, string, string, string]{
+		Container:        container,
 		Name:             Instance,
 		InputTopic:       flow.StringTopic("word"),
 		OutputTopic:      flow.StringTopic("word-collect"),

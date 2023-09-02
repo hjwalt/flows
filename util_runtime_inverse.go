@@ -1,10 +1,23 @@
 package flows
 
-import "github.com/hjwalt/runway/runtime"
+import (
+	"github.com/hjwalt/runway/inverse"
+	"github.com/hjwalt/runway/runtime"
+)
 
 type RuntimeRegistrar interface {
 	Register()
 	RegisterRuntime()
+	Inverse() inverse.Container
+}
+
+func Runtimes(rf func() RuntimeRegistrar) []runtime.Runtime {
+	r := rf()
+
+	r.RegisterRuntime()
+	r.Register()
+
+	return InjectedRuntimes(r.Inverse())
 }
 
 func Register(m Main, instance string, rf func() RuntimeRegistrar) {
@@ -17,7 +30,7 @@ func Register(m Main, instance string, rf func() RuntimeRegistrar) {
 			r.Register()
 
 			return &RuntimeFacade{
-				Runtimes: InjectedRuntimes(),
+				Runtimes: InjectedRuntimes(r.Inverse()),
 			}
 		},
 	)

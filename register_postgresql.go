@@ -9,36 +9,43 @@ import (
 )
 
 const (
-	QualifierPostgresqlConnectionConfiguration        = "QualifierPostgresqlConnectionConfiguration"
-	QualifierPostgresqlConnection                     = "QualifierPostgresqlConnection"
-	QualifierPostgresqlSingleStateRepository          = "QualifierPostgresqlSingleStateRepository"
-	QualifierPostgresqlSingleStateRepositoryTableName = "QualifierPostgresqlSingleStateRepositoryTableName"
-	QualifierPostgresqlUpsertRepository               = "QualifierPostgresqlUpsertRepository"
+	QualifierPostgresqlConnection = "QualifierPostgresqlConnection"
 )
 
 func RegisterPostgresql(
+	container inverse.Container,
 	name string,
 	connectionString string,
-	config []runtime.Configuration[*runtime_bun.PostgresqlConnection],
+	configs []runtime.Configuration[*runtime_bun.PostgresqlConnection],
 ) {
-	RegisterPostgresqlConfig(
-		runtime_bun.WithApplicationName(name),
-		runtime_bun.WithConnectionString(connectionString),
-	)
-	RegisterPostgresqlConfig(config...)
-	inverse.RegisterWithConfigurationRequired[*runtime_bun.PostgresqlConnection](
+
+	resolver := runtime.NewResolver[*runtime_bun.PostgresqlConnection, runtime_bun.BunConnection](
 		QualifierPostgresqlConnection,
-		QualifierPostgresqlConnectionConfiguration,
+		container,
+		true,
 		runtime_bun.NewPostgresqlConnection,
 	)
-	inverse.Register(QualifierRuntime, InjectorRuntime(QualifierPostgresqlConnection))
+
+	resolver.AddConfigVal(runtime_bun.WithApplicationName(name))
+	resolver.AddConfigVal(runtime_bun.WithConnectionString(connectionString))
+
+	for _, config := range configs {
+		resolver.AddConfigVal(config)
+	}
+
+	resolver.Register()
+
+	RegisterRuntime(QualifierPostgresqlConnection, container)
 }
 
-// Postgresql connection
-func RegisterPostgresqlConfig(config ...runtime.Configuration[*runtime_bun.PostgresqlConnection]) {
-	inverse.RegisterInstances(QualifierPostgresqlConnectionConfiguration, config)
+func GetPostgresqlConnection(ctx context.Context, ci inverse.Container) (runtime_bun.BunConnection, error) {
+	return inverse.GenericGetLast[runtime_bun.BunConnection](ci, ctx, QualifierPostgresqlConnection)
 }
 
-func GetPostgresqlConnection(ctx context.Context) (runtime_bun.BunConnection, error) {
-	return inverse.GetLast[runtime_bun.BunConnection](ctx, QualifierPostgresqlConnection)
+// ===================================
+
+func RegisterPostgresqlConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_bun.PostgresqlConnection]) {
+	for _, config := range configs {
+		ci.AddVal(runtime.QualifierConfig(QualifierPostgresqlConnection), config)
+	}
 }

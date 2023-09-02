@@ -5,6 +5,7 @@ import (
 
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/flow"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/logger"
 	"go.uber.org/zap"
 )
@@ -25,6 +26,7 @@ func WordRemapStatelessFunction(c context.Context, m flow.Message[string, string
 
 func Registrar() flows.RuntimeRegistrar {
 	return flows.StatelessOneToOneConfiguration[string, string, string, string]{
+		Container:    inverse.NewContainer(),
 		Name:         Instance,
 		InputTopic:   flow.StringTopic("word"),
 		OutputTopic:  flow.StringTopic("word-updated"),

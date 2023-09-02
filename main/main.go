@@ -21,7 +21,7 @@ func main() {
 	example_word_multi.Register(m)
 	example_word_remap.Register(m)
 
-	err := m.Start(environment.GetString("INSTANCE", example_word_count.Instance))
+	err := m.Start(environment.GetString("INSTANCE", example_word_multi.Instance))
 
 	if err != nil {
 		panic(err)

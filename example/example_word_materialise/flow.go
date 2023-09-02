@@ -5,6 +5,7 @@ import (
 
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/flow"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/logger"
 	"github.com/uptrace/bun"
 )
@@ -44,12 +45,13 @@ func FlowsMaterialisedMap(c context.Context, m flow.Message[string, string]) ([]
 
 func Registrar() flows.RuntimeRegistrar {
 	return flows.MaterialisePostgresqlOneToOneFunctionConfiguration[FlowsMaterialised, string, string]{
+		Container:                inverse.NewContainer(),
 		Name:                     Instance,
 		InputTopic:               flow.StringTopic("word-count"),
 		Function:                 FlowsMaterialisedMap,
 		InputBroker:              "localhost:9092",
 		OutputBroker:             "localhost:9092",
-		HttpPort:                 8081,
+		HttpPort:                 8082,
 		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
 	}
 }

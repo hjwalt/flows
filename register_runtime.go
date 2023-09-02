@@ -11,18 +11,14 @@ const (
 	QualifierRuntime = "QualifierRuntime"
 )
 
-func RegisterRuntime(qualifier string) {
-	inverse.Register(QualifierRuntime, InjectorRuntime(qualifier))
+func RegisterRuntime(qualifier string, ci inverse.Container) {
+	ci.Add(QualifierRuntime, func(ctx context.Context, ci2 inverse.Container) (any, error) {
+		return ci2.Get(ctx, qualifier)
+	})
 }
 
-func InjectorRuntime(qualifier string) inverse.Injector[runtime.Runtime] {
-	return func(ctx context.Context) (runtime.Runtime, error) {
-		return inverse.GetLast[runtime.Runtime](ctx, qualifier)
-	}
-}
-
-func InjectedRuntimes() []runtime.Runtime {
-	allRuntimes, err := inverse.GetAll[runtime.Runtime](context.Background(), QualifierRuntime)
+func InjectedRuntimes(ci inverse.Container) []runtime.Runtime {
+	allRuntimes, err := inverse.GenericGetAll[runtime.Runtime](ci, context.Background(), QualifierRuntime)
 	if err != nil {
 		panic(err)
 	}

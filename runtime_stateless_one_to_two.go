@@ -7,10 +7,12 @@ import (
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 )
 
 type StatelessOneToTwoConfiguration[IK any, IV any, OK1 any, OV1 any, OK2 any, OV2 any] struct {
+	Container                  inverse.Container
 	Name                       string
 	InputTopic                 flow.Topic[IK, IV]
 	OutputTopicOne             flow.Topic[OK1, OV1]
@@ -27,10 +29,12 @@ type StatelessOneToTwoConfiguration[IK any, IV any, OK1 any, OV1 any, OK2 any, O
 
 func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Register() {
 	RegisterStatelessSingleFunction(
+		c.Container,
 		c.InputTopic.Name(),
 		stateless.ConvertTopicOneToTwo(c.Function, c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo),
 	)
 	RegisterRouteConfig(
+		c.Container,
 		runtime_bunrouter.WithRouterFlow(
 			router.WithFlowStatelessOneToTwo(c.InputTopic, c.OutputTopicOne, c.OutputTopicTwo),
 		),
@@ -39,18 +43,22 @@ func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Register() {
 
 func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) RegisterRuntime() {
 	RegisterRetry(
+		c.Container,
 		c.RetryConfiguration,
 	)
 	RegisterProducer(
+		c.Container,
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
 	RegisterConsumer(
+		c.Container,
 		c.Name,
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
 	RegisterRoute(
+		c.Container,
 		c.HttpPort,
 		c.RouteConfiguration,
 	)
@@ -61,6 +69,12 @@ func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Runtime() ru
 	c.Register()
 
 	return &RuntimeFacade{
-		Runtimes: InjectedRuntimes(),
+		Runtimes: InjectedRuntimes(
+			c.Container,
+		),
 	}
+}
+
+func (c StatelessOneToTwoConfiguration[IK, IV, OK1, OV1, OK2, OV2]) Inverse() inverse.Container {
+	return c.Container
 }

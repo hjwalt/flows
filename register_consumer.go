@@ -13,44 +13,56 @@ import (
 )
 
 const (
-	QualifierKafkaConsumerConfiguration             = "QualifierKafkaConsumerConfiguration"
-	QualifierKafkaConsumer                          = "QualifierKafkaConsumer"
-	QualifierKafkaConsumerHandler                   = "QualifierKafkaConsumerHandler"
-	QualifierKafkaConsumerBatchFunction             = "QualifierKafkaConsumerBatchFunction"
-	QualifierKafkaConsumerKeyFunction               = "QualifierKafkaConsumerKeyFunction"
-	QualifierKafkaConsumerKeyedHandlerConfiguration = "QualifierKafkaConsumerKeyedHandlerConfiguration"
-	QualifierConsumerFunction                       = "QualifierFlowStateless"
-	QualifierConsumerTopic                          = "QualifierConsumerTopic"
+	QualifierKafkaConsumer              = "QualifierKafkaConsumer"
+	QualifierKafkaConsumerHandler       = "QualifierKafkaConsumerHandler"
+	QualifierKafkaConsumerBatchFunction = "QualifierKafkaConsumerBatchFunction"
+	QualifierKafkaConsumerKeyFunction   = "QualifierKafkaConsumerKeyFunction"
+	QualifierConsumerFunction           = "QualifierFlowStateless"
 )
 
 func RegisterConsumer(
+	container inverse.Container,
 	name string,
 	broker string,
 	configs []runtime.Configuration[*runtime_sarama.Consumer],
 ) {
-	RegisterConsumerConfig(
-		runtime_sarama.WithConsumerBroker(broker),
-		runtime_sarama.WithConsumerGroupName(name),
+
+	resolver := runtime.NewResolver[*runtime_sarama.Consumer, runtime.Runtime](
+		QualifierKafkaConsumer,
+		container,
+		true,
+		runtime_sarama.NewConsumer,
 	)
-	RegisterConsumerConfig(configs...)
-	inverse.Register(QualifierKafkaConsumerConfiguration, ResolveConsumerHandlerConfiguration)
-	inverse.Register(QualifierKafkaConsumerConfiguration, ResolveConsumerTopics)
-	inverse.RegisterWithConfigurationRequired[*runtime_sarama.Consumer](QualifierKafkaConsumer, QualifierKafkaConsumerConfiguration, runtime_sarama.NewConsumer)
 
-	inverse.RegisterConfiguration[*runtime_sarama.KeyedHandler](QualifierKafkaConsumerKeyedHandlerConfiguration, runtime_sarama.WithKeyedHandlerPrometheus())
-	inverse.Register(QualifierKafkaConsumerKeyedHandlerConfiguration, ResolveConsumerKeyFunction)
-	inverse.Register(QualifierKafkaConsumerKeyedHandlerConfiguration, ResolveConsumerBatchFunction)
-	inverse.RegisterWithConfigurationRequired[*runtime_sarama.KeyedHandler](QualifierKafkaConsumerHandler, QualifierKafkaConsumerKeyedHandlerConfiguration, runtime_sarama.NewKeyedHandler)
+	resolver.AddConfigVal(runtime_sarama.WithConsumerBroker(broker))
+	resolver.AddConfigVal(runtime_sarama.WithConsumerGroupName(name))
+	resolver.AddConfig(ResolveConsumerHandlerConfiguration)
+	resolver.AddConfig(ResolveConsumerTopics)
 
-	RegisterRuntime(QualifierKafkaConsumer)
+	for _, config := range configs {
+		resolver.AddConfigVal(config)
+	}
+
+	resolver.Register()
+
+	RegisterRuntime(QualifierKafkaConsumer, container)
+
+	consumerKeyedHandlerResolver := runtime.NewResolver[*runtime_sarama.KeyedHandler, runtime_sarama.ConsumerHandler](
+		QualifierKafkaConsumerHandler,
+		container,
+		true,
+		runtime_sarama.NewKeyedHandler,
+	)
+
+	consumerKeyedHandlerResolver.AddConfigVal(runtime_sarama.WithKeyedHandlerPrometheus())
+	consumerKeyedHandlerResolver.AddConfig(ResolveConsumerKeyFunction)
+	consumerKeyedHandlerResolver.AddConfig(ResolveConsumerBatchFunction)
+
+	consumerKeyedHandlerResolver.Register()
 }
 
-func RegisterConsumerConfig(config ...runtime.Configuration[*runtime_sarama.Consumer]) {
-	inverse.RegisterInstances(QualifierKafkaConsumerConfiguration, config)
-}
-
-func ResolveConsumerHandlerConfiguration(ctx context.Context) (runtime.Configuration[*runtime_sarama.Consumer], error) {
-	consumerHandler, getConsumerHandlerError := inverse.GetLast[runtime_sarama.ConsumerHandler](ctx, QualifierKafkaConsumerHandler)
+func ResolveConsumerHandlerConfiguration(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_sarama.Consumer], error) {
+	consumerHandler, getConsumerHandlerError := inverse.GenericGetLast[runtime_sarama.ConsumerHandler](ci, ctx, QualifierKafkaConsumerHandler)
 	if getConsumerHandlerError != nil {
 		return nil, getConsumerHandlerError
 	}
@@ -66,16 +78,16 @@ type ConsumerFunction struct {
 	Key   stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes]
 }
 
-func RegisterConsumerFunctionInstance(instance ConsumerFunction) {
-	inverse.RegisterInstance(QualifierConsumerFunction, instance)
+func RegisterConsumerFunctionInstance(instance ConsumerFunction, ci inverse.Container) {
+	ci.AddVal(QualifierConsumerFunction, instance)
 }
 
-func RegisterConsumerFunctionInjector(injector inverse.Injector[ConsumerFunction]) {
-	inverse.Register(QualifierConsumerFunction, injector)
+func RegisterConsumerFunctionInjector(injector inverse.Injector[ConsumerFunction], ci inverse.Container) {
+	inverse.GenericAdd(ci, QualifierConsumerFunction, injector)
 }
 
-func ResolveConsumerBatchFunction(ctx context.Context) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
-	allStatelessFunctions, getAllErr := inverse.GetAll[ConsumerFunction](ctx, QualifierConsumerFunction)
+func ResolveConsumerBatchFunction(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
+	allStatelessFunctions, getAllErr := inverse.GenericGetAll[ConsumerFunction](ci, ctx, QualifierConsumerFunction)
 	if getAllErr != nil {
 		return nil, getAllErr
 	}
@@ -84,12 +96,12 @@ func ResolveConsumerBatchFunction(ctx context.Context) (runtime.Configuration[*r
 		return nil, errors.New("missing stateless functions")
 	}
 
-	retry, retryErr := GetRetry(ctx)
+	retry, retryErr := GetRetry(ctx, ci)
 	if retryErr != nil {
 		return nil, retryErr
 	}
 
-	producer, producerErr := GetKafkaProducer(ctx)
+	producer, producerErr := GetKafkaProducer(ctx, ci)
 	if producerErr != nil {
 		return nil, producerErr
 	}
@@ -122,8 +134,8 @@ func ResolveConsumerBatchFunction(ctx context.Context) (runtime.Configuration[*r
 	return runtime_sarama.WithKeyedHandlerFunction(batchFn), nil
 }
 
-func ResolveConsumerKeyFunction(ctx context.Context) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
-	allStatelessFunctions, getAllErr := inverse.GetAll[ConsumerFunction](ctx, QualifierConsumerFunction)
+func ResolveConsumerKeyFunction(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
+	allStatelessFunctions, getAllErr := inverse.GenericGetAll[ConsumerFunction](ci, ctx, QualifierConsumerFunction)
 	if getAllErr != nil {
 		return nil, getAllErr
 	}
@@ -147,8 +159,8 @@ func ResolveConsumerKeyFunction(ctx context.Context) (runtime.Configuration[*run
 	return runtime_sarama.WithKeyedHandlerKeyFunction(keyFn), nil
 }
 
-func ResolveConsumerTopics(ctx context.Context) (runtime.Configuration[*runtime_sarama.Consumer], error) {
-	allStatelessFunctions, getAllErr := inverse.GetAll[ConsumerFunction](ctx, QualifierConsumerFunction)
+func ResolveConsumerTopics(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_sarama.Consumer], error) {
+	allStatelessFunctions, getAllErr := inverse.GenericGetAll[ConsumerFunction](ci, ctx, QualifierConsumerFunction)
 	if getAllErr != nil {
 		return nil, getAllErr
 	}
@@ -164,4 +176,18 @@ func ResolveConsumerTopics(ctx context.Context) (runtime.Configuration[*runtime_
 	}
 
 	return runtime_sarama.WithConsumerTopic(topics...), nil
+}
+
+// ===================================
+
+func RegisterConsumerConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_sarama.Consumer]) {
+	for _, config := range configs {
+		ci.AddVal(runtime.QualifierConfig(QualifierKafkaConsumer), config)
+	}
+}
+
+func RegisterConsumerKeyedHandlerConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_sarama.KeyedHandler]) {
+	for _, config := range configs {
+		ci.AddVal(runtime.QualifierConfig(QualifierKafkaConsumerHandler), config)
+	}
 }

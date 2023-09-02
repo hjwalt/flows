@@ -9,21 +9,31 @@ import (
 )
 
 const (
-	QualifierRetryConfiguration = "QualifierRetryConfiguration"
-	QualifierRetry              = "QualifierRetry"
+	QualifierRetry = "QualifierRetry"
 )
 
 // Retry
-func RegisterRetry(config []runtime.Configuration[*runtime_retry.Retry]) {
-	inverse.RegisterInstances(QualifierRetryConfiguration, config)
-	inverse.RegisterWithConfigurationOptional[*runtime_retry.Retry](
+func RegisterRetry(
+	container inverse.Container,
+	configs []runtime.Configuration[*runtime_retry.Retry],
+) {
+
+	resolver := runtime.NewResolver[*runtime_retry.Retry, *runtime_retry.Retry](
 		QualifierRetry,
-		QualifierRetryConfiguration,
+		container,
+		false,
 		runtime_retry.NewRetry,
 	)
-	inverse.Register(QualifierRuntime, InjectorRuntime(QualifierRetry))
+
+	for _, config := range configs {
+		resolver.AddConfigVal(config)
+	}
+
+	resolver.Register()
+
+	RegisterRuntime(QualifierRetry, container)
 }
 
-func GetRetry(ctx context.Context) (*runtime_retry.Retry, error) {
-	return inverse.GetLast[*runtime_retry.Retry](ctx, QualifierRetry)
+func GetRetry(ctx context.Context, ci inverse.Container) (*runtime_retry.Retry, error) {
+	return inverse.GenericGetLast[*runtime_retry.Retry](ci, ctx, QualifierRetry)
 }

@@ -10,28 +10,41 @@ import (
 )
 
 var (
-	QualifierKafkaProducerConfiguration = "QualifierKafkaProducerConfiguration"
-	QualifierKafkaProducer              = "QualifierKafkaProducer"
+	QualifierKafkaProducer = "QualifierKafkaProducer"
 )
 
 func RegisterProducer(
+	container inverse.Container,
 	broker string,
 	configs []runtime.Configuration[*runtime_sarama.Producer],
 ) {
-	RegisterProducerConfig(runtime_sarama.WithProducerBroker(broker))
-	RegisterProducerConfig(configs...)
-	inverse.RegisterWithConfigurationRequired[*runtime_sarama.Producer](
+
+	resolver := runtime.NewResolver[*runtime_sarama.Producer, flow.Producer](
 		QualifierKafkaProducer,
-		QualifierKafkaProducerConfiguration,
+		container,
+		true,
 		runtime_sarama.NewProducer,
 	)
-	RegisterRuntime(QualifierKafkaProducer)
+
+	resolver.AddConfigVal(runtime_sarama.WithProducerBroker(broker))
+
+	for _, config := range configs {
+		resolver.AddConfigVal(config)
+	}
+
+	resolver.Register()
+
+	RegisterRuntime(QualifierKafkaProducer, container)
 }
 
-func RegisterProducerConfig(config ...runtime.Configuration[*runtime_sarama.Producer]) {
-	inverse.RegisterInstances(QualifierKafkaProducerConfiguration, config)
+func GetKafkaProducer(ctx context.Context, ci inverse.Container) (flow.Producer, error) {
+	return inverse.GenericGetLast[flow.Producer](ci, ctx, QualifierKafkaProducer)
 }
 
-func GetKafkaProducer(ctx context.Context) (flow.Producer, error) {
-	return inverse.GetLast[flow.Producer](ctx, QualifierKafkaProducer)
+// ===================================
+
+func RegisterProducerConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_sarama.Producer]) {
+	for _, config := range configs {
+		ci.AddVal(runtime.QualifierConfig(QualifierKafkaProducer), config)
+	}
 }

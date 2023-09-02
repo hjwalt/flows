@@ -12,15 +12,13 @@ const (
 )
 
 func instance() runtime.Runtime {
-	wordCount := example_word_count.Registrar()
-	wordMaterialise := example_word_materialise.Registrar()
+	allRuntimes := []runtime.Runtime{}
 
-	wordMaterialise.RegisterRuntime()
-	wordCount.Register()
-	wordMaterialise.Register()
+	allRuntimes = append(allRuntimes, flows.Runtimes(example_word_count.Registrar)...)
+	allRuntimes = append(allRuntimes, flows.Runtimes(example_word_materialise.Registrar)...)
 
 	return &flows.RuntimeFacade{
-		Runtimes: flows.InjectedRuntimes(),
+		Runtimes: allRuntimes,
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 )
 
@@ -23,6 +24,7 @@ import (
 // stateful switch -> stateful function(s) (for each source topic)
 
 type JoinPostgresqlFunctionConfiguration struct {
+	Container                  inverse.Container
 	Name                       string
 	StatefulFunctions          map[string]stateful.SingleFunction
 	PersistenceIdFunctions     map[string]stateful.PersistenceIdFunction[[]byte, []byte]
@@ -57,6 +59,7 @@ func (c JoinPostgresqlFunctionConfiguration) Register() {
 		)
 
 		RegisterStatelessSingleFunctionWithKey(
+			c.Container,
 			topic,
 			sourceToIntermediateMap,
 			persistenceIdFn,
@@ -67,6 +70,7 @@ func (c JoinPostgresqlFunctionConfiguration) Register() {
 	}
 
 	RegisterStatefulFunction(
+		c.Container,
 		c.IntermediateTopicName,
 		c.PostgresTable,
 		stateful.NewTopicSwitch(statefulTopicSwitchConfigurations...),
@@ -76,23 +80,28 @@ func (c JoinPostgresqlFunctionConfiguration) Register() {
 
 func (c JoinPostgresqlFunctionConfiguration) RegisterRuntime() {
 	RegisterPostgresql(
+		c.Container,
 		c.Name,
 		c.PostgresConnectionString,
 		c.PostgresqlConfiguration,
 	)
 	RegisterRetry(
+		c.Container,
 		c.RetryConfiguration,
 	)
 	RegisterProducer(
+		c.Container,
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
 	RegisterConsumer(
+		c.Container,
 		c.Name,
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
 	RegisterRoute(
+		c.Container,
 		c.HttpPort,
 		c.RouteConfiguration,
 	)
@@ -103,6 +112,12 @@ func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
 	c.Register()
 
 	return &RuntimeFacade{
-		Runtimes: InjectedRuntimes(),
+		Runtimes: InjectedRuntimes(
+			c.Container,
+		),
 	}
+}
+
+func (c JoinPostgresqlFunctionConfiguration) Inverse() inverse.Container {
+	return c.Container
 }

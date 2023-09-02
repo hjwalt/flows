@@ -8,6 +8,7 @@ import (
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/runway/format"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/reflect"
 	"go.uber.org/zap"
@@ -69,6 +70,7 @@ func joinWord(c context.Context, m flow.Message[string, string], s stateful.Stat
 
 func Registrar() flows.RuntimeRegistrar {
 	return flows.JoinPostgresqlFunctionConfiguration{
+		Container: inverse.NewContainer(),
 		StatefulFunctions: map[string]stateful.SingleFunction{
 			"word": stateful.ConvertOneToOne(
 				joinCount,

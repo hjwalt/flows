@@ -9,13 +9,18 @@ import (
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateful_bun"
 	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/structure"
 )
 
-func RegisterStatelessSingleFunction(topic string, fn stateless.SingleFunction) {
+func RegisterStatelessSingleFunction(
+	ci inverse.Container,
+	topic string,
+	fn stateless.SingleFunction,
+) {
 	RegisterConsumerFunctionInjector(
-		func(ctx context.Context) (ConsumerFunction, error) {
-			retry, err := GetRetry(ctx)
+		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
+			retry, err := GetRetry(ctx, ci)
 			if err != nil {
 				return ConsumerFunction{}, err
 			}
@@ -38,25 +43,36 @@ func RegisterStatelessSingleFunction(topic string, fn stateless.SingleFunction) 
 				Fn:    wrappedBatch,
 			}, nil
 		},
+		ci,
 	)
 }
 
-func RegisterStatelessBatchFunction(topic string, fn stateless.BatchFunction) {
+func RegisterStatelessBatchFunction(
+	ci inverse.Container,
+	topic string,
+	fn stateless.BatchFunction,
+) {
 	RegisterConsumerFunctionInjector(
-		func(ctx context.Context) (ConsumerFunction, error) {
+		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
 			return ConsumerFunction{
 				Topic: topic,
 				Key:   stateless.Base64PersistenceId,
 				Fn:    fn,
 			}, nil
 		},
+		ci,
 	)
 }
 
-func RegisterStatelessSingleFunctionWithKey(topic string, fn stateless.SingleFunction, key stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes]) {
+func RegisterStatelessSingleFunctionWithKey(
+	ci inverse.Container,
+	topic string,
+	fn stateless.SingleFunction,
+	key stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes],
+) {
 	RegisterConsumerFunctionInjector(
-		func(ctx context.Context) (ConsumerFunction, error) {
-			retry, err := GetRetry(ctx)
+		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
+			retry, err := GetRetry(ctx, ci)
 			if err != nil {
 				return ConsumerFunction{}, err
 			}
@@ -79,18 +95,20 @@ func RegisterStatelessSingleFunctionWithKey(topic string, fn stateless.SingleFun
 				Fn:    wrappedBatch,
 			}, nil
 		},
+		ci,
 	)
 }
 
 func RegisterStatefulFunction(
+	ci inverse.Container,
 	topic string,
 	tableName string,
 	fn stateful.SingleFunction,
 	key stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes],
 ) {
 	RegisterConsumerFunctionInjector(
-		func(ctx context.Context) (ConsumerFunction, error) {
-			bunConnection, getBunConnectionError := GetPostgresqlConnection(ctx)
+		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
+			bunConnection, getBunConnectionError := GetPostgresqlConnection(ctx, ci)
 			if getBunConnectionError != nil {
 				return ConsumerFunction{}, getBunConnectionError
 			}
@@ -116,15 +134,19 @@ func RegisterStatefulFunction(
 				Key:   key,
 				Fn:    wrappedBatch,
 			}, nil
-
 		},
+		ci,
 	)
 }
 
-func RegisterMaterialiseFunction[T any](topic string, fn materialise.MapFunction[structure.Bytes, structure.Bytes, T]) {
+func RegisterMaterialiseFunction[T any](
+	ci inverse.Container,
+	topic string,
+	fn materialise.MapFunction[structure.Bytes, structure.Bytes, T],
+) {
 	RegisterConsumerFunctionInjector(
-		func(ctx context.Context) (ConsumerFunction, error) {
-			bunConnection, getBunConnectionError := GetPostgresqlConnection(ctx)
+		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
+			bunConnection, getBunConnectionError := GetPostgresqlConnection(ctx, ci)
 			if getBunConnectionError != nil {
 				return ConsumerFunction{}, getBunConnectionError
 			}
@@ -144,17 +166,19 @@ func RegisterMaterialiseFunction[T any](topic string, fn materialise.MapFunction
 				Fn:    wrappedBatch,
 			}, nil
 		},
+		ci,
 	)
 }
 
 func RegisterCollectorFunction(
+	ci inverse.Container,
 	topic string,
 	persistenceIdFunction stateful.PersistenceIdFunction[[]byte, []byte],
 	aggregator collect.Aggregator[structure.Bytes, structure.Bytes, structure.Bytes],
 	collector collect.Collector,
 ) {
 	RegisterConsumerFunctionInjector(
-		func(ctx context.Context) (ConsumerFunction, error) {
+		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
 			wrappedBatch := collect.NewCollect(
 				collect.WithCollectCollector(collector),
 				collect.WithCollectAggregator(aggregator),
@@ -167,5 +191,6 @@ func RegisterCollectorFunction(
 				Fn:    wrappedBatch,
 			}, nil
 		},
+		ci,
 	)
 }
