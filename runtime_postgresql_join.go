@@ -24,7 +24,6 @@ import (
 // stateful switch -> stateful function(s) (for each source topic)
 
 type JoinPostgresqlFunctionConfiguration struct {
-	Container                  inverse.Container
 	Name                       string
 	StatefulFunctions          map[string]stateful.SingleFunction
 	PersistenceIdFunctions     map[string]stateful.PersistenceIdFunction[[]byte, []byte]
@@ -41,7 +40,7 @@ type JoinPostgresqlFunctionConfiguration struct {
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c JoinPostgresqlFunctionConfiguration) Register() {
+func (c JoinPostgresqlFunctionConfiguration) Register(ci inverse.Container) {
 	statefulTopicSwitchConfigurations := []runtime.Configuration[*stateful.TopicSwitch]{}
 	persistenceIdConfigurations := []runtime.Configuration[*stateful.PersistenceIdSwitch]{}
 
@@ -59,7 +58,7 @@ func (c JoinPostgresqlFunctionConfiguration) Register() {
 		)
 
 		RegisterStatelessSingleFunctionWithKey(
-			c.Container,
+			ci,
 			topic,
 			sourceToIntermediateMap,
 			persistenceIdFn,
@@ -70,54 +69,39 @@ func (c JoinPostgresqlFunctionConfiguration) Register() {
 	}
 
 	RegisterJoinStatefulFunction(
-		c.Container,
+		ci,
 		c.IntermediateTopicName,
 		c.PostgresTable,
 		stateful.NewTopicSwitch(statefulTopicSwitchConfigurations...),
 		stateful.NewPersistenceIdSwitch(persistenceIdConfigurations...),
 	)
-}
 
-func (c JoinPostgresqlFunctionConfiguration) RegisterRuntime() {
+	// RUNTIME
+
 	RegisterPostgresql(
-		c.Container,
+		ci,
 		c.Name,
 		c.PostgresConnectionString,
 		c.PostgresqlConfiguration,
 	)
 	RegisterRetry(
-		c.Container,
+		ci,
 		c.RetryConfiguration,
 	)
 	RegisterProducer(
-		c.Container,
+		ci,
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
 	RegisterConsumer(
-		c.Container,
+		ci,
 		c.Name,
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
 	RegisterRoute(
-		c.Container,
+		ci,
 		c.HttpPort,
 		c.RouteConfiguration,
 	)
-}
-
-func (c JoinPostgresqlFunctionConfiguration) Runtime() runtime.Runtime {
-	c.RegisterRuntime()
-	c.Register()
-
-	return &RuntimeFacade{
-		Runtimes: InjectedRuntimes(
-			c.Container,
-		),
-	}
-}
-
-func (c JoinPostgresqlFunctionConfiguration) Inverse() inverse.Container {
-	return c.Container
 }

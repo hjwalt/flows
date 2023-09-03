@@ -6,7 +6,6 @@ import (
 	"github.com/hjwalt/flows/example/example_word_count"
 	"github.com/hjwalt/flows/example/example_word_join"
 	"github.com/hjwalt/flows/example/example_word_materialise"
-	"github.com/hjwalt/flows/example/example_word_multi"
 	"github.com/hjwalt/flows/example/example_word_remap"
 	"github.com/hjwalt/runway/environment"
 )
@@ -18,10 +17,9 @@ func main() {
 	example_word_count.Register(m)
 	example_word_join.Register(m)
 	example_word_materialise.Register(m)
-	example_word_multi.Register(m)
 	example_word_remap.Register(m)
 
-	err := m.Start(environment.GetString("INSTANCE", example_word_multi.Instance))
+	err := m.Start(environment.GetString("INSTANCE", flows.AllInstances))
 
 	if err != nil {
 		panic(err)

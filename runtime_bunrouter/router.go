@@ -22,18 +22,26 @@ const (
 	DELETE = "DELETE"
 )
 
+var ports = structure.NewSet[int]()
+
 // constructor
 func NewRouter(configurations ...runtime.Configuration[*Router]) runtime.Runtime {
-	router := &Router{
+	r := &Router{
 		runtimeConfiguration: []runtime.Configuration[*runtime.HttpRunnable]{},
+		flowConfiguration:    []runtime.Configuration[*router.RouteFlow]{},
 		router:               bunrouter.New(),
 	}
 
 	for _, configuration := range configurations {
-		router = configuration(router)
+		r = configuration(r)
 	}
 
-	runtimeConfiguration := append(router.runtimeConfiguration, runtime.HttpWithHandler(router.router))
+	flow := router.NewRouteFlow(
+		r.flowConfiguration...,
+	)
+	r.router.GET("/flow", bunrouter.HTTPHandlerFunc(flow.Handle))
+
+	runtimeConfiguration := append(r.runtimeConfiguration, runtime.HttpWithHandler(r.router))
 
 	return runtime.NewHttp(runtimeConfiguration...)
 }
@@ -41,6 +49,11 @@ func NewRouter(configurations ...runtime.Configuration[*Router]) runtime.Runtime
 // configuration
 func WithRouterPort(port int) runtime.Configuration[*Router] {
 	return func(r *Router) *Router {
+		for ports.Contain(port) {
+			port = port + 1
+		}
+
+		ports.Add(port)
 		r.runtimeConfiguration = append(r.runtimeConfiguration, runtime.HttpWithPort(port))
 		return r
 	}
@@ -165,25 +178,14 @@ func WithRouterProducerHandler(method string, path string, bodyMap stateless.One
 
 func WithRouterFlow(configurations ...runtime.Configuration[*router.RouteFlow]) runtime.Configuration[*Router] {
 	return func(r *Router) *Router {
-		// handlerFunction := router.NewRouteFlow(
-		// 	configurations...,
-		// )
-		// if r.group == nil {
-		// 	r.router.GET("/flow", bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
-		// } else {
-		// 	r.group.GET("/flow", bunrouter.HTTPHandlerFunc(handlerFunction.Handle))
-		// }
+		r.flowConfiguration = append(r.flowConfiguration, configurations...)
 		return r
 	}
 }
 
 func WithRouterPrometheus() runtime.Configuration[*Router] {
 	return func(r *Router) *Router {
-		if r.group == nil {
-			r.router.GET("/prometheus", bunrouter.HTTPHandlerFunc(promhttp.Handler().ServeHTTP))
-		} else {
-			r.group.GET("/prometheus", bunrouter.HTTPHandlerFunc(promhttp.Handler().ServeHTTP))
-		}
+		r.router.GET("/prometheus", bunrouter.HTTPHandlerFunc(promhttp.Handler().ServeHTTP))
 		return r
 	}
 }
@@ -198,6 +200,7 @@ func WithRouterProducer(producer flow.Producer) runtime.Configuration[*Router] {
 // implementation
 type Router struct {
 	runtimeConfiguration []runtime.Configuration[*runtime.HttpRunnable]
+	flowConfiguration    []runtime.Configuration[*router.RouteFlow]
 	router               *bunrouter.Router
 	group                *bunrouter.Group
 	producer             flow.Producer

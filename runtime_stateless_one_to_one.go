@@ -12,7 +12,6 @@ import (
 )
 
 type StatelessOneToOneConfiguration[IK any, IV any, OK any, OV any] struct {
-	Container                  inverse.Container
 	Name                       string
 	InputTopic                 flow.Topic[IK, IV]
 	OutputTopic                flow.Topic[OK, OV]
@@ -26,54 +25,39 @@ type StatelessOneToOneConfiguration[IK any, IV any, OK any, OV any] struct {
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c StatelessOneToOneConfiguration[IK, IV, OK, OV]) Register() {
+func (c StatelessOneToOneConfiguration[IK, IV, OK, OV]) Register(ci inverse.Container) {
 	RegisterStatelessSingleFunction(
-		c.Container,
+		ci,
 		c.InputTopic.Name(),
 		stateless.ConvertTopicOneToOne(c.Function, c.InputTopic, c.OutputTopic),
 	)
 	RegisterRouteConfig(
-		c.Container,
+		ci,
 		runtime_bunrouter.WithRouterFlow(
 			router.WithFlowStatelessOneToOne(c.InputTopic, c.OutputTopic),
 		),
 	)
-}
 
-func (c StatelessOneToOneConfiguration[IK, IV, OK, OV]) RegisterRuntime() {
+	// RUNTIME
+
 	RegisterRetry(
-		c.Container,
+		ci,
 		c.RetryConfiguration,
 	)
 	RegisterProducer(
-		c.Container,
+		ci,
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
 	RegisterConsumer(
-		c.Container,
+		ci,
 		c.Name,
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
 	RegisterRoute(
-		c.Container,
+		ci,
 		c.HttpPort,
 		c.RouteConfiguration,
 	)
-}
-
-func (c StatelessOneToOneConfiguration[IK, IV, OK, OV]) Runtime() runtime.Runtime {
-	c.RegisterRuntime()
-	c.Register()
-
-	return &RuntimeFacade{
-		Runtimes: InjectedRuntimes(
-			c.Container,
-		),
-	}
-}
-
-func (c StatelessOneToOneConfiguration[IK, IV, OK, OV]) Inverse() inverse.Container {
-	return c.Container
 }

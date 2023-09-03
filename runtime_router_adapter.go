@@ -14,7 +14,6 @@ import (
 
 // Wiring configuration
 type RouterAdapterConfiguration[Request any, InputKey any, InputValue any] struct {
-	Container                  inverse.Container
 	Name                       string
 	ProduceTopic               flow.Topic[InputKey, InputValue]
 	ProduceBroker              string
@@ -25,9 +24,9 @@ type RouterAdapterConfiguration[Request any, InputKey any, InputValue any] struc
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register() {
+func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register(ci inverse.Container) {
 	RegisterRouteConfig(
-		c.Container,
+		ci,
 		runtime_bunrouter.WithRouterProducerHandler(
 			runtime_bunrouter.POST,
 			"/"+c.Name,
@@ -38,32 +37,17 @@ func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register() {
 			),
 		),
 	)
-}
 
-func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) RegisterRuntime() {
+	// RUNTIME
+
 	RegisterProducer(
-		c.Container,
+		ci,
 		c.ProduceBroker,
 		c.KafkaProducerConfiguration,
 	)
 	RegisterRoute(
-		c.Container,
+		ci,
 		c.HttpPort,
 		c.RouteConfiguration,
 	)
-}
-
-func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Runtime() runtime.Runtime {
-	c.RegisterRuntime()
-	c.Register()
-
-	return &RuntimeFacade{
-		Runtimes: InjectedRuntimes(
-			c.Container,
-		),
-	}
-}
-
-func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Inverse() inverse.Container {
-	return c.Container
 }

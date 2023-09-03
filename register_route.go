@@ -25,6 +25,10 @@ func RegisterRoute(
 		runtime_bunrouter.NewRouter,
 	)
 
+	if port == 0 {
+		port = 8081
+	}
+
 	resolver.AddConfigVal(runtime_bunrouter.WithRouterPort(port))
 	resolver.AddConfigVal(runtime_bunrouter.WithRouterPrometheus())
 	resolver.AddConfig(ResolveRouteProducer)

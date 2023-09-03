@@ -55,18 +55,15 @@ func collector(c context.Context, persistenceId string, s stateful.State[*exampl
 	return &outMessage, nil
 }
 
-func Registrar() flows.RuntimeRegistrar {
-	container := inverse.NewContainer()
-
+func Registrar(ci inverse.Container) flows.RuntimeRegistrar {
 	flows.RegisterConsumerKeyedHandlerConfig(
-		container,
+		ci,
 		runtime_sarama.WithKeyedHandlerMaxPerKey(1000),
 		runtime_sarama.WithKeyedHandlerMaxBufferred(10000),
 		runtime_sarama.WithKeyedHandlerMaxDelay(1*time.Second),
 	)
 
 	return flows.CollectorOneToOneConfiguration[*example.WordCollectState, string, string, string, string]{
-		Container:        container,
 		Name:             Instance,
 		InputTopic:       flow.StringTopic("word"),
 		OutputTopic:      flow.StringTopic("word-collect"),

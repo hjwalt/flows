@@ -43,15 +43,14 @@ func FlowsMaterialisedMap(c context.Context, m flow.Message[string, string]) ([]
 	}, nil
 }
 
-func Registrar() flows.RuntimeRegistrar {
+func Registrar(ci inverse.Container) flows.RuntimeRegistrar {
 	return flows.MaterialisePostgresqlOneToOneFunctionConfiguration[FlowsMaterialised, string, string]{
-		Container:                inverse.NewContainer(),
 		Name:                     Instance,
 		InputTopic:               flow.StringTopic("word-count"),
 		Function:                 FlowsMaterialisedMap,
 		InputBroker:              "localhost:9092",
 		OutputBroker:             "localhost:9092",
-		HttpPort:                 8082,
+		HttpPort:                 8081,
 		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
 	}
 }

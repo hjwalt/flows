@@ -6,32 +6,22 @@ import (
 )
 
 type RuntimeRegistrar interface {
-	Register()
-	RegisterRuntime()
-	Inverse() inverse.Container
+	Register(ci inverse.Container)
 }
 
-func Runtimes(rf func() RuntimeRegistrar) []runtime.Runtime {
-	r := rf()
+func Runtimes(ci inverse.Container, rf func(inverse.Container) RuntimeRegistrar) []runtime.Runtime {
+	r := rf(ci)
 
-	r.RegisterRuntime()
-	r.Register()
+	r.Register(ci)
 
-	return InjectedRuntimes(r.Inverse())
+	return InjectedRuntimes(ci)
 }
 
-func Register(m Main, instance string, rf func() RuntimeRegistrar) {
+func Register(m Main, instance string, rf func(ci inverse.Container) RuntimeRegistrar) {
 	m.Register(
 		instance,
-		func() runtime.Runtime {
-			r := rf()
-
-			r.RegisterRuntime()
-			r.Register()
-
-			return &RuntimeFacade{
-				Runtimes: InjectedRuntimes(r.Inverse()),
-			}
+		func(ci inverse.Container) []runtime.Runtime {
+			return Runtimes(ci, rf)
 		},
 	)
 }

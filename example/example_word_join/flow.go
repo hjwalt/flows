@@ -68,9 +68,8 @@ func joinWord(c context.Context, m flow.Message[string, string], s stateful.Stat
 	return &outMessage, s, nil
 }
 
-func Registrar() flows.RuntimeRegistrar {
+func Registrar(ci inverse.Container) flows.RuntimeRegistrar {
 	return flows.JoinPostgresqlFunctionConfiguration{
-		Container: inverse.NewContainer(),
 		StatefulFunctions: map[string]stateful.SingleFunction{
 			"word": stateful.ConvertOneToOne(
 				joinCount,
@@ -107,7 +106,7 @@ func Registrar() flows.RuntimeRegistrar {
 		IntermediateTopicName:    "word-join-intermediate",
 		PostgresTable:            "public.flows_join_state",
 		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
-		HttpPort:                 8083,
+		HttpPort:                 8081,
 	}
 }
 

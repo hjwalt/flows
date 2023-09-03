@@ -52,9 +52,8 @@ func fn(c context.Context, m flow.Message[string, string], s stateful.State[*exa
 	return &outMessage, s, nil
 }
 
-func Registrar() flows.RuntimeRegistrar {
+func Registrar(ci inverse.Container) flows.RuntimeRegistrar {
 	return flows.StatefulPostgresqlOneToOneFunctionConfiguration[*example.WordCountState, string, string, string, string]{
-		Container:                inverse.NewContainer(),
 		Name:                     Instance,
 		InputTopic:               flow.StringTopic("word"),
 		OutputTopic:              flow.StringTopic("word-count"),

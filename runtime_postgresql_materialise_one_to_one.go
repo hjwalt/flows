@@ -14,7 +14,6 @@ import (
 
 // Wiring configuration
 type MaterialisePostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any] struct {
-	Container                  inverse.Container
 	Name                       string
 	InputTopic                 flow.Topic[IK, IV]
 	Function                   materialise.MapFunction[IK, IV, S]
@@ -29,60 +28,45 @@ type MaterialisePostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any] s
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
 }
 
-func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Register() {
+func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Register(ci inverse.Container) {
 	RegisterMaterialiseFunction(
-		c.Container,
+		ci,
 		c.InputTopic.Name(),
 		materialise.ConvertOneToOne(c.Function, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
 	)
 	RegisterRouteConfig(
-		c.Container,
+		ci,
 		runtime_bunrouter.WithRouterFlow(
 			router.WithFlowMaterialiseOneToOne(c.InputTopic),
 		),
 	)
-}
 
-func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) RegisterRuntime() {
+	// RUNTIME
+
 	RegisterPostgresql(
-		c.Container,
+		ci,
 		c.Name,
 		c.PostgresConnectionString,
 		c.PostgresqlConfiguration,
 	)
 	RegisterRetry(
-		c.Container,
+		ci,
 		c.RetryConfiguration,
 	)
 	RegisterProducer(
-		c.Container,
+		ci,
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
 	RegisterConsumer(
-		c.Container,
+		ci,
 		c.Name,
 		c.InputBroker,
 		c.KafkaConsumerConfiguration,
 	)
 	RegisterRoute(
-		c.Container,
+		ci,
 		c.HttpPort,
 		c.RouteConfiguration,
 	)
-}
-
-func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Runtime() runtime.Runtime {
-	c.RegisterRuntime()
-	c.Register()
-
-	return &RuntimeFacade{
-		Runtimes: InjectedRuntimes(
-			c.Container,
-		),
-	}
-}
-
-func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Inverse() inverse.Container {
-	return c.Container
 }
