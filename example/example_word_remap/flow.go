@@ -24,7 +24,7 @@ func WordRemapStatelessFunction(c context.Context, m flow.Message[string, string
 	}, nil
 }
 
-func Registrar(ci inverse.Container) flows.RuntimeRegistrar {
+func Registrar(ci inverse.Container) flows.Prebuilt {
 	return flows.StatelessOneToOneConfiguration[string, string, string, string]{
 		Name:         Instance,
 		InputTopic:   flow.StringTopic("word"),
@@ -37,5 +37,5 @@ func Registrar(ci inverse.Container) flows.RuntimeRegistrar {
 }
 
 func Register(m flows.Main) {
-	flows.Register(m, Instance, Registrar)
+	m.Prebuilt(Instance, Registrar)
 }

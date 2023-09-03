@@ -13,25 +13,46 @@ const (
 
 func NewMain() Main {
 	return &main{
-		runtimes: make(map[string]func(inverse.Container) []runtime.Runtime),
+		allInstance: AllInstances,
+		runtimes:    make(map[string]func(inverse.Container) []runtime.Runtime),
+	}
+}
+
+func NewMainAllInstance(allInstanceName string) Main {
+	return &main{
+		allInstance: allInstanceName,
+		runtimes:    make(map[string]func(inverse.Container) []runtime.Runtime),
 	}
 }
 
 type Main interface {
-	Register(i string, r func(inverse.Container) []runtime.Runtime) error
+	Runtimes(i string, r func(inverse.Container) []runtime.Runtime) error
+	Prebuilt(i string, rf func(ci inverse.Container) Prebuilt) error
 	Start(i string) error
 }
 
 type main struct {
-	runtimes map[string]func(inverse.Container) []runtime.Runtime
+	allInstance string
+	runtimes    map[string]func(inverse.Container) []runtime.Runtime
 }
 
-func (m *main) Register(i string, r func(inverse.Container) []runtime.Runtime) error {
+func (m *main) Runtimes(i string, r func(inverse.Container) []runtime.Runtime) error {
 	if m == nil {
 		return errors.New("main is missing")
 	}
 	m.runtimes[i] = r
 	return nil
+}
+
+func (m *main) Prebuilt(i string, rf func(ci inverse.Container) Prebuilt) error {
+	return m.Runtimes(
+		i,
+		func(ci inverse.Container) []runtime.Runtime {
+			r := rf(ci)
+			r.Register(ci)
+			return InjectedRuntimes(ci)
+		},
+	)
 }
 
 func (m *main) Start(i string) error {
@@ -41,7 +62,7 @@ func (m *main) Start(i string) error {
 
 	allRuntimes := []runtime.Runtime{}
 
-	if i == AllInstances {
+	if i == m.allInstance {
 		for _, rConstructor := range m.runtimes {
 			rs := rConstructor(inverse.NewContainer())
 			allRuntimes = append(allRuntimes, rs...)

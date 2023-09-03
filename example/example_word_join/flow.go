@@ -68,7 +68,7 @@ func joinWord(c context.Context, m flow.Message[string, string], s stateful.Stat
 	return &outMessage, s, nil
 }
 
-func Registrar(ci inverse.Container) flows.RuntimeRegistrar {
+func Registrar(ci inverse.Container) flows.Prebuilt {
 	return flows.JoinPostgresqlFunctionConfiguration{
 		StatefulFunctions: map[string]stateful.SingleFunction{
 			"word": stateful.ConvertOneToOne(
@@ -111,5 +111,5 @@ func Registrar(ci inverse.Container) flows.RuntimeRegistrar {
 }
 
 func Register(m flows.Main) {
-	flows.Register(m, Instance, Registrar)
+	m.Prebuilt(Instance, Registrar)
 }

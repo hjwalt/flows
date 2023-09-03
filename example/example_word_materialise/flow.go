@@ -43,7 +43,7 @@ func FlowsMaterialisedMap(c context.Context, m flow.Message[string, string]) ([]
 	}, nil
 }
 
-func Registrar(ci inverse.Container) flows.RuntimeRegistrar {
+func Registrar(ci inverse.Container) flows.Prebuilt {
 	return flows.MaterialisePostgresqlOneToOneFunctionConfiguration[FlowsMaterialised, string, string]{
 		Name:                     Instance,
 		InputTopic:               flow.StringTopic("word-count"),
@@ -56,5 +56,5 @@ func Registrar(ci inverse.Container) flows.RuntimeRegistrar {
 }
 
 func Register(m flows.Main) {
-	flows.Register(m, Instance, Registrar)
+	m.Prebuilt(Instance, Registrar)
 }
