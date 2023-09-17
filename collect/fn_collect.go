@@ -53,7 +53,7 @@ func (r *Collect) Apply(c context.Context, ms []flow.Message[structure.Bytes, st
 	for _, m := range ms {
 		persistenceId, persistenceIdErr := r.persistenceIdFunc(c, m)
 		if persistenceIdErr != nil {
-			return flow.EmptySlice(), errors.Join(persistenceIdErr, ErrBatchCollect, stateful.ErrPersistenceId)
+			return flow.EmptySlice(), errors.Join(persistenceIdErr, ErrBatchCollect, ErrPersistenceId)
 		}
 
 		if state, stateExist := stateMap[persistenceId]; stateExist {
@@ -87,4 +87,8 @@ var (
 	ErrBatchCollect       = errors.New("batch collect")
 	ErrCollectStateMap    = errors.New("collect map message from state")
 	ErrCollectStateCreate = errors.New("collect map state from input message")
+)
+
+var (
+	ErrPersistenceId = errors.New("persistence id")
 )

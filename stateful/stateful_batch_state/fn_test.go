@@ -1,4 +1,4 @@
-package stateful_test
+package stateful_batch_state_test
 
 import (
 	"context"
@@ -6,61 +6,21 @@ import (
 
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/stateful"
+	"github.com/hjwalt/flows/stateful/stateful_batch_state"
+	"github.com/hjwalt/flows/stateful/stateful_mock"
 	"github.com/hjwalt/runway/structure"
 	"github.com/stretchr/testify/assert"
 )
 
-type InMemoryRepository struct {
-	State map[string]stateful.State[structure.Bytes]
-}
-
-func (r *InMemoryRepository) Get(ctx context.Context, persistenceId string) (stateful.State[structure.Bytes], error) {
-	if state, statePresent := r.State[persistenceId]; statePresent {
-		return state, nil
-	} else {
-		return stateful.NewState[[]byte](persistenceId, []byte{}), nil
-	}
-}
-
-func (r *InMemoryRepository) GetAll(ctx context.Context, persistenceIds []string) (map[string]stateful.State[structure.Bytes], error) {
-	stateMap := map[string]stateful.State[structure.Bytes]{}
-	for _, persistenceId := range persistenceIds {
-		if state, statePresent := r.State[persistenceId]; statePresent {
-			stateMap[persistenceId] = state
-		} else {
-			stateMap[persistenceId] = stateful.NewState[[]byte](persistenceId, []byte{})
-		}
-	}
-	return stateMap, nil
-}
-
-func (r *InMemoryRepository) Upsert(ctx context.Context, persistenceId string, dbState stateful.State[structure.Bytes]) error {
-	r.State[persistenceId] = dbState
-	return nil
-}
-
-func (r *InMemoryRepository) UpsertAll(ctx context.Context, stateMap map[string]stateful.State[structure.Bytes]) error {
-	for k, v := range stateMap {
-		r.State[k] = v
-	}
-	return nil
-}
-
-func TestBatchSimpleApplySuccessful(t *testing.T) {
+func TestFn(t *testing.T) {
 	assert := assert.New(t)
 
 	applyCount := 0
 
-	repo := &InMemoryRepository{
-		State: map[string]stateful.State[[]byte]{},
-	}
+	repo := stateful_mock.Repository()
 
-	txFn := stateful.NewReadWrite(
-		stateful.WithReadWritePersistenceIdFunc(func(ctx context.Context, m flow.Message[structure.Bytes, structure.Bytes]) (string, error) {
-			return string(m.Key), nil
-		}),
-		stateful.WithReadWriteRepository(repo),
-		stateful.WithReadWriteFunction(func(c context.Context, m flow.Message[structure.Bytes, structure.Bytes], inState stateful.State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], stateful.State[structure.Bytes], error) {
+	txFn := stateful_batch_state.New(
+		func(c context.Context, m flow.Message[structure.Bytes, structure.Bytes], inState stateful.State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], stateful.State[structure.Bytes], error) {
 			applyCount += 1
 			inState.Content = []byte(string(inState.Content) + string(m.Value))
 			return []flow.Message[structure.Bytes, structure.Bytes]{
@@ -71,7 +31,11 @@ func TestBatchSimpleApplySuccessful(t *testing.T) {
 				},
 				inState,
 				nil
-		}),
+		},
+		func(ctx context.Context, m flow.Message[structure.Bytes, structure.Bytes]) (string, error) {
+			return string(m.Key), nil
+		},
+		repo,
 	)
 
 	txFn(context.Background(), []flow.Message[[]byte, []byte]{

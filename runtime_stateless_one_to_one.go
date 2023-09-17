@@ -7,6 +7,7 @@ import (
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/flows/stateless/stateless_one_to_one"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 )
@@ -16,6 +17,7 @@ type StatelessOneToOneConfiguration[IK any, IV any, OK any, OV any] struct {
 	InputTopic                 flow.Topic[IK, IV]
 	OutputTopic                flow.Topic[OK, OV]
 	Function                   stateless.OneToOneFunction[IK, IV, OK, OV]
+	ErrorHandler               stateless.ErrorHandlerFunction
 	InputBroker                string
 	OutputBroker               string
 	HttpPort                   int
@@ -29,7 +31,7 @@ func (c StatelessOneToOneConfiguration[IK, IV, OK, OV]) Register(ci inverse.Cont
 	RegisterStatelessSingleFunction(
 		ci,
 		c.InputTopic.Name(),
-		stateless.ConvertTopicOneToOne(c.Function, c.InputTopic, c.OutputTopic),
+		stateless_one_to_one.New(c.Function, c.InputTopic, c.OutputTopic),
 	)
 	RegisterRouteConfig(
 		ci,

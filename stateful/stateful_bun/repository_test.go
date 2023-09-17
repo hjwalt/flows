@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/hjwalt/flows/stateful"
-	"github.com/hjwalt/flows/stateful_bun"
+	"github.com/hjwalt/flows/stateful/stateful_bun"
 	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
 )

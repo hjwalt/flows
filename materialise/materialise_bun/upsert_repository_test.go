@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/hjwalt/flows/materialise_bun"
+	"github.com/hjwalt/flows/materialise/materialise_bun"
 	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/uptrace/bun"

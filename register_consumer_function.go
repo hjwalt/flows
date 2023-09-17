@@ -6,10 +6,15 @@ import (
 	"github.com/hjwalt/flows/collect"
 	"github.com/hjwalt/flows/join"
 	"github.com/hjwalt/flows/materialise"
-	"github.com/hjwalt/flows/materialise_bun"
+	"github.com/hjwalt/flows/materialise/materialise_bun"
 	"github.com/hjwalt/flows/stateful"
-	"github.com/hjwalt/flows/stateful_bun"
+	"github.com/hjwalt/flows/stateful/stateful_batch_state"
+	"github.com/hjwalt/flows/stateful/stateful_bun"
+	"github.com/hjwalt/flows/stateful/stateful_error_handler"
+	"github.com/hjwalt/flows/stateful/stateful_error_handler_skip_list"
 	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/flows/stateless/stateless_error_handler"
+	"github.com/hjwalt/flows/stateless/stateless_error_handler_skip_list"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/structure"
 )
@@ -27,6 +32,11 @@ func RegisterStatelessSingleFunction(
 			}
 
 			wrappedFunction := fn
+
+			wrappedFunction = stateless_error_handler.New(
+				wrappedFunction,
+				stateless_error_handler_skip_list.Default(),
+			)
 
 			wrappedFunction = stateless.NewSingleRetry(
 				stateless.WithSingleRetryNextFunction(wrappedFunction),
@@ -80,6 +90,11 @@ func RegisterStatelessSingleFunctionWithKey(
 
 			wrappedFunction := fn
 
+			wrappedFunction = stateless_error_handler.New(
+				wrappedFunction,
+				stateless_error_handler_skip_list.Default(),
+			)
+
 			wrappedFunction = stateless.NewSingleRetry(
 				stateless.WithSingleRetryNextFunction(wrappedFunction),
 				stateless.WithSingleRetryRuntime(retry),
@@ -120,14 +135,20 @@ func RegisterStatefulFunction(
 			)
 
 			wrappedStatefulFunction := fn
+
+			wrappedStatefulFunction = stateful_error_handler.New(
+				wrappedStatefulFunction,
+				stateful_error_handler_skip_list.Default(),
+			)
+
 			wrappedStatefulFunction = stateful.NewDeduplicate(
 				stateful.WithDeduplicateNextFunction(wrappedStatefulFunction),
 			)
 
-			wrappedBatch := stateful.NewReadWrite(
-				stateful.WithReadWriteFunction(wrappedStatefulFunction),
-				stateful.WithReadWritePersistenceIdFunc(key),
-				stateful.WithReadWriteRepository(repository),
+			wrappedBatch := stateful_batch_state.New(
+				wrappedStatefulFunction,
+				key,
+				repository,
 			)
 
 			return ConsumerFunction{
@@ -165,10 +186,10 @@ func RegisterJoinStatefulFunction(
 				stateful.WithDeduplicateNextFunction(wrappedStatefulFunction),
 			)
 
-			wrappedBatch := stateful.NewReadWrite(
-				stateful.WithReadWriteFunction(wrappedStatefulFunction),
-				stateful.WithReadWritePersistenceIdFunc(key),
-				stateful.WithReadWriteRepository(repository),
+			wrappedBatch := stateful_batch_state.New(
+				wrappedStatefulFunction,
+				key,
+				repository,
 			)
 
 			wrappedBatch = join.NewIntermediateToJoinMap(

@@ -3,7 +3,7 @@ package materialise_bun_test
 import (
 	"testing"
 
-	"github.com/hjwalt/flows/materialise_bun"
+	"github.com/hjwalt/flows/materialise/materialise_bun"
 	"github.com/stretchr/testify/assert"
 )
 

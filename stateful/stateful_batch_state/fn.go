@@ -1,4 +1,4 @@
-package stateful
+package stateful_batch_state
 
 import (
 	"context"
@@ -6,51 +6,29 @@ import (
 	"time"
 
 	"github.com/hjwalt/flows/flow"
+	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/logger"
-	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/runway/structure"
 )
 
-// constructor
-func NewReadWrite(configurations ...runtime.Configuration[*ReadWrite]) stateless.BatchFunction {
-	singleFunction := &ReadWrite{}
-	for _, configuration := range configurations {
-		singleFunction = configuration(singleFunction)
-	}
-	return singleFunction.Apply
-}
-
-// configuration
-func WithReadWritePersistenceIdFunc(persistenceIdFunc func(context.Context, flow.Message[structure.Bytes, structure.Bytes]) (string, error)) runtime.Configuration[*ReadWrite] {
-	return func(st *ReadWrite) *ReadWrite {
-		st.persistenceIdFunc = persistenceIdFunc
-		return st
-	}
-}
-
-func WithReadWriteRepository(repository Repository) runtime.Configuration[*ReadWrite] {
-	return func(st *ReadWrite) *ReadWrite {
-		st.repository = repository
-		return st
-	}
-}
-
-func WithReadWriteFunction(next SingleFunction) runtime.Configuration[*ReadWrite] {
-	return func(st *ReadWrite) *ReadWrite {
-		st.next = next
-		return st
-	}
+func New(
+	next stateful.SingleFunction,
+	keyfn stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes],
+	repo stateful.Repository,
+) stateless.BatchFunction {
+	f := fn{next: next, persistenceIdFunc: keyfn, repository: repo}
+	return f.apply
 }
 
 // implementation
-type ReadWrite struct {
-	next              SingleFunction
-	persistenceIdFunc PersistenceIdFunction[structure.Bytes, structure.Bytes]
-	repository        Repository
+type fn struct {
+	next              stateful.SingleFunction
+	persistenceIdFunc stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes]
+	repository        stateful.Repository
 }
 
-func (r *ReadWrite) Apply(c context.Context, ms []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
+func (r *fn) apply(c context.Context, ms []flow.Message[structure.Bytes, structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], error) {
 
 	// prepare persistence id and message map
 	persistenceIds := make([]string, len(ms))
@@ -72,7 +50,7 @@ func (r *ReadWrite) Apply(c context.Context, ms []flow.Message[structure.Bytes, 
 	}
 
 	// prepare result holder
-	nextStateMap := map[string]State[[]byte]{}
+	nextStateMap := map[string]stateful.State[[]byte]{}
 	resultMessages := []flow.Message[structure.Bytes, structure.Bytes]{}
 
 	// execute next function, create next state map
