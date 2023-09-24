@@ -73,11 +73,13 @@ type Retry struct {
 
 func (c *Retry) Start() error {
 	c.stopped.Store(false)
+	logger.Debug("retry start")
 	return nil
 }
 
 func (c *Retry) Stop() {
 	c.stopped.Store(true)
+	logger.Debug("retry stop")
 }
 
 func (c *Retry) Do(fnToDo func(int64) error) error {

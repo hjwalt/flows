@@ -128,7 +128,7 @@ func (h *KeyedHandler) ConsumeClaimIteration(session sarama.ConsumerGroupSession
 
 	select {
 	case saramaMessage := <-khs.messageClaimed:
-		logger.Info("read", zap.String("handler", khs.id), zap.String("topic", saramaMessage.Topic), zap.Int32("partition", saramaMessage.Partition), zap.Int64("offset", saramaMessage.Offset))
+		logger.Debug("read", zap.String("handler", khs.id), zap.String("topic", saramaMessage.Topic), zap.Int32("partition", saramaMessage.Partition), zap.Int64("offset", saramaMessage.Offset))
 
 		flowMessage, flowMessageErr := FromConsumerMessage(saramaMessage)
 		if flowMessageErr != nil {
@@ -214,12 +214,12 @@ func (khs *keyedHandlerState) consumeBatch(
 		khs.reset(maxDelay)
 		return nil
 	}
-	logger.Info("handling", zap.String("source", source), zap.Int("batch", len(khs.messages)), zap.String("handler", khs.id), zap.String("topic", khs.messageToCommit.Topic), zap.Int32("partition", khs.messageToCommit.Partition), zap.Int64("offset", khs.messageToCommit.Offset))
+	logger.Debug("handling", zap.String("source", source), zap.Int("batch", len(khs.messages)), zap.String("handler", khs.id), zap.String("topic", khs.messageToCommit.Topic), zap.Int32("partition", khs.messageToCommit.Partition), zap.Int64("offset", khs.messageToCommit.Offset))
 	if _, err := fn(context.Background(), khs.messages); err != nil {
 		return err
 	}
 	session.MarkMessage(khs.messageToCommit, "")
-	logger.Info("commit", zap.String("topic", khs.messageToCommit.Topic), zap.Int32("partition", khs.messageToCommit.Partition), zap.Int64("offset", khs.messageToCommit.Offset))
+	logger.Debug("commit", zap.String("topic", khs.messageToCommit.Topic), zap.Int32("partition", khs.messageToCommit.Partition), zap.Int64("offset", khs.messageToCommit.Offset))
 
 	if metric != nil {
 		metric.MessagesProcessedIncrement(khs.messageToCommit.Topic, khs.messageToCommit.Partition, int64(len(khs.messages)))

@@ -54,7 +54,7 @@ type PostgresqlConnection struct {
 }
 
 func (r *PostgresqlConnection) Start() error {
-	logger.Info("starting bun")
+	logger.Debug("starting bun")
 
 	if len(r.ApplicationName) == 0 {
 		r.ApplicationName = "flows"
@@ -82,15 +82,15 @@ func (r *PostgresqlConnection) Start() error {
 
 	r.db = bunDb
 
-	logger.Info("started bun")
+	logger.Debug("started bun")
 
 	return nil
 }
 
 func (r *PostgresqlConnection) Stop() {
-	logger.Info("stopping bun")
+	logger.Debug("stopping bun")
 	r.db.Close()
-	logger.Info("stopped bun")
+	logger.Debug("stopped bun")
 }
 
 func (r *PostgresqlConnection) Db() bun.IDB {

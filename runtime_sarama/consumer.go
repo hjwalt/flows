@@ -54,13 +54,13 @@ func (r *Consumer) Start() error {
 		return ErrConsumerBrokersEmpty
 	}
 
-	logger.Info("starting sarama consumer")
+	logger.Debug("starting sarama consumer")
 
 	// set consumer group default
 	if len(r.GroupName) == 0 {
 		r.GroupName = "flows-" + uuid.New().String()
 	}
-	logger.Info("using consumer group name", zap.String("name", r.GroupName))
+	logger.Debug("using consumer group name", zap.String("name", r.GroupName))
 
 	// create consumer group
 	var groupInitErr error
@@ -69,17 +69,17 @@ func (r *Consumer) Start() error {
 		return groupInitErr
 	}
 
-	logger.Info("started sarama consumer")
+	logger.Debug("started sarama consumer")
 
 	return nil
 }
 
 func (r *Consumer) Stop() {
-	logger.Info("stopping sarama consumer")
+	logger.Debug("stopping sarama consumer")
 	if r.Group != nil {
 		r.Group.Close()
 	}
-	logger.Info("stopped sarama consumer")
+	logger.Debug("stopped sarama consumer")
 }
 
 func (r *Consumer) Loop(ctx context.Context, cancel context.CancelFunc) error {

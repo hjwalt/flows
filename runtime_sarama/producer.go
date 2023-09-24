@@ -58,7 +58,7 @@ func (p *Producer) Start() error {
 		return errors.New("producer brokers are empty")
 	}
 
-	logger.Info("starting sarama producer")
+	logger.Debug("starting sarama producer")
 
 	// create producer
 	var producerCreateErr error
@@ -67,17 +67,17 @@ func (p *Producer) Start() error {
 		return producerCreateErr
 	}
 
-	logger.Info("started sarama producer")
+	logger.Debug("started sarama producer")
 
 	return nil
 }
 
 func (p *Producer) Stop() {
-	logger.Info("stopping sarama producer")
+	logger.Debug("stopping sarama producer")
 
 	if p.Producer != nil {
 		p.Producer.Close()
 	}
 
-	logger.Info("stopped sarama producer")
+	logger.Debug("stopped sarama producer")
 }
