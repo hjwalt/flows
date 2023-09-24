@@ -1,41 +1,32 @@
-package stateful
+package stateful_deduplicate_offset
 
 import (
 	"context"
 
 	"github.com/hjwalt/flows/flow"
+	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"
-	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/runway/structure"
 	"go.uber.org/zap"
 )
 
-// constructor
-func NewDeduplicate(configurations ...runtime.Configuration[*Deduplicate]) SingleFunction {
-	singleFunction := &Deduplicate{}
-	for _, configuration := range configurations {
-		singleFunction = configuration(singleFunction)
+func New(
+	next stateful.SingleFunction,
+) stateful.SingleFunction {
+	f := fn{
+		next: next,
 	}
-	return singleFunction.Apply
+	return f.apply
 }
 
-// configuration
-func WithDeduplicateNextFunction(next SingleFunction) runtime.Configuration[*Deduplicate] {
-	return func(st *Deduplicate) *Deduplicate {
-		st.next = next
-		return st
-	}
+type fn struct {
+	next stateful.SingleFunction
 }
 
-// implementation
-type Deduplicate struct {
-	next SingleFunction
-}
+func (r fn) apply(c context.Context, m flow.Message[structure.Bytes, structure.Bytes], inState stateful.State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], stateful.State[structure.Bytes], error) {
 
-func (r Deduplicate) Apply(c context.Context, m flow.Message[structure.Bytes, structure.Bytes], inState State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], State[structure.Bytes], error) {
-
-	s := SetDefault(inState)
+	s := stateful.SetDefault(inState)
 
 	// for edge case of offset zero
 	storedOffset, offsetExists := s.Internal.GetV1().OffsetProgress[m.Partition]

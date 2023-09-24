@@ -10,6 +10,7 @@ import (
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/flows/stateful/stateful_batch_state"
 	"github.com/hjwalt/flows/stateful/stateful_bun"
+	"github.com/hjwalt/flows/stateful/stateful_deduplicate_offset"
 	"github.com/hjwalt/flows/stateful/stateful_error_handler"
 	"github.com/hjwalt/flows/stateful/stateful_error_handler_skip_list"
 	"github.com/hjwalt/flows/stateless"
@@ -141,8 +142,8 @@ func RegisterStatefulFunction(
 				stateful_error_handler_skip_list.Default(),
 			)
 
-			wrappedStatefulFunction = stateful.NewDeduplicate(
-				stateful.WithDeduplicateNextFunction(wrappedStatefulFunction),
+			wrappedStatefulFunction = stateful_deduplicate_offset.New(
+				wrappedStatefulFunction,
 			)
 
 			wrappedBatch := stateful_batch_state.New(
@@ -182,8 +183,8 @@ func RegisterJoinStatefulFunction(
 
 			wrappedStatefulFunction := fn
 
-			wrappedStatefulFunction = stateful.NewDeduplicate(
-				stateful.WithDeduplicateNextFunction(wrappedStatefulFunction),
+			wrappedStatefulFunction = stateful_deduplicate_offset.New(
+				wrappedStatefulFunction,
 			)
 
 			wrappedBatch := stateful_batch_state.New(

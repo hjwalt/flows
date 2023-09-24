@@ -1,4 +1,4 @@
-package stateful_test
+package stateful_deduplicate_offset_test
 
 import (
 	"context"
@@ -7,12 +7,13 @@ import (
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/flows/stateful"
+	"github.com/hjwalt/flows/stateful/stateful_deduplicate_offset"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/structure"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSingleDeduplicate(t *testing.T) {
+func TestFn(t *testing.T) {
 
 	// common data config
 	inputMessage := flow.Message[string, string]{
@@ -259,12 +260,10 @@ func TestSingleDeduplicate(t *testing.T) {
 
 			assert := assert.New(t)
 
-			fn := stateful.NewDeduplicate(
-				stateful.WithDeduplicateNextFunction(
-					func(c context.Context, m flow.Message[structure.Bytes, structure.Bytes], inState stateful.State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], stateful.State[structure.Bytes], error) {
-						return []flow.Message[structure.Bytes, structure.Bytes]{m}, inState, nil
-					},
-				),
+			fn := stateful_deduplicate_offset.New(
+				func(c context.Context, m flow.Message[structure.Bytes, structure.Bytes], inState stateful.State[structure.Bytes]) ([]flow.Message[structure.Bytes, structure.Bytes], stateful.State[structure.Bytes], error) {
+					return []flow.Message[structure.Bytes, structure.Bytes]{m}, inState, nil
+				},
 			)
 
 			ctx := context.Background()
