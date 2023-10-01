@@ -28,6 +28,7 @@ func NewMainAllInstance(allInstanceName string) Main {
 type Main interface {
 	Runtimes(i string, r func(inverse.Container) []runtime.Runtime) error
 	Prebuilt(i string, rf func(ci inverse.Container) Prebuilt) error
+	Registrar(i string, rf func(ci inverse.Container)) error
 	Start(i string) error
 }
 
@@ -50,6 +51,16 @@ func (m *main) Prebuilt(i string, rf func(ci inverse.Container) Prebuilt) error 
 		func(ci inverse.Container) []runtime.Runtime {
 			r := rf(ci)
 			r.Register(ci)
+			return InjectedRuntimes(ci)
+		},
+	)
+}
+
+func (m *main) Registrar(i string, rf func(ci inverse.Container)) error {
+	return m.Runtimes(
+		i,
+		func(ci inverse.Container) []runtime.Runtime {
+			rf(ci)
 			return InjectedRuntimes(ci)
 		},
 	)
