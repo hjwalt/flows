@@ -3,7 +3,7 @@ package test_helper
 import (
 	"context"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/uptrace/bun"
 )
 

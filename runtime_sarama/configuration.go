@@ -1,6 +1,6 @@
 package runtime_sarama
 
-import "github.com/Shopify/sarama"
+import "github.com/IBM/sarama"
 
 type SaramaConfigModifier func(*sarama.Config)
 

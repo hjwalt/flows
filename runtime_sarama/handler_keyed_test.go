@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/golang/mock/gomock"
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/runtime_sarama"

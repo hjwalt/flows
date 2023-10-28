@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"

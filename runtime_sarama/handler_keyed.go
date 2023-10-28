@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/metric"
 	"github.com/hjwalt/flows/stateful"

@@ -1,7 +1,7 @@
 package runtime_sarama
 
 import (
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/logger"

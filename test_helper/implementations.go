@@ -9,7 +9,7 @@ import (
 	sql "database/sql"
 	reflect "reflect"
 
-	sarama "github.com/Shopify/sarama"
+	sarama "github.com/IBM/sarama"
 	gomock "github.com/golang/mock/gomock"
 	bun "github.com/uptrace/bun"
 	schema "github.com/uptrace/bun/schema"
