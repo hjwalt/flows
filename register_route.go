@@ -2,6 +2,7 @@ package flows
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/runway/inverse"
@@ -45,7 +46,11 @@ func RegisterRoute(
 func ResolveRouteProducer(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_bunrouter.Router], error) {
 	producer, getProducerError := GetKafkaProducer(ctx, ci)
 	if getProducerError != nil {
-		return nil, getProducerError
+		if errors.Is(getProducerError, inverse.ErrInverseResolverMissing) {
+			return runtime_bunrouter.WithRouterProducer(nil), nil
+		} else {
+			return nil, getProducerError
+		}
 	}
 	return runtime_bunrouter.WithRouterProducer(producer), nil
 }
