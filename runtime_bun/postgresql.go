@@ -1,6 +1,7 @@
 package runtime_bun
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"time"
 
@@ -43,12 +44,21 @@ func WithMaxOpenConnections(maxOpenConns int) runtime.Configuration[*PostgresqlC
 	}
 }
 
+func WithTlsAnyClientCert() runtime.Configuration[*PostgresqlConnection] {
+	return func(c *PostgresqlConnection) *PostgresqlConnection {
+		c.TlsConfig = &tls.Config{
+			ClientAuth: tls.RequireAnyClientCert,
+		}
+		return c
+	}
+}
+
 // implementation
 type PostgresqlConnection struct {
 	ConnectionString string
 	ApplicationName  string
 	MaxOpenConns     int
-	// Controller       runtime.Controller
+	TlsConfig        *tls.Config
 
 	db *bun.DB
 }
@@ -65,6 +75,7 @@ func (r *PostgresqlConnection) Start() error {
 		pgdriver.WithReadTimeout(5*time.Second),
 		pgdriver.WithWriteTimeout(5*time.Second),
 		pgdriver.WithApplicationName(r.ApplicationName),
+		pgdriver.WithTLSConfig(r.TlsConfig),
 		pgdriver.WithConnParams(map[string]interface{}{
 			"bytea_output":                  "hex",             // ensures that misconfigured database does not brick state management
 			"default_transaction_isolation": "repeatable read", // ensures that multiple threads accessing the same persistence id does not encounter race condition
