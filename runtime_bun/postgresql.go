@@ -44,10 +44,11 @@ func WithMaxOpenConnections(maxOpenConns int) runtime.Configuration[*PostgresqlC
 	}
 }
 
-func WithTlsAnyClientCert() runtime.Configuration[*PostgresqlConnection] {
+func WithTlsAnyClientCert(serverName string) runtime.Configuration[*PostgresqlConnection] {
 	return func(c *PostgresqlConnection) *PostgresqlConnection {
 		c.TlsConfig = &tls.Config{
 			ClientAuth: tls.RequireAnyClientCert,
+			ServerName: serverName,
 		}
 		return c
 	}
