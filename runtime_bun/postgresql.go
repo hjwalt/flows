@@ -54,6 +54,13 @@ func WithTlsAnyClientCert(serverName string) runtime.Configuration[*PostgresqlCo
 	}
 }
 
+func WithTlsConfig(tlsConfig *tls.Config) runtime.Configuration[*PostgresqlConnection] {
+	return func(c *PostgresqlConnection) *PostgresqlConnection {
+		c.TlsConfig = tlsConfig
+		return c
+	}
+}
+
 // implementation
 type PostgresqlConnection struct {
 	ConnectionString string
