@@ -6,6 +6,7 @@ import (
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
+	"go.uber.org/zap"
 )
 
 // constructor
@@ -61,6 +62,14 @@ func (conn *Neo4JConnectionBasicAuth) Start() error {
 		logger.ErrorErr("failed to start neo4j", err)
 		return err
 	}
+
+	info, err := driver.GetServerInfo(context.Background())
+	if err != nil {
+		logger.ErrorErr("failed to start neo4j", err)
+		return err
+	}
+
+	logger.Info("neo4j info", zap.Any("info", info))
 
 	conn.driver = driver
 	return nil
