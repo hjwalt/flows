@@ -11,6 +11,7 @@ import (
 	"github.com/hjwalt/flows/protobuf"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
+	"github.com/hjwalt/flows/runtime_neo4j"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/runway/format"
@@ -66,6 +67,11 @@ func Registrar(ci inverse.Container) flows.Prebuilt {
 		PostgresTable:            "public.flows_count_state",
 		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
 
+		Neo4jConfiguration: []runtime.Configuration[*runtime_neo4j.Neo4JConnectionBasicAuth]{
+			runtime_neo4j.WithPass("localhost"),
+			runtime_neo4j.WithUser("neo4j"),
+			runtime_neo4j.WithUrl("neo4j://localhost:7687"),
+		},
 		// Optional configurations
 		RetryConfiguration: []runtime.Configuration[*runtime_retry.Retry]{
 			runtime_retry.WithRetryOption(

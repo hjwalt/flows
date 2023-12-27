@@ -1,34 +1,32 @@
 version: "3.8"
 
 services:
-  zookeeper:
-    image: docker.io/confluentinc/cp-zookeeper:7.2.0
-    hostname: zookeeper
-    container_name: zookeeper
-    ports:
-      - "2181:2181"
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-
-  broker:
-    image: docker.io/confluentinc/cp-kafka:7.2.0
-    hostname: broker
-    container_name: broker
-    depends_on:
-      - zookeeper
+  kafka:
+    image: docker.io/confluentinc/cp-kafka:7.5.0
+    hostname: kafka
+    container_name: kafka
     ports:
       - "9092:9092"
+      - "30092:30092"
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_HOST://broker:29092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      CLUSTER_ID: "q1Sh-9_ISia_zwGINzRvyQ"
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_SERVICE://kafka:29092,PLAINTEXT_ADDITIONAL://localhost:30092
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT_SERVICE'
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_SERVICE://kafka:29092,PLAINTEXT_ADDITIONAL://0.0.0.0:30092,CONTROLLER://kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_SERVICE:PLAINTEXT,PLAINTEXT_ADDITIONAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_NODE_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-  
+    volumes:
+      - type: volume
+        source: kafka
+        target: /var/lib/kafka/data
+
   postgres:
     image: docker.io/library/postgres
     hostname: postgres
@@ -40,3 +38,18 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       
+  neo4j:
+    image: docker.io/library/neo4j:5.15.0
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NO4J_AUTH: "neo4j/neo4j"
+    volumes:
+      - type: volume
+        source: neo4j
+        target: /data
+
+volumes:
+  kafka:
+  neo4j:

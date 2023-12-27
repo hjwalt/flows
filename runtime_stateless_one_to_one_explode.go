@@ -4,10 +4,12 @@ import (
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
+	"github.com/hjwalt/flows/runtime_neo4j"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/inverse"
+	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
 )
 
@@ -23,6 +25,7 @@ type StatelessOneToOneExplodeConfiguration[IK any, IV any, OK any, OV any] struc
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
 	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
+	Neo4jConfiguration         []runtime.Configuration[*runtime_neo4j.Neo4JConnectionBasicAuth]
 }
 
 func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) Register(ci inverse.Container) {
@@ -60,4 +63,19 @@ func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) Register(ci inver
 		c.HttpPort,
 		c.RouteConfiguration,
 	)
+
+	if len(c.Neo4jConfiguration) > 0 {
+		neo4jConnection := runtime_neo4j.NewBasicAuth(c.Neo4jConfiguration...)
+		err := neo4jConnection.Start()
+		if err != nil {
+			logger.ErrorErr("failed to start neo4j", err)
+		} else {
+			defer neo4jConnection.Stop()
+
+			runtime_neo4j.InsertConstraint(neo4jConnection.(runtime_neo4j.Neo4jConnection))
+			runtime_neo4j.InsertTopic(neo4jConnection.(runtime_neo4j.Neo4jConnection), c.InputTopic)
+			runtime_neo4j.InsertTopic(neo4jConnection.(runtime_neo4j.Neo4jConnection), c.OutputTopic)
+			runtime_neo4j.InsertRelationStateless(neo4jConnection.(runtime_neo4j.Neo4jConnection), c.Name, c.InputTopic, c.OutputTopic)
+		}
+	}
 }

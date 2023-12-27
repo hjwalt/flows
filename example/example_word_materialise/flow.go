@@ -5,8 +5,10 @@ import (
 
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/flow"
+	"github.com/hjwalt/flows/runtime_neo4j"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/logger"
+	"github.com/hjwalt/runway/runtime"
 	"github.com/uptrace/bun"
 )
 
@@ -52,6 +54,11 @@ func Registrar(ci inverse.Container) flows.Prebuilt {
 		OutputBroker:             "localhost:9092",
 		HttpPort:                 8081,
 		PostgresConnectionString: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
+		Neo4jConfiguration: []runtime.Configuration[*runtime_neo4j.Neo4JConnectionBasicAuth]{
+			runtime_neo4j.WithPass("localhost"),
+			runtime_neo4j.WithUser("neo4j"),
+			runtime_neo4j.WithUrl("neo4j://localhost:7687"),
+		},
 	}
 }
 

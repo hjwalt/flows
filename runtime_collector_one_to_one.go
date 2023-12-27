@@ -5,6 +5,7 @@ import (
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
+	"github.com/hjwalt/flows/runtime_neo4j"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
@@ -29,6 +30,7 @@ type CollectorOneToOneConfiguration[S any, IK any, IV any, OK any, OV any] struc
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
 	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
 	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
+	Neo4jConfiguration         []runtime.Configuration[*runtime_neo4j.Neo4JConnectionBasicAuth]
 }
 
 func (c CollectorOneToOneConfiguration[S, IK, IV, OK, OV]) Register(ci inverse.Container) {
