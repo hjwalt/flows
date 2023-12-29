@@ -1,4 +1,4 @@
-package router
+package adapter
 
 import (
 	"errors"
@@ -55,7 +55,7 @@ type RouteProducer struct {
 	bodyMap  stateless.OneToOneFunction[structure.Bytes, structure.Bytes, structure.Bytes, structure.Bytes]
 }
 
-func (rp *RouteProducer) Handle(w http.ResponseWriter, req *http.Request) {
+func (rp *RouteProducer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	err := rp.Produce(w, req)
 	if err != nil {
 		logger.ErrorErr("handle error", err)

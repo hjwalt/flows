@@ -1,4 +1,4 @@
-package router_test
+package adapter_test
 
 import (
 	"bytes"
@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/hjwalt/flows/adapter"
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/test_helper"
 	"github.com/hjwalt/runway/structure"
 	"github.com/stretchr/testify/assert"
@@ -18,9 +18,9 @@ import (
 func TestRouteProducer(t *testing.T) {
 	producer := test_helper.NewChannelProducer()
 
-	routerProducer := router.NewRouteProducer(
-		router.WithRouteProducerRuntime(producer),
-		router.WithRouteBodyMap(func(ctx context.Context, req flow.Message[structure.Bytes, structure.Bytes]) (*flow.Message[structure.Bytes, structure.Bytes], error) {
+	routerProducer := adapter.NewRouteProducer(
+		adapter.WithRouteProducerRuntime(producer),
+		adapter.WithRouteBodyMap(func(ctx context.Context, req flow.Message[structure.Bytes, structure.Bytes]) (*flow.Message[structure.Bytes, structure.Bytes], error) {
 			return &req, nil
 		}),
 	)
@@ -71,7 +71,7 @@ func TestRouteProducer(t *testing.T) {
 
 			req, _ := http.NewRequest(c.method, c.url, c.body)
 			rr := httptest.NewRecorder()
-			routerProducer.Handle(rr, req)
+			routerProducer.ServeHTTP(rr, req)
 
 			c.assertions(t, rr)
 		})

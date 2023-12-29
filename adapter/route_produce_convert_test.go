@@ -1,4 +1,4 @@
-package router_test
+package adapter_test
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hjwalt/flows/adapter"
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
 )
@@ -93,7 +93,7 @@ func TestRouteProducerBodyMapConversion(t *testing.T) {
 		}, nil
 	}
 
-	converted := router.RouteProduceBodyMapConvert(source, crappyStringFormat, crappyStringFormat, crappyStringFormat)
+	converted := adapter.RouteProduceBodyMapConvert(source, crappyStringFormat, crappyStringFormat, crappyStringFormat)
 
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {

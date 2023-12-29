@@ -7,6 +7,7 @@ require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.5.0
+	github.com/hjwalt/routes v0.0.8
 	github.com/hjwalt/runway v0.2.0
 	github.com/neo4j/neo4j-go-driver/v5 v5.15.0
 	github.com/prometheus/client_golang v1.18.0
@@ -19,7 +20,6 @@ require (
 	github.com/uptrace/bun/driver/pgdriver v1.1.16
 	github.com/uptrace/bun/driver/sqliteshim v1.1.16
 	github.com/uptrace/bun/extra/bundebug v1.1.16
-	github.com/uptrace/bunrouter v1.0.21
 	go.uber.org/zap v1.26.0
 	google.golang.org/protobuf v1.32.0
 )
@@ -46,6 +46,7 @@ require (
 	github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
+	github.com/go-chi/chi/v5 v5.0.11 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect

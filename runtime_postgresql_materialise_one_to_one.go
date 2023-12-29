@@ -3,7 +3,6 @@ package flows
 import (
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/materialise"
-	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_neo4j"
@@ -36,12 +35,6 @@ func (c MaterialisePostgresqlOneToOneFunctionConfiguration[S, IK, IV]) Register(
 		ci,
 		c.InputTopic.Name(),
 		materialise.ConvertOneToOne(c.Function, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
-	)
-	RegisterRouteConfig(
-		ci,
-		runtime_bunrouter.WithRouterFlow(
-			router.WithFlowMaterialiseOneToOne(c.InputTopic),
-		),
 	)
 
 	// RUNTIME

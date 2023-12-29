@@ -2,7 +2,6 @@ package flows
 
 import (
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_neo4j"
@@ -44,13 +43,6 @@ func (c StatefulPostgresqlOneToOneFunctionConfiguration[S, IK, IV, OK, OV]) Regi
 		stateful.ConvertTopicOneToOne(c.Function, c.StateFormat, c.InputTopic, c.OutputTopic),
 		stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
 	)
-	RegisterRouteConfig(
-		ci,
-		runtime_bunrouter.WithRouterFlow(
-			router.WithFlowStatefulOneToOne(c.InputTopic, c.OutputTopic, c.PostgresTable),
-		),
-	)
-
 	// RUNTIME
 
 	RegisterPostgresql(

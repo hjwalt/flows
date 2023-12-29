@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/hjwalt/flows"
+	"github.com/hjwalt/flows/example/example_word_adapter"
 	"github.com/hjwalt/flows/example/example_word_collect"
 	"github.com/hjwalt/flows/example/example_word_count"
 	"github.com/hjwalt/flows/example/example_word_join"
@@ -13,6 +14,7 @@ import (
 func main() {
 	m := flows.NewMain()
 
+	example_word_adapter.Register(m)
 	example_word_collect.Register(m)
 	example_word_count.Register(m)
 	example_word_join.Register(m)

@@ -1,10 +1,10 @@
-package router_test
+package adapter_test
 
 import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/hjwalt/flows/router"
+	"github.com/hjwalt/flows/adapter"
 	"github.com/hjwalt/flows/test_helper"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,7 +35,7 @@ func TestWriteJson(t *testing.T) {
 			name:     "format error",
 			status:   200,
 			response: CrappyResponseStruct{Message: "error", Error: true},
-			err:      router.ErrorWriteJsonFormat,
+			err:      adapter.ErrorWriteJsonFormat,
 		},
 	}
 
@@ -44,7 +44,7 @@ func TestWriteJson(t *testing.T) {
 			assert := assert.New(t)
 
 			rr := httptest.NewRecorder()
-			err := router.WriteJson(rr, c.status, c.response, test_helper.CrappyJson[CrappyResponseStruct]())
+			err := adapter.WriteJson(rr, c.status, c.response, test_helper.CrappyJson[CrappyResponseStruct]())
 
 			if c.err == nil {
 				assert.NoError(err)

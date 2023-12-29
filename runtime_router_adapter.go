@@ -1,8 +1,8 @@
 package flows
 
 import (
+	"github.com/hjwalt/flows/adapter"
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateless"
@@ -15,6 +15,7 @@ import (
 // Wiring configuration
 type RouterAdapterConfiguration[Request any, InputKey any, InputValue any] struct {
 	Name                       string
+	Path                       string
 	ProduceTopic               flow.Topic[InputKey, InputValue]
 	ProduceBroker              string
 	RequestBodyFormat          format.Format[Request]
@@ -27,14 +28,16 @@ type RouterAdapterConfiguration[Request any, InputKey any, InputValue any] struc
 func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register(ci inverse.Container) {
 	RegisterRouteConfig(
 		ci,
-		runtime_bunrouter.WithRouterProducerHandler(
-			runtime_bunrouter.POST,
-			"/"+c.Name,
-			router.RouteProduceTopicBodyMapConvert(
-				c.RequestMapFunction,
-				c.RequestBodyFormat,
-				c.ProduceTopic,
-			),
+		c.RouteConfiguration...,
+	)
+	RegisterProducerRoute(
+		ci,
+		runtime_bunrouter.POST,
+		c.Path,
+		adapter.RouteProduceTopicBodyMapConvert(
+			c.RequestMapFunction,
+			c.RequestBodyFormat,
+			c.ProduceTopic,
 		),
 	)
 

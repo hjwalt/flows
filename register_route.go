@@ -2,11 +2,13 @@ package flows
 
 import (
 	"context"
-	"errors"
 
+	"github.com/hjwalt/flows/adapter"
 	"github.com/hjwalt/flows/runtime_bunrouter"
+	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
+	"github.com/hjwalt/runway/structure"
 )
 
 const (
@@ -32,7 +34,6 @@ func RegisterRoute(
 
 	resolver.AddConfigVal(runtime_bunrouter.WithRouterPort(port))
 	resolver.AddConfigVal(runtime_bunrouter.WithRouterPrometheus())
-	resolver.AddConfig(ResolveRouteProducer)
 
 	for _, config := range configs {
 		resolver.AddConfigVal(config)
@@ -43,22 +44,30 @@ func RegisterRoute(
 	RegisterRuntime(QualifierRoute, container)
 }
 
-func ResolveRouteProducer(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_bunrouter.Router], error) {
-	producer, getProducerError := GetKafkaProducer(ctx, ci)
-	if getProducerError != nil {
-		if errors.Is(getProducerError, inverse.ErrInverseResolverMissing) {
-			return runtime_bunrouter.WithRouterProducer(nil), nil
-		} else {
-			return nil, getProducerError
-		}
-	}
-	return runtime_bunrouter.WithRouterProducer(producer), nil
-}
-
 // ===================================
 
 func RegisterRouteConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_bunrouter.Router]) {
 	for _, config := range configs {
 		ci.AddVal(runtime.QualifierConfig(QualifierRoute), config)
 	}
+}
+
+func RegisterProducerRoute(ci inverse.Container, method string, path string, bodyMap stateless.OneToOneFunction[structure.Bytes, structure.Bytes, structure.Bytes, structure.Bytes]) {
+	inverse.GenericAdd(
+		ci,
+		runtime.QualifierConfig(QualifierRoute),
+		func(ctx context.Context, c inverse.Container) (runtime.Configuration[*runtime_bunrouter.Router], error) {
+			producer, getProducerError := GetKafkaProducer(ctx, ci)
+			if getProducerError != nil {
+				return nil, getProducerError
+			}
+
+			handlerFunction := adapter.NewRouteProducer(
+				adapter.WithRouteProducerRuntime(producer),
+				adapter.WithRouteBodyMap(bodyMap),
+			)
+
+			return runtime_bunrouter.WithRouterHttpHandler(method, path, handlerFunction.ServeHTTP), nil
+		},
+	)
 }

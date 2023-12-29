@@ -3,7 +3,6 @@ package flows
 import (
 	"github.com/hjwalt/flows/collect"
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_neo4j"
 	"github.com/hjwalt/flows/runtime_retry"
@@ -40,12 +39,6 @@ func (c CollectorOneToOneConfiguration[S, IK, IV, OK, OV]) Register(ci inverse.C
 		stateful.ConvertPersistenceId(c.StateKeyFunction, c.InputTopic.KeyFormat(), c.InputTopic.ValueFormat()),
 		collect.ConvertTopicAggregator(c.Aggregator, c.StateFormat, c.InputTopic),
 		collect.ConvertTopicOneToOneCollector(c.Collector, c.StateFormat, c.OutputTopic),
-	)
-	RegisterRouteConfig(
-		ci,
-		runtime_bunrouter.WithRouterFlow(
-			router.WithFlowStatelessOneToOne(c.InputTopic, c.OutputTopic),
-		),
 	)
 
 	// RUNTIME

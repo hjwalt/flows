@@ -2,7 +2,6 @@ package flows
 
 import (
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/router"
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_neo4j"
 	"github.com/hjwalt/flows/runtime_retry"
@@ -33,12 +32,6 @@ func (c StatelessOneToOneExplodeConfiguration[IK, IV, OK, OV]) Register(ci inver
 		ci,
 		c.InputTopic.Name(),
 		stateless.ConvertTopicOneToOneExplode(c.Function, c.InputTopic, c.OutputTopic),
-	)
-	RegisterRouteConfig(
-		ci,
-		runtime_bunrouter.WithRouterFlow(
-			router.WithFlowStatelessOneToOne(c.InputTopic, c.OutputTopic),
-		),
 	)
 
 	// RUNTIME
