@@ -44,7 +44,7 @@ services:
       - "7474:7474"
       - "7687:7687"
     environment:
-      NO4J_AUTH: "neo4j/localhost"
+      NEO4J_AUTH: "neo4j/localhost"
     volumes:
       - type: volume
         source: neo4j
