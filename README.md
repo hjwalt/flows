@@ -73,6 +73,11 @@ Switching between different container technology will be done some time in the f
 - Simple format helpers, with bytes as default
 - Idiomatic golang
 
+## Semantics
+
+At least once publishing with effectively once state update.
+Additional application based deduplication is recommended (request id header deduplication for instance).
+
 ## Integrations
 
 - Kafka using Sarama
@@ -256,4 +261,34 @@ export DOCKER_HOST=unix:///run/user/1000/podman/podman.sock
 ## Microbatching
 
 Microbatching is applied in this repository to achieve better throughput.
-Maximum batching wait time can be configured.
+Maximum batching wait time can be configured. 
+Per message semantics can be achieved by configuration, however throughput will suffer without increasing compute resources.
+
+## WHY?
+
+Why do I build this instead of using tools like Spark, Flink, Kafka Streams?
+
+This is my personal view based on experience with those three.
+Note that I have not tested things like Pulsar functions or NATS jetstream, those might well be solving the same thing.
+
+The three I mentioned are heavyweight data engineering tools.
+It can continously process data flow with a special DSL, with exactly once semantics (at a cost) and very high throughput (also at a cost).
+
+However, in a complex backend data flow changes, constantly. 
+Often times, its just one step in the middle of the flow. 
+Sometimes its removing a step, sometimes its adding steps, sometimes its reusing steps. 
+Heavyweight tools just doesn't work well with that kind of constant change.
+Deploy a flow that is too small its costly, deploy a flow that is too big it constantly changes.
+
+So the idea of a lightweight flow comes in.
+Its similar to Kafka streams, but every single step is independently deployed, every intermediate data types are independently designed.
+With a schema management system, Kafka, and Kubernetes, its the right balance of performance, ease of deployement, and flexibility.
+Its also written in golang, so that the resource use of each lightweight flow step is small, yet it can be scaled both horizontally and vertically very well.
+In theory other language like C++ and Rust will also work, but at the time of implementation I am far more familiar with golang and Java.
+So golang it is.
+
+This is how I would build and deploy flows:
+
+1. One repository per bounded context, so that every bounded context is isolated without having hundreds of repositories
+2. One schema management repository (if no tools are used)
+3. "app-domain-function" naming convention everywhere (consumer group, kubernetes deployment, etc)
