@@ -4,11 +4,12 @@ import (
 	"context"
 
 	"github.com/hjwalt/flows/adapter"
-	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/routes/runtime_chi"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/runway/structure"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -18,22 +19,22 @@ const (
 func RegisterRoute(
 	container inverse.Container,
 	port int,
-	configs []runtime.Configuration[*runtime_bunrouter.Router],
+	configs []runtime.Configuration[*runtime_chi.Runtime[context.Context]],
 ) {
 
-	resolver := runtime.NewResolver[*runtime_bunrouter.Router, runtime.Runtime](
+	resolver := runtime.NewResolver[*runtime_chi.Runtime[context.Context], runtime.Runtime](
 		QualifierRoute,
 		container,
 		true,
-		runtime_bunrouter.NewRouter,
+		runtime_chi.New[context.Context],
 	)
 
 	if port == 0 {
 		port = 8081
 	}
 
-	resolver.AddConfigVal(runtime_bunrouter.WithRouterPort(port))
-	resolver.AddConfigVal(runtime_bunrouter.WithRouterPrometheus())
+	resolver.AddConfigVal(runtime_chi.WithPort[context.Context](port))
+	resolver.AddConfigVal(runtime_chi.WithHttpHandler[context.Context]("/prometheus", "GET", promhttp.Handler()))
 
 	for _, config := range configs {
 		resolver.AddConfigVal(config)
@@ -46,7 +47,7 @@ func RegisterRoute(
 
 // ===================================
 
-func RegisterRouteConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_bunrouter.Router]) {
+func RegisterRouteConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_chi.Runtime[context.Context]]) {
 	for _, config := range configs {
 		ci.AddVal(runtime.QualifierConfig(QualifierRoute), config)
 	}
@@ -56,7 +57,7 @@ func RegisterProducerRoute(ci inverse.Container, method string, path string, bod
 	inverse.GenericAdd(
 		ci,
 		runtime.QualifierConfig(QualifierRoute),
-		func(ctx context.Context, c inverse.Container) (runtime.Configuration[*runtime_bunrouter.Router], error) {
+		func(ctx context.Context, c inverse.Container) (runtime.Configuration[*runtime_chi.Runtime[context.Context]], error) {
 			producer, getProducerError := GetKafkaProducer(ctx, ci)
 			if getProducerError != nil {
 				return nil, getProducerError
@@ -67,7 +68,7 @@ func RegisterProducerRoute(ci inverse.Container, method string, path string, bod
 				adapter.WithRouteBodyMap(bodyMap),
 			)
 
-			return runtime_bunrouter.WithRouterHttpHandler(method, path, handlerFunction.ServeHTTP), nil
+			return runtime_chi.WithHttpHandler[context.Context](path, method, handlerFunction), nil
 		},
 	)
 }

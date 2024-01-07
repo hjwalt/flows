@@ -1,13 +1,15 @@
 package flows
 
 import (
+	"context"
+
 	"github.com/hjwalt/flows/collect"
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_neo4j"
 	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
+	"github.com/hjwalt/routes/runtime_chi"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
@@ -28,7 +30,7 @@ type CollectorOneToOneConfiguration[S any, IK any, IV any, OK any, OV any] struc
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
 	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
-	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
+	RouteConfiguration         []runtime.Configuration[*runtime_chi.Runtime[context.Context]]
 	Neo4jConfiguration         []runtime.Configuration[*runtime_neo4j.Neo4JConnectionBasicAuth]
 }
 

@@ -73,17 +73,6 @@ func Registrar(ci inverse.Container) flows.Prebuilt {
 			),
 			runtime_retry.WithAbsorbError(true),
 		},
-		// RouteConfiguration: []runtime.Configuration[*runtime_bunrouter.Router]{
-		// 	runtime_bunrouter.WithRouterProducerHandler(runtime_bunrouter.POST, "/api/produce", func(ctx context.Context, req flow.Message[structure.Bytes, structure.Bytes]) (*flow.Message[structure.Bytes, structure.Bytes], error) {
-		// 		return &flow.Message[[]byte, []byte]{
-		// 				Topic:   "produce-topic",
-		// 				Key:     req.Key,
-		// 				Value:   req.Value,
-		// 				Headers: req.Headers,
-		// 			},
-		// 			nil
-		// 	}),
-		// },
 	}
 }
 

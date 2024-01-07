@@ -19,11 +19,6 @@ const (
 // THIS HAS BEEN RECODED TO BE A FACADE TO routes REPOSITORY
 // TODO: complete removal
 
-// constructor
-func NewRouter(configurations ...runtime.Configuration[*Router]) runtime.Runtime {
-	return runtime_chi.New[context.Context](configurations...)
-}
-
 // configuration
 func WithRouterPort(port int) runtime.Configuration[*Router] {
 	return runtime_chi.WithPort[context.Context](port)

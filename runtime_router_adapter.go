@@ -1,11 +1,13 @@
 package flows
 
 import (
+	"context"
+
 	"github.com/hjwalt/flows/adapter"
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateless"
+	"github.com/hjwalt/routes/runtime_chi"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
@@ -22,7 +24,7 @@ type RouterAdapterConfiguration[Request any, InputKey any, InputValue any] struc
 	RequestMapFunction         stateless.OneToOneFunction[structure.Bytes, Request, InputKey, InputValue]
 	HttpPort                   int
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
-	RouteConfiguration         []runtime.Configuration[*runtime_bunrouter.Router]
+	RouteConfiguration         []runtime.Configuration[*runtime_chi.Runtime[context.Context]]
 }
 
 func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register(ci inverse.Container) {
@@ -32,7 +34,7 @@ func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register(ci i
 	)
 	RegisterProducerRoute(
 		ci,
-		runtime_bunrouter.POST,
+		"POST",
 		c.Path,
 		adapter.RouteProduceTopicBodyMapConvert(
 			c.RequestMapFunction,
