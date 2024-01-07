@@ -1,6 +1,7 @@
 # Flows
 
 [![Go](https://github.com/hjwalt/flows/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/hjwalt/flows/actions/workflows/go.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/hjwalt/flows)](https://goreportcard.com/report/github.com/hjwalt/flows)
 
 Simple declarative and functional dataflow with Kafka and RabbitMQ.
 
