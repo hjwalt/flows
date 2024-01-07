@@ -3,11 +3,11 @@ package flows
 import (
 	"context"
 
-	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_rabbit"
 	"github.com/hjwalt/flows/task"
 	"github.com/hjwalt/flows/task_executor_converted"
 	"github.com/hjwalt/flows/task_executor_retry"
+	"github.com/hjwalt/routes/runtime_chi"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/runway/structure"
@@ -21,7 +21,7 @@ type ExecutorConfiguration[T any] struct {
 	HttpPort                    int
 	RabbitConsumerConfiguration []runtime.Configuration[*runtime_rabbit.Consumer]
 	RetryConfiguration          []runtime.Configuration[*runtime.Retry]
-	RouteConfiguration          []runtime.Configuration[*runtime_bunrouter.Router]
+	RouteConfiguration          []runtime.Configuration[*runtime_chi.Runtime[context.Context]]
 }
 
 func (c ExecutorConfiguration[T]) Register(ci inverse.Container) {
