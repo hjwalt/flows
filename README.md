@@ -1,5 +1,7 @@
 # Flows
 
+[![Go](https://github.com/hjwalt/flows/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/hjwalt/flows/actions/workflows/go.yml)
+
 Simple declarative and functional dataflow with Kafka and RabbitMQ.
 
 ## Developing
