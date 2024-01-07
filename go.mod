@@ -11,6 +11,8 @@ require (
 	github.com/hjwalt/runway v0.2.0
 	github.com/neo4j/neo4j-go-driver/v5 v5.15.0
 	github.com/prometheus/client_golang v1.18.0
+	github.com/rabbitmq/amqp091-go v1.9.0
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.8.4
 	github.com/testcontainers/testcontainers-go v0.27.0
 	github.com/uptrace/bun v1.1.16
