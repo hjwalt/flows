@@ -6,7 +6,6 @@ import (
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_neo4j"
-	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/routes/runtime_chi"
@@ -32,7 +31,7 @@ type StatefulPostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any, OK a
 	PostgresqlConfiguration    []runtime.Configuration[*runtime_bun.PostgresqlConnection]
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
-	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
+	RetryConfiguration         []runtime.Configuration[*runtime.Retry]
 	RouteConfiguration         []runtime.Configuration[*runtime_chi.Runtime[context.Context]]
 	Neo4jConfiguration         []runtime.Configuration[*runtime_neo4j.Neo4JConnectionBasicAuth]
 }

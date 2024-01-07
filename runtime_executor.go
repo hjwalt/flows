@@ -5,7 +5,6 @@ import (
 
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_rabbit"
-	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/task"
 	"github.com/hjwalt/flows/task_executor_converted"
 	"github.com/hjwalt/flows/task_executor_retry"
@@ -21,7 +20,7 @@ type ExecutorConfiguration[T any] struct {
 	TaskConnectionString        string
 	HttpPort                    int
 	RabbitConsumerConfiguration []runtime.Configuration[*runtime_rabbit.Consumer]
-	RetryConfiguration          []runtime.Configuration[*runtime_retry.Retry]
+	RetryConfiguration          []runtime.Configuration[*runtime.Retry]
 	RouteConfiguration          []runtime.Configuration[*runtime_bunrouter.Router]
 }
 

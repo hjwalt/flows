@@ -3,12 +3,10 @@ package example_word_count
 import (
 	"context"
 
-	"github.com/avast/retry-go"
 	"github.com/hjwalt/flows"
 	"github.com/hjwalt/flows/example"
 	"github.com/hjwalt/flows/flow"
 	"github.com/hjwalt/flows/runtime_neo4j"
-	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/stateful"
 	"github.com/hjwalt/runway/format"
 	"github.com/hjwalt/runway/inverse"
@@ -67,11 +65,9 @@ func Registrar(ci inverse.Container) flows.Prebuilt {
 			runtime_neo4j.WithUrl("neo4j://localhost:7687"),
 		},
 		// Optional configurations
-		RetryConfiguration: []runtime.Configuration[*runtime_retry.Retry]{
-			runtime_retry.WithRetryOption(
-				retry.Attempts(3),
-			),
-			runtime_retry.WithAbsorbError(true),
+		RetryConfiguration: []runtime.Configuration[*runtime.Retry]{
+			runtime.WithRetryAttempts(3),
+			runtime.WithRetryAbsorbError(true),
 		},
 	}
 }

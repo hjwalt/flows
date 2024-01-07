@@ -22,7 +22,7 @@ func Registrar(ci inverse.Container) flows.Prebuilt {
 		Name:                 Instance,
 		TaskChannel:          task.StringChannel("tasks"),
 		TaskExecutor:         fn,
-		TaskConnectionString: "amqp://guest:guest@localhost:5672/",
+		TaskConnectionString: "amqp://rabbit:rabbit@localhost:5672/",
 		HttpPort:             8081,
 		RabbitConsumerConfiguration: []runtime.Configuration[*runtime_rabbit.Consumer]{
 			runtime_rabbit.WithConsumerQueueDurable(false),

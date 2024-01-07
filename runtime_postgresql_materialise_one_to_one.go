@@ -7,7 +7,6 @@ import (
 	"github.com/hjwalt/flows/materialise"
 	"github.com/hjwalt/flows/runtime_bun"
 	"github.com/hjwalt/flows/runtime_neo4j"
-	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/runtime_sarama"
 	"github.com/hjwalt/routes/runtime_chi"
 	"github.com/hjwalt/runway/inverse"
@@ -27,7 +26,7 @@ type MaterialisePostgresqlOneToOneFunctionConfiguration[S any, IK any, IV any] s
 	PostgresqlConfiguration    []runtime.Configuration[*runtime_bun.PostgresqlConnection]
 	KafkaConsumerConfiguration []runtime.Configuration[*runtime_sarama.Consumer]
 	KafkaProducerConfiguration []runtime.Configuration[*runtime_sarama.Producer]
-	RetryConfiguration         []runtime.Configuration[*runtime_retry.Retry]
+	RetryConfiguration         []runtime.Configuration[*runtime.Retry]
 	RouteConfiguration         []runtime.Configuration[*runtime_chi.Runtime[context.Context]]
 	Neo4jConfiguration         []runtime.Configuration[*runtime_neo4j.Neo4JConnectionBasicAuth]
 }

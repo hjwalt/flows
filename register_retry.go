@@ -3,7 +3,6 @@ package flows
 import (
 	"context"
 
-	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
 )
@@ -15,14 +14,14 @@ const (
 // Retry
 func RegisterRetry(
 	container inverse.Container,
-	configs []runtime.Configuration[*runtime_retry.Retry],
+	configs []runtime.Configuration[*runtime.Retry],
 ) {
 
-	resolver := runtime.NewResolver[*runtime_retry.Retry, *runtime_retry.Retry](
+	resolver := runtime.NewResolver[*runtime.Retry, *runtime.Retry](
 		QualifierRetry,
 		container,
 		false,
-		runtime_retry.NewRetry,
+		runtime.NewRetry,
 	)
 
 	for _, config := range configs {
@@ -34,6 +33,6 @@ func RegisterRetry(
 	RegisterRuntime(QualifierRetry, container)
 }
 
-func GetRetry(ctx context.Context, ci inverse.Container) (*runtime_retry.Retry, error) {
-	return inverse.GenericGetLast[*runtime_retry.Retry](ci, ctx, QualifierRetry)
+func GetRetry(ctx context.Context, ci inverse.Container) (*runtime.Retry, error) {
+	return inverse.GenericGetLast[*runtime.Retry](ci, ctx, QualifierRetry)
 }

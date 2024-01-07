@@ -4,7 +4,6 @@ import (
 	"github.com/hjwalt/flows/runtime_bunrouter"
 	"github.com/hjwalt/flows/runtime_cron"
 	"github.com/hjwalt/flows/runtime_rabbit"
-	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/task"
 	"github.com/hjwalt/runway/inverse"
 	"github.com/hjwalt/runway/runtime"
@@ -18,7 +17,7 @@ type CronConfiguration[T any] struct {
 	TaskConnectionString        string
 	HttpPort                    int
 	RabbitProducerConfiguration []runtime.Configuration[*runtime_rabbit.Producer]
-	RetryConfiguration          []runtime.Configuration[*runtime_retry.Retry]
+	RetryConfiguration          []runtime.Configuration[*runtime.Retry]
 	RouteConfiguration          []runtime.Configuration[*runtime_bunrouter.Router]
 }
 

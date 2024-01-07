@@ -6,24 +6,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/avast/retry-go"
 	"github.com/hjwalt/flows/flow"
-	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/stateless"
 	"github.com/hjwalt/runway/reflect"
+	"github.com/hjwalt/runway/runtime"
 	"github.com/hjwalt/runway/structure"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSingleRetry(t *testing.T) {
-	retryRuntime := runtime_retry.NewRetry(
-		runtime_retry.WithRetryOption(
-			retry.Attempts(3),
-			retry.Delay(10*time.Millisecond),
-			retry.MaxDelay(time.Second),
-			retry.MaxJitter(time.Second),
-			retry.DelayType(retry.BackOffDelay),
-		),
+	retryRuntime := runtime.NewRetry(
+		runtime.WithRetryAttempts(3),
+		runtime.WithRetryDelay(10*time.Millisecond),
+		runtime.WithRetryMaxDelay(time.Second),
 	)
 
 	retryFn := stateless.NewSingleRetry(
@@ -32,7 +27,7 @@ func TestSingleRetry(t *testing.T) {
 			countStr := string(m.Value)
 			countInt := reflect.GetInt64(countStr)
 
-			count := runtime_retry.GetTryCount(ctx)
+			count := runtime.GetRetryCount(ctx)
 
 			if countInt > count {
 				return make([]flow.Message[structure.Bytes, structure.Bytes], 0), errors.New("count not done")

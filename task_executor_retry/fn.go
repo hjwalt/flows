@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hjwalt/flows/runtime_retry"
 	"github.com/hjwalt/flows/task"
 	"github.com/hjwalt/runway/logger"
 	"github.com/hjwalt/runway/runtime"
@@ -22,7 +21,7 @@ func New(configurations ...runtime.Configuration[*TaskRetry]) task.Executor[stru
 }
 
 // configurations
-func WithRetry(r *runtime_retry.Retry) runtime.Configuration[*TaskRetry] {
+func WithRetry(r *runtime.Retry) runtime.Configuration[*TaskRetry] {
 	return func(p *TaskRetry) *TaskRetry {
 		p.retry = r
 		return p
@@ -38,13 +37,13 @@ func WithExecutor(e task.Executor[structure.Bytes]) runtime.Configuration[*TaskR
 
 // implementation
 type TaskRetry struct {
-	retry    *runtime_retry.Retry
+	retry    *runtime.Retry
 	executor task.Executor[structure.Bytes]
 }
 
 func (r *TaskRetry) Apply(c context.Context, t task.Message[structure.Bytes]) error {
 	retryErr := r.retry.Do(func(tryCount int64) error {
-		err := r.executor(runtime_retry.SetTryCount(c, tryCount), t)
+		err := r.executor(runtime.SetRetryCount(c, tryCount), t)
 		if err != nil {
 			logger.Warn("retrying", zap.Int64("try", tryCount), zap.Error(err))
 			return err

@@ -27,7 +27,7 @@ func Registrar(ci inverse.Container) flows.Prebuilt {
 			"0 * * * * *",
 			"@every 2s",
 		},
-		TaskConnectionString: "amqp://guest:guest@localhost:5672/",
+		TaskConnectionString: "amqp://rabbit:rabbit@localhost:5672/",
 		HttpPort:             8082,
 	}
 }

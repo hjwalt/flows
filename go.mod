@@ -4,11 +4,10 @@ go 1.20
 
 require (
 	github.com/IBM/sarama v1.42.1
-	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.5.0
 	github.com/hjwalt/routes v0.0.8
-	github.com/hjwalt/runway v0.2.0
+	github.com/hjwalt/runway v0.2.2
 	github.com/neo4j/neo4j-go-driver/v5 v5.15.0
 	github.com/prometheus/client_golang v1.18.0
 	github.com/rabbitmq/amqp091-go v1.9.0
@@ -31,6 +30,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
+	github.com/avast/retry-go/v4 v4.5.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
