@@ -1,6 +1,6 @@
 # Flows
 
-Simple declarative and functional dataflow with Kafka.
+Simple declarative and functional dataflow with Kafka and RabbitMQ.
 
 ## Developing
 
@@ -92,6 +92,7 @@ Flows sits at the core of the [Kappa Architecture](https://hazelcast.com/glossar
 3. Join as combination of stateless and stateful functions
 4. Materialisation
 5. Collector
+6. Long running tasks
 
 ### Stateless
 
@@ -149,6 +150,11 @@ Example:
 
 1. In an ecommerce inventory handling for orders, the orders can be pre-aggregated (to a certain extent where the message size does not blow up the Kafka cluster), and final inventory check is performed one time for all the pre-aggregated orders
 2. In an event space management system, the updates against seat booking can be pre-aggregated before checking against the entire section
+
+### Tasks
+
+Long running actions are tricky to deal with in Kafka, because partitions can be blocked for uneven long running task duration. 
+The solution is to use other types of message queue, such as RabbitMQ with AMQP.
 
 ## Limitations
 

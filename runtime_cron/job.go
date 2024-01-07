@@ -8,13 +8,13 @@ import (
 	"github.com/hjwalt/runway/logger"
 )
 
-type Job[OK any, OV any, T any] struct {
+type Job[T any] struct {
 	taskProducer task.Producer
-	scheduler    task.Scheduler[OK, OV, T]
+	scheduler    task.Scheduler[T]
 	channel      task.Channel[T]
 }
 
-func (j *Job[OK, OV, T]) Run() {
+func (j *Job[T]) Run() {
 	ctx := context.Background()
 
 	t, err := j.scheduler(ctx)

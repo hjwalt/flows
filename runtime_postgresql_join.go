@@ -92,12 +92,12 @@ func (c JoinPostgresqlFunctionConfiguration) Register(ci inverse.Container) {
 		ci,
 		c.RetryConfiguration,
 	)
-	RegisterProducer(
+	RegisterKafkaProducer(
 		ci,
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
-	RegisterConsumer(
+	RegisterKafkaConsumer(
 		ci,
 		c.Name,
 		c.InputBroker,

@@ -25,11 +25,11 @@ func RegisterStatelessSingleFunction(
 	topic string,
 	fn stateless.SingleFunction,
 ) {
-	RegisterConsumerFunctionInjector(
-		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
+	RegisterKafkaConsumerFunctionInjector(
+		func(ctx context.Context, ci inverse.Container) (KafkaConsumerFunction, error) {
 			retry, err := GetRetry(ctx, ci)
 			if err != nil {
-				return ConsumerFunction{}, err
+				return KafkaConsumerFunction{}, err
 			}
 
 			wrappedFunction := fn
@@ -49,7 +49,7 @@ func RegisterStatelessSingleFunction(
 				stateless.WithBatchIterateFunctionNextFunction(wrappedFunction),
 			)
 
-			return ConsumerFunction{
+			return KafkaConsumerFunction{
 				Topic: topic,
 				Key:   stateless.Base64PersistenceId,
 				Fn:    wrappedBatch,
@@ -64,9 +64,9 @@ func RegisterStatelessBatchFunction(
 	topic string,
 	fn stateless.BatchFunction,
 ) {
-	RegisterConsumerFunctionInjector(
-		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
-			return ConsumerFunction{
+	RegisterKafkaConsumerFunctionInjector(
+		func(ctx context.Context, ci inverse.Container) (KafkaConsumerFunction, error) {
+			return KafkaConsumerFunction{
 				Topic: topic,
 				Key:   stateless.Base64PersistenceId,
 				Fn:    fn,
@@ -82,11 +82,11 @@ func RegisterStatelessSingleFunctionWithKey(
 	fn stateless.SingleFunction,
 	key stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes],
 ) {
-	RegisterConsumerFunctionInjector(
-		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
+	RegisterKafkaConsumerFunctionInjector(
+		func(ctx context.Context, ci inverse.Container) (KafkaConsumerFunction, error) {
 			retry, err := GetRetry(ctx, ci)
 			if err != nil {
-				return ConsumerFunction{}, err
+				return KafkaConsumerFunction{}, err
 			}
 
 			wrappedFunction := fn
@@ -106,7 +106,7 @@ func RegisterStatelessSingleFunctionWithKey(
 				stateless.WithBatchIterateFunctionNextFunction(wrappedFunction),
 			)
 
-			return ConsumerFunction{
+			return KafkaConsumerFunction{
 				Topic: topic,
 				Key:   key,
 				Fn:    wrappedBatch,
@@ -123,11 +123,11 @@ func RegisterStatefulFunction(
 	fn stateful.SingleFunction,
 	key stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes],
 ) {
-	RegisterConsumerFunctionInjector(
-		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
+	RegisterKafkaConsumerFunctionInjector(
+		func(ctx context.Context, ci inverse.Container) (KafkaConsumerFunction, error) {
 			bunConnection, getBunConnectionError := GetPostgresqlConnection(ctx, ci)
 			if getBunConnectionError != nil {
-				return ConsumerFunction{}, getBunConnectionError
+				return KafkaConsumerFunction{}, getBunConnectionError
 			}
 
 			repository := stateful_bun.NewRepository(
@@ -152,7 +152,7 @@ func RegisterStatefulFunction(
 				repository,
 			)
 
-			return ConsumerFunction{
+			return KafkaConsumerFunction{
 				Topic: topic,
 				Key:   key,
 				Fn:    wrappedBatch,
@@ -169,11 +169,11 @@ func RegisterJoinStatefulFunction(
 	fn stateful.SingleFunction,
 	key stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes],
 ) {
-	RegisterConsumerFunctionInjector(
-		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
+	RegisterKafkaConsumerFunctionInjector(
+		func(ctx context.Context, ci inverse.Container) (KafkaConsumerFunction, error) {
 			bunConnection, getBunConnectionError := GetPostgresqlConnection(ctx, ci)
 			if getBunConnectionError != nil {
-				return ConsumerFunction{}, getBunConnectionError
+				return KafkaConsumerFunction{}, getBunConnectionError
 			}
 
 			repository := stateful_bun.NewRepository(
@@ -197,7 +197,7 @@ func RegisterJoinStatefulFunction(
 				join.WithIntermediateToJoinMapTransactionWrappedFunction(wrappedBatch),
 			)
 
-			return ConsumerFunction{
+			return KafkaConsumerFunction{
 				Topic: topic,
 				Key:   join.IntermediateTopicKeyFunction,
 				Fn:    wrappedBatch,
@@ -212,11 +212,11 @@ func RegisterMaterialiseFunction[T any](
 	topic string,
 	fn materialise.MapFunction[structure.Bytes, structure.Bytes, T],
 ) {
-	RegisterConsumerFunctionInjector(
-		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
+	RegisterKafkaConsumerFunctionInjector(
+		func(ctx context.Context, ci inverse.Container) (KafkaConsumerFunction, error) {
 			bunConnection, getBunConnectionError := GetPostgresqlConnection(ctx, ci)
 			if getBunConnectionError != nil {
-				return ConsumerFunction{}, getBunConnectionError
+				return KafkaConsumerFunction{}, getBunConnectionError
 			}
 
 			repository := materialise_bun.NewBunUpsertRepository(
@@ -228,7 +228,7 @@ func RegisterMaterialiseFunction[T any](
 				materialise.WithBatchUpsertRepository[T](repository),
 			)
 
-			return ConsumerFunction{
+			return KafkaConsumerFunction{
 				Topic: topic,
 				Key:   stateless.Base64PersistenceId,
 				Fn:    wrappedBatch,
@@ -245,15 +245,15 @@ func RegisterCollectorFunction(
 	aggregator collect.Aggregator[structure.Bytes, structure.Bytes, structure.Bytes],
 	collector collect.Collector,
 ) {
-	RegisterConsumerFunctionInjector(
-		func(ctx context.Context, ci inverse.Container) (ConsumerFunction, error) {
+	RegisterKafkaConsumerFunctionInjector(
+		func(ctx context.Context, ci inverse.Container) (KafkaConsumerFunction, error) {
 			wrappedBatch := collect.NewCollect(
 				collect.WithCollectCollector(collector),
 				collect.WithCollectAggregator(aggregator),
 				collect.WithCollectPersistenceIdFunc(persistenceIdFunction),
 			)
 
-			return ConsumerFunction{
+			return KafkaConsumerFunction{
 				Topic: topic,
 				Key:   stateless.Base64PersistenceId,
 				Fn:    wrappedBatch,

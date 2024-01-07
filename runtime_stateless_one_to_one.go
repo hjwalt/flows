@@ -44,12 +44,12 @@ func (c StatelessOneToOneConfiguration[IK, IV, OK, OV]) Register(ci inverse.Cont
 		ci,
 		c.RetryConfiguration,
 	)
-	RegisterProducer(
+	RegisterKafkaProducer(
 		ci,
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
-	RegisterConsumer(
+	RegisterKafkaConsumer(
 		ci,
 		c.Name,
 		c.InputBroker,

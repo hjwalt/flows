@@ -20,7 +20,7 @@ const (
 	QualifierConsumerFunction           = "QualifierFlowStateless"
 )
 
-func RegisterConsumer(
+func RegisterKafkaConsumer(
 	container inverse.Container,
 	name string,
 	broker string,
@@ -36,8 +36,8 @@ func RegisterConsumer(
 
 	resolver.AddConfigVal(runtime_sarama.WithConsumerBroker(broker))
 	resolver.AddConfigVal(runtime_sarama.WithConsumerGroupName(name))
-	resolver.AddConfig(ResolveConsumerHandlerConfiguration)
-	resolver.AddConfig(ResolveConsumerTopics)
+	resolver.AddConfig(ResolveKafkaConsumerHandlerConfiguration)
+	resolver.AddConfig(ResolveKafkaConsumerTopics)
 
 	for _, config := range configs {
 		resolver.AddConfigVal(config)
@@ -55,13 +55,13 @@ func RegisterConsumer(
 	)
 
 	consumerKeyedHandlerResolver.AddConfigVal(runtime_sarama.WithKeyedHandlerPrometheus())
-	consumerKeyedHandlerResolver.AddConfig(ResolveConsumerKeyFunction)
-	consumerKeyedHandlerResolver.AddConfig(ResolveConsumerBatchFunction)
+	consumerKeyedHandlerResolver.AddConfig(ResolveKafkaConsumerKeyFunction)
+	consumerKeyedHandlerResolver.AddConfig(ResolveKafkaConsumerBatchFunction)
 
 	consumerKeyedHandlerResolver.Register()
 }
 
-func ResolveConsumerHandlerConfiguration(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_sarama.Consumer], error) {
+func ResolveKafkaConsumerHandlerConfiguration(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_sarama.Consumer], error) {
 	consumerHandler, getConsumerHandlerError := inverse.GenericGetLast[runtime_sarama.ConsumerHandler](ci, ctx, QualifierKafkaConsumerHandler)
 	if getConsumerHandlerError != nil {
 		return nil, getConsumerHandlerError
@@ -72,22 +72,22 @@ func ResolveConsumerHandlerConfiguration(ctx context.Context, ci inverse.Contain
 
 // ===================================
 
-type ConsumerFunction struct {
+type KafkaConsumerFunction struct {
 	Topic string
 	Fn    stateless.BatchFunction
 	Key   stateful.PersistenceIdFunction[structure.Bytes, structure.Bytes]
 }
 
-func RegisterConsumerFunctionInstance(instance ConsumerFunction, ci inverse.Container) {
+func RegisterKafkaConsumerFunctionInstance(instance KafkaConsumerFunction, ci inverse.Container) {
 	ci.AddVal(QualifierConsumerFunction, instance)
 }
 
-func RegisterConsumerFunctionInjector(injector inverse.Injector[ConsumerFunction], ci inverse.Container) {
+func RegisterKafkaConsumerFunctionInjector(injector inverse.Injector[KafkaConsumerFunction], ci inverse.Container) {
 	inverse.GenericAdd(ci, QualifierConsumerFunction, injector)
 }
 
-func ResolveConsumerBatchFunction(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
-	allStatelessFunctions, getAllErr := inverse.GenericGetAll[ConsumerFunction](ci, ctx, QualifierConsumerFunction)
+func ResolveKafkaConsumerBatchFunction(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
+	allStatelessFunctions, getAllErr := inverse.GenericGetAll[KafkaConsumerFunction](ci, ctx, QualifierConsumerFunction)
 	if getAllErr != nil {
 		return nil, getAllErr
 	}
@@ -134,8 +134,8 @@ func ResolveConsumerBatchFunction(ctx context.Context, ci inverse.Container) (ru
 	return runtime_sarama.WithKeyedHandlerFunction(batchFn), nil
 }
 
-func ResolveConsumerKeyFunction(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
-	allStatelessFunctions, getAllErr := inverse.GenericGetAll[ConsumerFunction](ci, ctx, QualifierConsumerFunction)
+func ResolveKafkaConsumerKeyFunction(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_sarama.KeyedHandler], error) {
+	allStatelessFunctions, getAllErr := inverse.GenericGetAll[KafkaConsumerFunction](ci, ctx, QualifierConsumerFunction)
 	if getAllErr != nil {
 		return nil, getAllErr
 	}
@@ -159,8 +159,8 @@ func ResolveConsumerKeyFunction(ctx context.Context, ci inverse.Container) (runt
 	return runtime_sarama.WithKeyedHandlerKeyFunction(keyFn), nil
 }
 
-func ResolveConsumerTopics(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_sarama.Consumer], error) {
-	allStatelessFunctions, getAllErr := inverse.GenericGetAll[ConsumerFunction](ci, ctx, QualifierConsumerFunction)
+func ResolveKafkaConsumerTopics(ctx context.Context, ci inverse.Container) (runtime.Configuration[*runtime_sarama.Consumer], error) {
+	allStatelessFunctions, getAllErr := inverse.GenericGetAll[KafkaConsumerFunction](ci, ctx, QualifierConsumerFunction)
 	if getAllErr != nil {
 		return nil, getAllErr
 	}
@@ -180,13 +180,13 @@ func ResolveConsumerTopics(ctx context.Context, ci inverse.Container) (runtime.C
 
 // ===================================
 
-func RegisterConsumerConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_sarama.Consumer]) {
+func RegisterKafkaConsumerConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_sarama.Consumer]) {
 	for _, config := range configs {
 		ci.AddVal(runtime.QualifierConfig(QualifierKafkaConsumer), config)
 	}
 }
 
-func RegisterConsumerKeyedHandlerConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_sarama.KeyedHandler]) {
+func RegisterKafkaConsumerKeyedHandlerConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_sarama.KeyedHandler]) {
 	for _, config := range configs {
 		ci.AddVal(runtime.QualifierConfig(QualifierKafkaConsumerHandler), config)
 	}

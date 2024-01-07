@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/hjwalt/flows"
+	"github.com/hjwalt/flows/example/example_task_cron"
+	"github.com/hjwalt/flows/example/example_task_executor"
 	"github.com/hjwalt/flows/example/example_word_adapter"
 	"github.com/hjwalt/flows/example/example_word_collect"
 	"github.com/hjwalt/flows/example/example_word_count"
@@ -20,6 +22,8 @@ func main() {
 	example_word_join.Register(m)
 	example_word_materialise.Register(m)
 	example_word_remap.Register(m)
+	example_task_executor.Register(m)
+	example_task_cron.Register(m)
 
 	err := m.Start(environment.GetString("INSTANCE", flows.AllInstances))
 

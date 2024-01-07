@@ -27,6 +27,12 @@ services:
         source: kafka
         target: /var/lib/kafka/data
 
+  rabbitmq:
+    image: docker.io/library/rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
   postgres:
     image: docker.io/library/postgres
     hostname: postgres

@@ -45,7 +45,7 @@ func (c RouterAdapterConfiguration[Request, InputKey, InputValue]) Register(ci i
 
 	// RUNTIME
 
-	RegisterProducer(
+	RegisterKafkaProducer(
 		ci,
 		c.ProduceBroker,
 		c.KafkaProducerConfiguration,

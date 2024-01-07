@@ -32,15 +32,15 @@ func WithTaskProducer(taskProducer task.Producer) runtime.Configuration[*Cron] {
 	}
 }
 
-func WithCronJob[OK any, OV any, T any](
+func WithCronJob[T any](
 	schedule string,
-	scheduler task.Scheduler[OK, OV, T],
+	scheduler task.Scheduler[T],
 	channel task.Channel[T],
 ) runtime.Configuration[*Cron] {
 	return func(c *Cron) *Cron {
 		c.cron.AddJob(
 			schedule,
-			&Job[OK, OV, T]{
+			&Job[T]{
 				taskProducer: c.taskProducer,
 				scheduler:    scheduler,
 				channel:      channel,

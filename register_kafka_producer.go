@@ -13,7 +13,7 @@ var (
 	QualifierKafkaProducer = "QualifierKafkaProducer"
 )
 
-func RegisterProducer(
+func RegisterKafkaProducer(
 	container inverse.Container,
 	broker string,
 	configs []runtime.Configuration[*runtime_sarama.Producer],
@@ -43,7 +43,7 @@ func GetKafkaProducer(ctx context.Context, ci inverse.Container) (flow.Producer,
 
 // ===================================
 
-func RegisterProducerConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_sarama.Producer]) {
+func RegisterKafkaProducerConfig(ci inverse.Container, configs ...runtime.Configuration[*runtime_sarama.Producer]) {
 	for _, config := range configs {
 		ci.AddVal(runtime.QualifierConfig(QualifierKafkaProducer), config)
 	}

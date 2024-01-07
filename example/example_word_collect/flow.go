@@ -56,7 +56,7 @@ func collector(c context.Context, persistenceId string, s stateful.State[*exampl
 }
 
 func Registrar(ci inverse.Container) flows.Prebuilt {
-	flows.RegisterConsumerKeyedHandlerConfig(
+	flows.RegisterKafkaConsumerKeyedHandlerConfig(
 		ci,
 		runtime_sarama.WithKeyedHandlerMaxPerKey(1000),
 		runtime_sarama.WithKeyedHandlerMaxBufferred(10000),

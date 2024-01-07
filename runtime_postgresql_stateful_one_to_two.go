@@ -59,12 +59,12 @@ func (c StatefulPostgresqlOneToTwoFunctionConfiguration[S, IK, IV, OK1, OV1, OK2
 		ci,
 		c.RetryConfiguration,
 	)
-	RegisterProducer(
+	RegisterKafkaProducer(
 		ci,
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
-	RegisterConsumer(
+	RegisterKafkaConsumer(
 		ci,
 		c.Name,
 		c.InputBroker,

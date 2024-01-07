@@ -49,12 +49,12 @@ func (c CollectorOneToOneConfiguration[S, IK, IV, OK, OV]) Register(ci inverse.C
 		ci,
 		c.RetryConfiguration,
 	)
-	RegisterProducer(
+	RegisterKafkaProducer(
 		ci,
 		c.OutputBroker,
 		c.KafkaProducerConfiguration,
 	)
-	RegisterConsumer(
+	RegisterKafkaConsumer(
 		ci,
 		c.Name,
 		c.InputBroker,
