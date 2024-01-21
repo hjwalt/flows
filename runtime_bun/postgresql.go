@@ -1,7 +1,6 @@
 package runtime_bun
 
 import (
-	"crypto/tls"
 	"database/sql"
 	"time"
 
@@ -44,29 +43,11 @@ func WithMaxOpenConnections(maxOpenConns int) runtime.Configuration[*PostgresqlC
 	}
 }
 
-func WithTlsAnyClientCert(serverName string) runtime.Configuration[*PostgresqlConnection] {
-	return func(c *PostgresqlConnection) *PostgresqlConnection {
-		c.TlsConfig = &tls.Config{
-			ClientAuth: tls.RequireAnyClientCert,
-			ServerName: serverName,
-		}
-		return c
-	}
-}
-
-func WithTlsConfig(tlsConfig *tls.Config) runtime.Configuration[*PostgresqlConnection] {
-	return func(c *PostgresqlConnection) *PostgresqlConnection {
-		c.TlsConfig = tlsConfig
-		return c
-	}
-}
-
 // implementation
 type PostgresqlConnection struct {
 	ConnectionString string
 	ApplicationName  string
 	MaxOpenConns     int
-	TlsConfig        *tls.Config
 
 	db *bun.DB
 }
